@@ -17,11 +17,11 @@ import {
   Menu,
   X,
   Download,
-  PawPrint,
   Facebook,
   Instagram,
   Twitter
 } from "lucide-react";
+import twoPawsLogo from "@assets/logos[1]_1748043489395.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -114,43 +114,43 @@ export default function Landing() {
       icon: Stethoscope,
       title: "Find Trusted Vets",
       description: "Book appointments with verified veterinarians near you. Read reviews, compare prices, and ensure your pet gets the best care in Egypt.",
-      color: "bg-blue-500",
-      bgColor: "from-blue-50 to-blue-100",
+      color: "bg-brand-green-dark",
+      bgColor: "from-brand-cream to-green-50",
     },
     {
       icon: Activity,
       title: "Health & Vaccination Tracker",
       description: "Never miss a vaccination again! Keep digital records of your pet's health history and get timely reminders for checkups.",
-      color: "bg-green-500",
-      bgColor: "from-green-50 to-green-100",
+      color: "bg-brand-olive",
+      bgColor: "from-brand-cream to-yellow-50",
     },
     {
       icon: MapPin,
       title: "Pet-Friendly Places",
       description: "Discover parks, cafés, hotels, and restaurants that welcome your furry friends. Explore Egypt with your pet by your side!",
-      color: "bg-yellow-500",
-      bgColor: "from-yellow-50 to-yellow-100",
+      color: "bg-brand-green-dark",
+      bgColor: "from-brand-cream to-green-50",
     },
     {
       icon: Users,
       title: "Pet Owner Community",
       description: "Connect with fellow pet lovers, share tips, arrange playdates, and get advice from experienced pet owners in your area.",
-      color: "bg-purple-500",
-      bgColor: "from-purple-50 to-purple-100",
+      color: "bg-brand-olive",
+      bgColor: "from-brand-cream to-yellow-50",
     },
     {
       icon: ShoppingCart,
       title: "Pet Supplies Marketplace",
       description: "Shop for premium pet food, toys, accessories, and more. Fast delivery across Egypt with exclusive deals for TwoPaws users.",
-      color: "bg-red-500",
-      bgColor: "from-red-50 to-red-100",
+      color: "bg-brand-green-dark",
+      bgColor: "from-brand-cream to-green-50",
     },
     {
       icon: Ambulance,
       title: "Emergency Care",
       description: "Quick access to emergency vet services and 24/7 pet helpline. Get immediate help when your pet needs it most.",
-      color: "bg-orange-500",
-      bgColor: "from-orange-50 to-orange-100",
+      color: "bg-brand-olive",
+      bgColor: "from-brand-cream to-yellow-50",
     },
   ];
 
@@ -209,8 +209,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
-              <PawPrint className="h-8 w-8 text-brand-blue" />
-              <span className="text-xl font-bold text-brand-dark">TwoPaws</span>
+              <img src={twoPawsLogo} alt="TwoPaws" className="h-8" />
             </div>
             
             <div className="hidden md:flex items-center space-x-8">
@@ -649,8 +648,7 @@ export default function Landing() {
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <PawPrint className="h-8 w-8 text-brand-blue" />
-                <span className="text-xl font-bold">TwoPaws</span>
+                <img src={twoPawsLogo} alt="TwoPaws" className="h-8" />
               </div>
               <p className="text-gray-400 mb-4">
                 Your pet's best friend in Egypt. Connecting pet families with the care and community they deserve.

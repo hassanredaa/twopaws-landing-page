@@ -25,11 +25,11 @@
   --radius: 0.5rem;
   
   /* Custom brand colors */
-  --brand-blue: 207 90% 54%; /* #3B82F6 */
-  --brand-green: 158 64% 52%; /* #10B981 */
-  --brand-yellow: 43 96% 56%; /* #F59E0B */
-  --brand-light: 210 11% 98%; /* #F8FAFC */
-  --brand-dark: 219 31% 21%; /* #1F2937 */
+  --brand-cream: 45 100% 94%; /* #FFF7E1 */
+  --brand-green-dark: 81 29% 34%; /* #5C7039 */
+  --brand-olive: 56 24% 42%; /* #928946 */
+  --brand-light: 45 100% 94%; /* #FFF7E1 */
+  --brand-dark: 81 29% 34%; /* #5C7039 */
 }
 
 .dark {
@@ -66,32 +66,32 @@
 }
 
 @layer utilities {
-  .text-brand-blue {
-    color: hsl(var(--brand-blue));
+  .text-brand-cream {
+    color: hsl(var(--brand-cream));
   }
   
-  .text-brand-green {
-    color: hsl(var(--brand-green));
+  .text-brand-green-dark {
+    color: hsl(var(--brand-green-dark));
   }
   
-  .text-brand-yellow {
-    color: hsl(var(--brand-yellow));
+  .text-brand-olive {
+    color: hsl(var(--brand-olive));
   }
   
   .text-brand-dark {
     color: hsl(var(--brand-dark));
   }
   
-  .bg-brand-blue {
-    background-color: hsl(var(--brand-blue));
+  .bg-brand-cream {
+    background-color: hsl(var(--brand-cream));
   }
   
-  .bg-brand-green {
-    background-color: hsl(var(--brand-green));
+  .bg-brand-green-dark {
+    background-color: hsl(var(--brand-green-dark));
   }
   
-  .bg-brand-yellow {
-    background-color: hsl(var(--brand-yellow));
+  .bg-brand-olive {
+    background-color: hsl(var(--brand-olive));
   }
   
   .bg-brand-light {
