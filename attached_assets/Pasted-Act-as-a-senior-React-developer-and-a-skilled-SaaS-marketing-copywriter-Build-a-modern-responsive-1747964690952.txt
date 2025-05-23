@@ -1,0 +1,85 @@
+Act as a senior React developer and a skilled SaaS marketing copywriter.
+
+Build a modern, responsive, and visually engaging marketing landing page for my pets app called TwoPaws using React and Tailwind CSS.
+
+Context
+TwoPaws is a new all-in-one mobile app for pet lovers in Egypt. It helps users:
+
+Discover and book local vets
+
+Find pet-friendly places
+
+Track their pet’s health & vaccinations
+
+Connect with a friendly pet owner community
+
+Buy pet supplies through an in-app marketplace
+
+Target Audience
+Pet owners (dogs, cats, birds, etc.), pet adopters, and anyone interested in animal care or local pet services.
+
+Website Purpose
+Market the TwoPaws app to new users
+
+Explain main features & benefits
+
+Encourage downloads (iOS & Android) or waitlist signups
+
+Build trust (testimonials, social links, etc.)
+
+Website Sections (in order)
+Hero Section:
+
+Catchy headline introducing TwoPaws
+
+Short description
+
+App screenshots/mockups (use placeholder)
+
+Download on App Store / Google Play buttons
+
+Features Section:
+
+3-5 feature cards with icons and engaging, benefit-focused descriptions (e.g., Vet Finder, Health Tracker, Marketplace, Community, Pet-Friendly Places)
+
+About Section:
+
+Brief mission statement and intro to TwoPaws
+
+Testimonials:
+
+2-3 short, friendly user quotes (add names and pet types for realism)
+
+FAQ:
+
+3-4 top questions new users might ask (with clear, helpful answers)
+
+Call to Action:
+
+Prominent section encouraging download or sign-up, with email input and “Join Waitlist” button
+
+Footer:
+
+Social media links, newsletter signup, contact info, and copyright
+
+Design & Tech Requirements
+Use React functional components (all in one file or modular, as you prefer)
+
+Use Tailwind CSS for a playful, pet-friendly look (suggested color palette: soft blue, green, yellow, and white backgrounds, rounded corners, large icons)
+
+Mobile-first & responsive design
+
+Use Heroicons or similar for icons
+
+Use placeholder images for screenshots or mockups
+
+Write engaging marketing copy for every section—don’t be generic, make it sound like a real, fun pet brand for Egypt
+
+Add App Store and Google Play badge images (use placeholder URLs)
+
+Output
+Provide the full React code (JSX), including import statements, for the landing page
+
+Use placeholder assets and URLs as needed
+
+Start with a high-level outline of the components/sections before the code
