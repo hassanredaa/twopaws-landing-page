@@ -215,31 +215,31 @@ export default function Landing() {
             <div className="hidden md:flex items-center space-x-8">
               <button
                 onClick={() => scrollToSection("features")}
-                className="text-gray-600 hover:text-brand-blue transition-colors"
+                className="text-gray-600 hover:text-brand-green-dark transition-colors"
               >
                 Features
               </button>
               <button
                 onClick={() => scrollToSection("about")}
-                className="text-gray-600 hover:text-brand-blue transition-colors"
+                className="text-gray-600 hover:text-brand-green-dark transition-colors"
               >
                 About
               </button>
               <button
                 onClick={() => scrollToSection("testimonials")}
-                className="text-gray-600 hover:text-brand-blue transition-colors"
+                className="text-gray-600 hover:text-brand-green-dark transition-colors"
               >
                 Reviews
               </button>
               <button
                 onClick={() => scrollToSection("faq")}
-                className="text-gray-600 hover:text-brand-blue transition-colors"
+                className="text-gray-600 hover:text-brand-green-dark transition-colors"
               >
                 FAQ
               </button>
               <Button 
                 onClick={() => scrollToSection("cta")}
-                className="bg-brand-blue text-white hover:bg-blue-600"
+                className="bg-brand-green-dark text-white hover:bg-brand-olive"
               >
                 Download Now
               </Button>
@@ -295,7 +295,7 @@ export default function Landing() {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-20 pb-16 bg-gradient-to-br from-blue-50 to-green-50">
+      <section className="pt-20 pb-16 bg-gradient-to-br from-brand-cream to-green-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <motion.div 
@@ -305,7 +305,7 @@ export default function Landing() {
               className="text-center lg:text-left"
             >
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-brand-dark leading-tight mb-6">
-                Your Pet's <span className="text-brand-blue">Best Friend</span> in Egypt
+                Your Pet's <span className="text-brand-green-dark">Best Friend</span> in Egypt
               </h1>
               <p className="text-xl text-gray-600 mb-8 leading-relaxed">
                 Discover vets, track health, find pet-friendly places, and connect with fellow pet lovers. Everything your furry friend needs in one app! 🐾
@@ -326,11 +326,11 @@ export default function Landing() {
               
               <div className="flex items-center justify-center lg:justify-start space-x-6 text-sm text-gray-500">
                 <div className="flex items-center space-x-2">
-                  <Star className="h-4 w-4 text-brand-yellow fill-current" />
+                  <Star className="h-4 w-4 text-brand-olive fill-current" />
                   <span>4.8/5 Rating</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Download className="h-4 w-4 text-brand-green" />
+                  <Download className="h-4 w-4 text-brand-green-dark" />
                   <span>10k+ Downloads</span>
                 </div>
               </div>
@@ -357,7 +357,7 @@ export default function Landing() {
                   transition={{ duration: 2, repeat: Infinity }}
                   className="absolute -top-4 -left-4 bg-white rounded-xl p-3 shadow-lg"
                 >
-                  <Stethoscope className="h-6 w-6 text-brand-blue" />
+                  <Stethoscope className="h-6 w-6 text-brand-green-dark" />
                 </motion.div>
                 <motion.div 
                   animate={{ y: [0, -10, 0] }}
@@ -371,14 +371,14 @@ export default function Landing() {
                   transition={{ duration: 2, repeat: Infinity, delay: 1 }}
                   className="absolute -bottom-4 -left-4 bg-white rounded-xl p-3 shadow-lg"
                 >
-                  <MapPin className="h-6 w-6 text-brand-green" />
+                  <MapPin className="h-6 w-6 text-brand-olive" />
                 </motion.div>
                 <motion.div 
                   animate={{ y: [0, -10, 0] }}
                   transition={{ duration: 2, repeat: Infinity, delay: 1.5 }}
                   className="absolute -bottom-4 -right-4 bg-white rounded-xl p-3 shadow-lg"
                 >
-                  <ShoppingCart className="h-6 w-6 text-brand-yellow" />
+                  <ShoppingCart className="h-6 w-6 text-brand-green-dark" />
                 </motion.div>
               </div>
             </motion.div>
