@@ -22,6 +22,7 @@ import {
   Twitter
 } from "lucide-react";
 import twoPawsLogo from "@assets/logos[1]_1748043489395.png";
+import loopDropIcon from "@assets/loopdrop[1]_1748299425142.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -110,6 +111,15 @@ export default function Landing() {
   });
 
   const features = [
+    {
+      icon: "custom",
+      iconSrc: loopDropIcon,
+      title: "LoopDrop Auto-Delivery",
+      description: "Never run out of pet essentials! Set up automatic delivery schedules for food, treats, and supplies. Smart recommendations based on your pet's needs.",
+      color: "bg-brand-olive",
+      bgColor: "from-yellow-50 to-brand-cream",
+      featured: true,
+    },
     {
       icon: Stethoscope,
       title: "Find Trusted Vets",
@@ -307,9 +317,23 @@ export default function Landing() {
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-brand-dark leading-tight mb-6">
                 Your Pet's <span className="text-brand-green-dark">Best Friend</span> in Egypt
               </h1>
-              <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+              <p className="text-xl text-gray-600 mb-6 leading-relaxed">
                 Discover vets, track health, find pet-friendly places, and connect with fellow pet lovers. Everything your furry friend needs in one app! 🐾
               </p>
+              
+              {/* LoopDrop Feature Highlight */}
+              <div className="bg-gradient-to-r from-brand-olive/10 to-yellow-100/50 border border-brand-olive/20 rounded-2xl p-4 mb-8">
+                <div className="flex items-center space-x-3">
+                  <img src={loopDropIcon} alt="LoopDrop" className="h-8 w-8" />
+                  <div>
+                    <h3 className="font-semibold text-brand-dark">Introducing LoopDrop!</h3>
+                    <p className="text-sm text-gray-600">Never run out of pet supplies with smart auto-delivery</p>
+                  </div>
+                  <span className="bg-brand-olive text-white text-xs px-2 py-1 rounded-full font-semibold ml-auto">
+                    NEW
+                  </span>
+                </div>
+              </div>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-8">
                 <img 
@@ -412,10 +436,19 @@ export default function Landing() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
                 viewport={{ once: true }}
-                className={`bg-gradient-to-br ${feature.bgColor} rounded-2xl p-8 hover:shadow-lg transition-shadow`}
+                className={`bg-gradient-to-br ${feature.bgColor} rounded-2xl p-8 hover:shadow-lg transition-shadow ${feature.featured ? 'border-2 border-brand-olive ring-2 ring-brand-olive/20' : ''}`}
               >
-                <div className={`${feature.color} rounded-xl p-4 w-16 h-16 flex items-center justify-center mb-6`}>
-                  <feature.icon className="h-8 w-8 text-white" />
+                <div className={`${feature.color} rounded-xl p-4 w-16 h-16 flex items-center justify-center mb-6 relative`}>
+                  {feature.icon === "custom" ? (
+                    <img src={feature.iconSrc} alt={feature.title} className="h-10 w-10" />
+                  ) : (
+                    <feature.icon className="h-8 w-8 text-white" />
+                  )}
+                  {feature.featured && (
+                    <div className="absolute -top-2 -right-2 bg-brand-olive text-white text-xs px-2 py-1 rounded-full font-semibold">
+                      NEW
+                    </div>
+                  )}
                 </div>
                 <h3 className="text-xl font-semibold text-brand-dark mb-4">{feature.title}</h3>
                 <p className="text-gray-600 leading-relaxed">{feature.description}</p>
