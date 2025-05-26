@@ -19,7 +19,8 @@ import {
   Download,
   Facebook,
   Instagram,
-  Twitter
+  Twitter,
+  Zap
 } from "lucide-react";
 import twoPawsLogo from "@assets/logos[1]_1748043489395.png";
 import loopDropIcon from "@assets/loopdrop[1]_1748299425142.png";
@@ -118,6 +119,14 @@ export default function Landing() {
       description: "Never run out of pet essentials! Set up automatic delivery schedules for food, treats, and supplies. Smart recommendations based on your pet's needs.",
       color: "bg-brand-olive",
       bgColor: "from-yellow-50 to-brand-cream",
+      featured: true,
+    },
+    {
+      icon: Heart,
+      title: "Pet Match Swiper",
+      description: "Find the perfect playmate or breeding partner for your pet! Swipe through profiles just like dating apps, but for your furry friends to find their soulmates.",
+      color: "bg-red-500",
+      bgColor: "from-red-50 to-pink-50",
       featured: true,
     },
     {
@@ -321,17 +330,32 @@ export default function Landing() {
                 Discover vets, track health, find pet-friendly places, and connect with fellow pet lovers. Everything your furry friend needs in one app! 🐾
               </p>
               
-              {/* LoopDrop Feature Highlight */}
-              <div className="bg-gradient-to-r from-brand-olive/10 to-yellow-100/50 border border-brand-olive/20 rounded-2xl p-4 mb-8">
-                <div className="flex items-center space-x-3">
-                  <img src={loopDropIcon} alt="LoopDrop" className="h-8 w-8" />
-                  <div>
-                    <h3 className="font-semibold text-brand-dark">Introducing LoopDrop!</h3>
-                    <p className="text-sm text-gray-600">Never run out of pet supplies with smart auto-delivery</p>
+              {/* Featured Highlights */}
+              <div className="space-y-3 mb-8">
+                <div className="bg-gradient-to-r from-brand-olive/10 to-yellow-100/50 border border-brand-olive/20 rounded-2xl p-4">
+                  <div className="flex items-center space-x-3">
+                    <img src={loopDropIcon} alt="LoopDrop" className="h-8 w-8" />
+                    <div>
+                      <h3 className="font-semibold text-brand-dark">Introducing LoopDrop!</h3>
+                      <p className="text-sm text-gray-600">Never run out of pet supplies with smart auto-delivery</p>
+                    </div>
+                    <span className="bg-brand-olive text-white text-xs px-2 py-1 rounded-full font-semibold ml-auto">
+                      NEW
+                    </span>
                   </div>
-                  <span className="bg-brand-olive text-white text-xs px-2 py-1 rounded-full font-semibold ml-auto">
-                    NEW
-                  </span>
+                </div>
+                
+                <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-2xl p-4">
+                  <div className="flex items-center space-x-3">
+                    <Heart className="h-8 w-8 text-red-500" />
+                    <div>
+                      <h3 className="font-semibold text-brand-dark">Pet Match Swiper</h3>
+                      <p className="text-sm text-gray-600">Find your pet's perfect playmate with swipe-to-match</p>
+                    </div>
+                    <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-semibold ml-auto">
+                      HOT
+                    </span>
+                  </div>
                 </div>
               </div>
               
