@@ -12,15 +12,25 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const res = await fetch(url, {
-    method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
-
-  await throwIfResNotOk(res);
-  return res;
+  // Mocked API logic for frontend-only app
+  if (url === "/api/waitlist" && method === "POST") {
+    const email = (data as any)?.email;
+    if (email && email.endsWith("@duplicate.com")) {
+      // Simulate duplicate email error
+      return new Response(JSON.stringify({ message: "You're already on our waitlist!" }), { status: 409 });
+    }
+    return new Response(JSON.stringify({ message: "You've been added to the waitlist!" }), { status: 200 });
+  }
+  if (url === "/api/newsletter" && method === "POST") {
+    const email = (data as any)?.email;
+    if (email && email.endsWith("@duplicate.com")) {
+      // Simulate duplicate email error
+      return new Response(JSON.stringify({ message: "You're already subscribed!" }), { status: 409 });
+    }
+    return new Response(JSON.stringify({ message: "Thanks for subscribing!" }), { status: 200 });
+  }
+  // Default mock for other endpoints
+  return new Response(JSON.stringify({ message: "Mocked response" }), { status: 200 });
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
@@ -29,16 +39,8 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey[0] as string, {
-      credentials: "include",
-    });
-
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
-    }
-
-    await throwIfResNotOk(res);
-    return await res.json();
+    // Always return a mocked object for queries
+    return {} as T;
   };
 
 export const queryClient = new QueryClient({

@@ -38,8 +38,6 @@ Quick access to emergency vet services and 24/7 pet helpline when your pet needs
 
 - **Frontend:** React 18 with TypeScript
 - **Styling:** Tailwind CSS with shadcn/ui components
-- **Backend:** Node.js with Express.js
-- **Database:** PostgreSQL with Drizzle ORM
 - **Build Tool:** Vite
 - **Routing:** Wouter
 - **Forms:** React Hook Form with Zod validation
@@ -71,7 +69,7 @@ npm install
 npm run dev
 ```
 
-4. Open your browser and visit `http://localhost:5000`
+4. Open your browser and visit `http://localhost:5173` (or the port Vite shows)
 
 ## 📱 Features Showcase
 
