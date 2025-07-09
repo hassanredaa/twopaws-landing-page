@@ -26,10 +26,10 @@
   
   /* Custom brand colors */
   --brand-cream: 45 100% 94%; /* #FFF7E1 */
-  --brand-green-dark: 81 29% 34%; /* #5C7039 */
-  --brand-olive: 56 24% 42%; /* #928946 */
+  --brand-green-dark: 315 31% 36%; /* #773f69 */
+  --brand-olive: 43 99% 58%; /* #fec329 */
   --brand-light: 45 100% 94%; /* #FFF7E1 */
-  --brand-dark: 81 29% 34%; /* #5C7039 */
+  --brand-dark: 315 31% 36%; /* #773f69 */
 }
 
 .dark {

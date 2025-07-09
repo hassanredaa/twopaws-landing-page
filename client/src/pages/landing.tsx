@@ -53,38 +53,9 @@ export default function Landing() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { toast } = useToast();
 
-  const waitlistForm = useForm<EmailForm>({
-    resolver: zodResolver(emailSchema),
-    defaultValues: { email: "" },
-  });
-
   const newsletterForm = useForm<EmailForm>({
     resolver: zodResolver(emailSchema),
     defaultValues: { email: "" },
-  });
-
-  const waitlistMutation = useMutation({
-    mutationFn: async (data: EmailForm) => {
-      const response = await apiRequest("POST", "/api/waitlist", data);
-      return response.json();
-    },
-    onSuccess: (data) => {
-      toast({
-        title: "Welcome to the waitlist! 🎉",
-        description: data.message,
-      });
-      waitlistForm.reset();
-    },
-    onError: (error: any) => {
-      const message = error.message.includes("409")
-        ? "You're already on our waitlist!"
-        : "Please enter a valid email address";
-      toast({
-        title: "Oops!",
-        description: message,
-        variant: "destructive",
-      });
-    },
   });
 
   const newsletterMutation = useMutation({
@@ -373,17 +344,10 @@ export default function Landing() {
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-8">
-                <img
-                  src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us?size=250x83&releaseDate=1709251200"
-                  alt="Download on App Store"
-                  className="h-14 hover:scale-105 transition-transform cursor-pointer"
-                />
-                <img
-                  src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
-                  alt="Get it on Google Play"
-                  className="h-14 hover:scale-105 transition-transform cursor-pointer"
-                />
+              <div className="flex justify-center lg:justify-start mb-8">
+                <Button className="bg-brand-olive text-brand-dark hover:bg-yellow-400 font-semibold">
+                  Coming Soon
+                </Button>
               </div>
 
               {/* <div className="flex items-center justify-center lg:justify-start space-x-6 text-sm text-gray-500">
@@ -664,50 +628,14 @@ export default function Landing() {
               Join thousands of Egyptian pet families who trust TwoPaws for their pet care needs.
             </p>
 
-            <Form {...waitlistForm}>
-              <form
-                onSubmit={waitlistForm.handleSubmit((data) => waitlistMutation.mutate(data))}
-                className="max-w-md mx-auto mb-8"
-              >
-                <div className="flex gap-4">
-                  <FormField
-                    control={waitlistForm.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem className="flex-1">
-                        <FormControl>
-                          <Input
-                            placeholder="Enter your email"
-                            className="bg-white border-0 focus:ring-2 focus:ring-white"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button
-                    type="submit"
-                    disabled={waitlistMutation.isPending}
-                    className="bg-brand-yellow text-brand-dark hover:bg-yellow-400 font-semibold"
-                  >
-                    {waitlistMutation.isPending ? "Joining..." : "Join Waitlist"}
-                  </Button>
-                </div>
-              </form>
-            </Form>
+            <p className="text-lg font-semibold mb-8">
+              Follow us to know the latest updates
+            </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <img
-                src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us?size=250x83&releaseDate=1709251200"
-                alt="Download on App Store"
-                className="h-14 hover:scale-105 transition-transform cursor-pointer mx-auto"
-              />
-              <img
-                src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
-                alt="Get it on Google Play"
-                className="h-14 hover:scale-105 transition-transform cursor-pointer mx-auto"
-              />
+            <div className="flex justify-center">
+              <Button className="bg-brand-olive text-brand-dark hover:bg-yellow-400 font-semibold">
+                Coming Soon
+              </Button>
             </div>
           </motion.div>
         </div>
