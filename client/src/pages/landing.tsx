@@ -23,6 +23,7 @@ import {
   Zap
 } from "lucide-react";
 import insta from "../../../attached_assets/instagram.svg"
+import ss from "../../../attached_assets/ss.png"
 import twoPawsLogo from "../../../attached_assets/logotrans.png";
 import loopDropIcon from "@assets/loopdrop[1]_1748299425142.png";
 import { Button } from "@/components/ui/button";
@@ -370,9 +371,9 @@ export default function Landing() {
               className="relative"
             >
               <div className="relative mx-auto max-w-sm">
-                <div className="bg-gray-900 rounded-3xl p-2 shadow-2xl">
+                <div className="bg-transparent rounded-3xl p-2 ">
                   <img
-                    src="https://images.unsplash.com/photo-1601758228041-f3b2795255f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=800"
+                    src={ss}
                     alt="TwoPaws App Interface"
                     className="w-full rounded-2xl"
                   />
