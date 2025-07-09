@@ -1,10 +1,55 @@
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import twoPawsLogo from "@assets/logos[1]_1748043489395.png";
+import { Menu, X, Facebook, Instagram, Twitter } from "lucide-react";
 
 export default function Terms() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50 p-4">
-      <Card className="w-full max-w-4xl mx-auto">
-        <CardContent className="pt-6 space-y-6 text-sm text-gray-700">
+    <div className="min-h-screen flex flex-col bg-white">
+      {/* Navigation */}
+      <nav className="fixed top-0 w-full bg-white/90 backdrop-blur-md z-50 border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-2">
+              <a href="/">
+                <img src={twoPawsLogo} alt="TwoPaws" className="h-8" />
+              </a>
+            </div>
+            <div className="hidden md:flex items-center space-x-8">
+              <a href="/" className="text-gray-600 hover:text-brand-green-dark transition-colors">
+                Home
+              </a>
+              <a href="/terms" className="text-gray-600 hover:text-brand-green-dark transition-colors">
+                Terms
+              </a>
+            </div>
+            <div className="md:hidden">
+              <Button variant="ghost" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+                {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </Button>
+            </div>
+          </div>
+        </div>
+        {isMobileMenuOpen && (
+          <div className="md:hidden bg-white border-t border-gray-100">
+            <div className="px-4 py-4 space-y-3">
+              <a href="/" className="block w-full text-left text-gray-600">
+                Home
+              </a>
+              <a href="/terms" className="block w-full text-left text-gray-600">
+                Terms
+              </a>
+            </div>
+          </div>
+        )}
+      </nav>
+
+      <main className="flex-grow pt-24 px-4 pb-16 bg-gray-50 flex items-start justify-center">
+        <Card className="w-full max-w-4xl mx-auto">
+          <CardContent className="pt-6 space-y-6 text-sm text-gray-700">
           <h1 className="text-3xl font-bold mb-4">
             Terms & Conditions and Privacy Policy
           </h1>
@@ -228,6 +273,73 @@ export default function Terms() {
           </p>
         </CardContent>
       </Card>
+      </main>
+
+      <footer className="bg-brand-dark text-white py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-4 gap-8 mb-8">
+            <div>
+              <div className="flex items-center space-x-2 mb-4">
+                <img src={twoPawsLogo} alt="TwoPaws" className="h-8" />
+              </div>
+              <p className="text-gray-400 mb-4">
+                Your pet's best friend in Egypt. Connecting pet families with the care and community they deserve.
+              </p>
+              <div className="flex space-x-4">
+                <a href="#" className="text-gray-400 hover:text-brand-blue transition-colors">
+                  <Facebook className="h-6 w-6" />
+                </a>
+                <a href="#" className="text-gray-400 hover:text-brand-blue transition-colors">
+                  <Instagram className="h-6 w-6" />
+                </a>
+                <a href="#" className="text-gray-400 hover:text-brand-blue transition-colors">
+                  <Twitter className="h-6 w-6" />
+                </a>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-4">Support</h3>
+              <ul className="space-y-2 text-gray-400">
+                <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Contact Us</a></li>
+                <li>
+                  <a href="/terms" className="hover:text-white transition-colors">Privacy Policy</a>
+                </li>
+                <li>
+                  <a href="/terms" className="hover:text-white transition-colors">Terms of Service</a>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-4">Stay Updated</h3>
+              <p className="text-gray-400 mb-4 text-sm">
+                Get pet care tips and app updates delivered to your inbox.
+              </p>
+              <form className="space-y-2">
+                <input
+                  type="email"
+                  placeholder="Your email"
+                  className="w-full rounded-md bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:border-brand-blue px-3 py-2 text-sm"
+                />
+                <Button type="submit" className="w-full bg-brand-blue hover:bg-blue-600">
+                  Subscribe
+                </Button>
+              </form>
+            </div>
+          </div>
+
+          <div className="border-t border-gray-800 pt-8 flex flex-col sm:flex-row justify-between items-center">
+            <p className="text-gray-400 text-sm">
+              © 2024 TwoPaws. All rights reserved. Made with ❤️ for Egyptian pets.
+            </p>
+            <div className="flex items-center space-x-4 mt-4 sm:mt-0">
+              <span className="text-gray-400 text-sm">🇪🇬 Proudly Egyptian</span>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
