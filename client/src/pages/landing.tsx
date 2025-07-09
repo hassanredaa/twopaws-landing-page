@@ -379,7 +379,7 @@ export default function Landing() {
                 />
               </div>
 
-              <div className="flex items-center justify-center lg:justify-start space-x-6 text-sm text-gray-500">
+              {/* <div className="flex items-center justify-center lg:justify-start space-x-6 text-sm text-gray-500">
                 <div className="flex items-center space-x-2">
                   <Star className="h-4 w-4 text-brand-olive fill-current" />
                   <span>4.8/5 Rating</span>
@@ -388,7 +388,7 @@ export default function Landing() {
                   <Download className="h-4 w-4 text-brand-green-dark" />
                   <span>10k+ Downloads</span>
                 </div>
-              </div>
+              </div> */}
             </motion.div>
 
             <motion.div
