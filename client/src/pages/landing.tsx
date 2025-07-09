@@ -4,12 +4,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "framer-motion";
-import { 
-  Heart, 
-  MapPin, 
-  ShoppingCart, 
-  Users, 
-  Stethoscope, 
+import {
+  Heart,
+  MapPin,
+  ShoppingCart,
+  Users,
+  Stethoscope,
   Activity,
   Ambulance,
   Star,
@@ -27,18 +27,18 @@ import loopDropIcon from "@assets/loopdrop[1]_1748299425142.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { 
-  Form, 
-  FormControl, 
-  FormField, 
-  FormItem, 
-  FormMessage 
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage
 } from "@/components/ui/form";
-import { 
-  Accordion, 
-  AccordionContent, 
-  AccordionItem, 
-  AccordionTrigger 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger
 } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -76,8 +76,8 @@ export default function Landing() {
       waitlistForm.reset();
     },
     onError: (error: any) => {
-      const message = error.message.includes("409") 
-        ? "You're already on our waitlist!" 
+      const message = error.message.includes("409")
+        ? "You're already on our waitlist!"
         : "Please enter a valid email address";
       toast({
         title: "Oops!",
@@ -100,8 +100,8 @@ export default function Landing() {
       newsletterForm.reset();
     },
     onError: (error: any) => {
-      const message = error.message.includes("409") 
-        ? "You're already subscribed!" 
+      const message = error.message.includes("409")
+        ? "You're already subscribed!"
         : "Please enter a valid email address";
       toast({
         title: "Oops!",
@@ -230,7 +230,7 @@ export default function Landing() {
             <div className="flex items-center space-x-2">
               <img src={twoPawsLogo} alt="TwoPaws" className="h-16" />
             </div>
-            
+
             <div className="hidden md:flex items-center space-x-8">
               <button
                 onClick={() => scrollToSection("features")}
@@ -250,20 +250,27 @@ export default function Landing() {
               >
                 Reviews
               </button>
+              <a href="/terms" className="text-gray-600 hover:text-brand-green-dark transition-colors">
+                Terms
+              </a>
+              <a href="/terms" className="text-gray-600 hover:text-brand-green-dark transition-colors">
+                Privacy Policy
+              </a>
               <button
                 onClick={() => scrollToSection("faq")}
                 className="text-gray-600 hover:text-brand-green-dark transition-colors"
               >
                 FAQ
               </button>
-              <Button 
+
+              <Button
                 onClick={() => scrollToSection("cta")}
                 className="bg-brand-green-dark text-white hover:bg-brand-olive"
               >
                 Download Now
               </Button>
             </div>
-            
+
             <div className="md:hidden">
               <Button
                 variant="ghost"
@@ -274,7 +281,7 @@ export default function Landing() {
             </div>
           </div>
         </div>
-        
+
         {isMobileMenuOpen && (
           <div className="md:hidden bg-white border-t border-gray-100">
             <div className="px-4 py-4 space-y-3">
@@ -302,7 +309,7 @@ export default function Landing() {
               >
                 FAQ
               </button>
-              <Button 
+              <Button
                 onClick={() => scrollToSection("cta")}
                 className="w-full bg-brand-blue text-white"
               >
@@ -317,7 +324,7 @@ export default function Landing() {
       <section className="pt-20 pb-16 bg-gradient-to-br from-brand-cream to-green-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
@@ -329,7 +336,7 @@ export default function Landing() {
               <p className="text-xl text-gray-600 mb-6 leading-relaxed">
                 Discover vets, track health, find pet-friendly places, and connect with fellow pet lovers. Everything your furry friend needs in one app! 🐾
               </p>
-              
+
               {/* Featured Highlights */}
               <div className="space-y-3 mb-8">
                 <div className="bg-gradient-to-r from-brand-olive/10 to-yellow-100/50 border border-brand-olive/20 rounded-2xl p-4">
@@ -344,7 +351,7 @@ export default function Landing() {
                     </span>
                   </div>
                 </div>
-                
+
                 <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-2xl p-4">
                   <div className="flex items-center space-x-3">
                     <Heart className="h-8 w-8 text-red-500" />
@@ -358,20 +365,20 @@ export default function Landing() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-8">
-                <img 
+                <img
                   src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us?size=250x83&releaseDate=1709251200"
-                  alt="Download on App Store" 
+                  alt="Download on App Store"
                   className="h-14 hover:scale-105 transition-transform cursor-pointer"
                 />
-                <img 
+                <img
                   src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
-                  alt="Get it on Google Play" 
+                  alt="Get it on Google Play"
                   className="h-14 hover:scale-105 transition-transform cursor-pointer"
                 />
               </div>
-              
+
               <div className="flex items-center justify-center lg:justify-start space-x-6 text-sm text-gray-500">
                 <div className="flex items-center space-x-2">
                   <Star className="h-4 w-4 text-brand-olive fill-current" />
@@ -383,8 +390,8 @@ export default function Landing() {
                 </div>
               </div>
             </motion.div>
-            
-            <motion.div 
+
+            <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.6, delay: 0.2 }}
@@ -392,36 +399,36 @@ export default function Landing() {
             >
               <div className="relative mx-auto max-w-sm">
                 <div className="bg-gray-900 rounded-3xl p-2 shadow-2xl">
-                  <img 
-                    src="https://images.unsplash.com/photo-1601758228041-f3b2795255f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=800" 
-                    alt="TwoPaws App Interface" 
+                  <img
+                    src="https://images.unsplash.com/photo-1601758228041-f3b2795255f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=800"
+                    alt="TwoPaws App Interface"
                     className="w-full rounded-2xl"
                   />
                 </div>
-                
+
                 {/* Floating feature icons */}
-                <motion.div 
+                <motion.div
                   animate={{ y: [0, -10, 0] }}
                   transition={{ duration: 2, repeat: Infinity }}
                   className="absolute -top-4 -left-4 bg-white rounded-xl p-3 shadow-lg"
                 >
                   <Stethoscope className="h-6 w-6 text-brand-green-dark" />
                 </motion.div>
-                <motion.div 
+                <motion.div
                   animate={{ y: [0, -10, 0] }}
                   transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
                   className="absolute -top-4 -right-4 bg-white rounded-xl p-3 shadow-lg"
                 >
                   <Heart className="h-6 w-6 text-red-500" />
                 </motion.div>
-                <motion.div 
+                <motion.div
                   animate={{ y: [0, -10, 0] }}
                   transition={{ duration: 2, repeat: Infinity, delay: 1 }}
                   className="absolute -bottom-4 -left-4 bg-white rounded-xl p-3 shadow-lg"
                 >
                   <MapPin className="h-6 w-6 text-brand-olive" />
                 </motion.div>
-                <motion.div 
+                <motion.div
                   animate={{ y: [0, -10, 0] }}
                   transition={{ duration: 2, repeat: Infinity, delay: 1.5 }}
                   className="absolute -bottom-4 -right-4 bg-white rounded-xl p-3 shadow-lg"
@@ -437,7 +444,7 @@ export default function Landing() {
       {/* Features Section */}
       <section id="features" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
@@ -451,7 +458,7 @@ export default function Landing() {
               From finding the best vets in Cairo to discovering pet-friendly cafés in Alexandria, TwoPaws has got you covered.
             </p>
           </motion.div>
-          
+
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
               <motion.div
@@ -492,13 +499,13 @@ export default function Landing() {
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
             >
-              <img 
-                src="https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600" 
-                alt="Veterinary clinic with caring professionals" 
+              <img
+                src="https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600"
+                alt="Veterinary clinic with caring professionals"
                 className="rounded-2xl shadow-xl"
               />
             </motion.div>
-            
+
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -509,14 +516,14 @@ export default function Landing() {
                 Built by Pet Lovers, for Pet Lovers
               </h2>
               <p className="text-lg text-gray-600 mb-6 leading-relaxed">
-                TwoPaws was born from our own struggles as pet parents in Egypt. We couldn't find reliable vet information, 
+                TwoPaws was born from our own struggles as pet parents in Egypt. We couldn't find reliable vet information,
                 struggled to keep track of vaccinations, and often felt isolated in our pet parenting journey.
               </p>
               <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                That's why we created TwoPaws - to build a supportive community where every pet gets the love, care, 
+                That's why we created TwoPaws - to build a supportive community where every pet gets the love, care,
                 and attention they deserve. From bustling Cairo to beautiful Alexandria, we're connecting pet families across Egypt.
               </p>
-              
+
               <div className="grid grid-cols-3 gap-6">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-brand-blue">10k+</div>
@@ -539,7 +546,7 @@ export default function Landing() {
       {/* Testimonials Section */}
       <section id="testimonials" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
@@ -553,7 +560,7 @@ export default function Landing() {
               Real stories from real pet families across Egypt
             </p>
           </motion.div>
-          
+
           <div className="grid md:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
               <motion.div
@@ -566,9 +573,9 @@ export default function Landing() {
                 <Card className="h-full shadow-lg border border-gray-100">
                   <CardContent className="p-8">
                     <div className="flex items-center mb-6">
-                      <img 
-                        src={testimonial.avatar} 
-                        alt={testimonial.name} 
+                      <img
+                        src={testimonial.avatar}
+                        alt={testimonial.name}
                         className="w-12 h-12 rounded-full object-cover"
                       />
                       <div className="ml-4">
@@ -595,7 +602,7 @@ export default function Landing() {
       {/* FAQ Section */}
       <section id="faq" className="py-20 bg-brand-light">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
@@ -609,7 +616,7 @@ export default function Landing() {
               Everything you need to know about TwoPaws
             </p>
           </motion.div>
-          
+
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
@@ -649,9 +656,9 @@ export default function Landing() {
             <p className="text-xl text-blue-100 mb-8">
               Join thousands of Egyptian pet families who trust TwoPaws for their pet care needs.
             </p>
-            
+
             <Form {...waitlistForm}>
-              <form 
+              <form
                 onSubmit={waitlistForm.handleSubmit((data) => waitlistMutation.mutate(data))}
                 className="max-w-md mx-auto mb-8"
               >
@@ -672,8 +679,8 @@ export default function Landing() {
                       </FormItem>
                     )}
                   />
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     disabled={waitlistMutation.isPending}
                     className="bg-brand-yellow text-brand-dark hover:bg-yellow-400 font-semibold"
                   >
@@ -682,16 +689,16 @@ export default function Landing() {
                 </div>
               </form>
             </Form>
-            
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <img 
+              <img
                 src="https://tools.applemediaservices.com/api/badges/download-on-the-app-store/black/en-us?size=250x83&releaseDate=1709251200"
-                alt="Download on App Store" 
+                alt="Download on App Store"
                 className="h-14 hover:scale-105 transition-transform cursor-pointer mx-auto"
               />
-              <img 
+              <img
                 src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
-                alt="Get it on Google Play" 
+                alt="Get it on Google Play"
                 className="h-14 hover:scale-105 transition-transform cursor-pointer mx-auto"
               />
             </div>
@@ -702,23 +709,17 @@ export default function Landing() {
       {/* Footer */}
       <footer className="bg-brand-dark text-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
+          <div className="grid md:grid-cols-3 gap-8 mb-8">
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <img src={twoPawsLogo} alt="TwoPaws" className="h-8" />
+                <img src={twoPawsLogo} alt="TwoPaws" className="h-20" />
               </div>
               <p className="text-gray-400 mb-4">
                 Your pet's best friend in Egypt. Connecting pet families with the care and community they deserve.
               </p>
               <div className="flex space-x-4">
-                <a href="#" className="text-gray-400 hover:text-brand-blue transition-colors">
-                  <Facebook className="h-6 w-6" />
-                </a>
-                <a href="#" className="text-gray-400 hover:text-brand-blue transition-colors">
+                <a href="https://www.instagram.com/twopaws.app/" className="text-gray-400 hover:text-brand-blue transition-colors">
                   <Instagram className="h-6 w-6" />
-                </a>
-                <a href="#" className="text-gray-400 hover:text-brand-blue transition-colors">
-                  <Twitter className="h-6 w-6" />
                 </a>
               </div>
             </div>
@@ -727,7 +728,7 @@ export default function Landing() {
               <h3 className="font-semibold mb-4">Quick Links</h3>
               <ul className="space-y-2 text-gray-400">
                 <li>
-                  <button 
+                  <button
                     onClick={() => scrollToSection("features")}
                     className="hover:text-white transition-colors"
                   >
@@ -735,7 +736,7 @@ export default function Landing() {
                   </button>
                 </li>
                 <li>
-                  <button 
+                  <button
                     onClick={() => scrollToSection("about")}
                     className="hover:text-white transition-colors"
                   >
@@ -743,7 +744,7 @@ export default function Landing() {
                   </button>
                 </li>
                 <li>
-                  <button 
+                  <button
                     onClick={() => scrollToSection("testimonials")}
                     className="hover:text-white transition-colors"
                   >
@@ -751,7 +752,7 @@ export default function Landing() {
                   </button>
                 </li>
                 <li>
-                  <button 
+                  <button
                     onClick={() => scrollToSection("faq")}
                     className="hover:text-white transition-colors"
                   >
@@ -764,8 +765,8 @@ export default function Landing() {
             <div>
               <h3 className="font-semibold mb-4">Support</h3>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact Us</a></li>
+                {/* <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Contact Us</a></li> */}
                 <li>
                   <a href="/terms" className="hover:text-white transition-colors">
                     Privacy Policy
@@ -778,14 +779,14 @@ export default function Landing() {
                 </li>
               </ul>
             </div>
-
+{/* 
             <div>
               <h3 className="font-semibold mb-4">Stay Updated</h3>
               <p className="text-gray-400 mb-4 text-sm">
                 Get pet care tips and app updates delivered to your inbox.
               </p>
               <Form {...newsletterForm}>
-                <form 
+                <form
                   onSubmit={newsletterForm.handleSubmit((data) => newsletterMutation.mutate(data))}
                   className="space-y-2"
                 >
@@ -805,8 +806,8 @@ export default function Landing() {
                       </FormItem>
                     )}
                   />
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     disabled={newsletterMutation.isPending}
                     className="w-full bg-brand-blue hover:bg-blue-600"
                   >
@@ -814,16 +815,13 @@ export default function Landing() {
                   </Button>
                 </form>
               </Form>
-            </div>
+            </div> */}
           </div>
 
           <div className="border-t border-gray-800 pt-8 flex flex-col sm:flex-row justify-between items-center">
             <p className="text-gray-400 text-sm">
-              © 2024 TwoPaws. All rights reserved. Made with ❤️ for Egyptian pets.
+              © {new Date().getFullYear()} TwoPaws. All rights reserved.
             </p>
-            <div className="flex items-center space-x-4 mt-4 sm:mt-0">
-              <span className="text-gray-400 text-sm">🇪🇬 Proudly Egyptian</span>
-            </div>
           </div>
         </div>
       </footer>
