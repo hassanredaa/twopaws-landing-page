@@ -245,23 +245,23 @@ export default function Landing() {
                 About
               </button>
               <button
+                onClick={() => scrollToSection("faq")}
+                className="text-gray-600 hover:text-brand-green-dark transition-colors"
+              >
+                FAQ
+              </button>
+              {/* <button
                 onClick={() => scrollToSection("testimonials")}
                 className="text-gray-600 hover:text-brand-green-dark transition-colors"
               >
                 Reviews
-              </button>
+              </button> */}
               <a href="/terms" className="text-gray-600 hover:text-brand-green-dark transition-colors">
                 Terms
               </a>
               <a href="/terms" className="text-gray-600 hover:text-brand-green-dark transition-colors">
                 Privacy Policy
               </a>
-              <button
-                onClick={() => scrollToSection("faq")}
-                className="text-gray-600 hover:text-brand-green-dark transition-colors"
-              >
-                FAQ
-              </button>
 
               <Button
                 onClick={() => scrollToSection("cta")}
@@ -297,18 +297,25 @@ export default function Landing() {
               >
                 About
               </button>
-              <button
+              {/* <button
                 onClick={() => scrollToSection("testimonials")}
                 className="block w-full text-left text-gray-600"
               >
                 Reviews
-              </button>
+              </button> */}
               <button
                 onClick={() => scrollToSection("faq")}
                 className="block w-full text-left text-gray-600"
               >
                 FAQ
               </button>
+                            <a href="/terms" className="text-gray-600 hover:text-brand-green-dark transition-colors">
+                Terms
+              </a>
+              <a href="/terms" className="text-gray-600 hover:text-brand-green-dark transition-colors">
+                Privacy Policy
+              </a>
+
               <Button
                 onClick={() => scrollToSection("cta")}
                 className="w-full bg-brand-blue text-white"
@@ -544,7 +551,7 @@ export default function Landing() {
       </section>
 
       {/* Testimonials Section */}
-      <section id="testimonials" className="py-20 bg-white">
+      {/* <section id="testimonials" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -597,7 +604,7 @@ export default function Landing() {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* FAQ Section */}
       <section id="faq" className="py-20 bg-brand-light">
