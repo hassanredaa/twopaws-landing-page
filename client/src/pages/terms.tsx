@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import twoPawsLogo from "@assets/logos[1]_1748043489395.png";
+import twoPawsLogo from "../../../attached_assets/logotrans.png";
+import insta from "../../../attached_assets/instagram.svg"
+
 import { Menu, X, Facebook, Instagram, Twitter } from "lucide-react";
 
 export default function Terms() {
@@ -15,7 +17,7 @@ export default function Terms() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
               <a href="/">
-                <img src={twoPawsLogo} alt="TwoPaws" className="h-8" />
+                <img src={twoPawsLogo} alt="TwoPaws" className="h-16" />
               </a>
             </div>
             <div className="hidden md:flex items-center space-x-8">
@@ -274,7 +276,7 @@ export default function Terms() {
           </CardContent>
         </Card>
       </main>
-      <footer className="bg-brand-dark text-white py-16">
+      <footer className="bg-white text-black py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-3 gap-8 mb-8">
             <div>
@@ -286,7 +288,7 @@ export default function Terms() {
               </p>
               <div className="flex space-x-4">
                 <a href="https://www.instagram.com/twopaws.app/" className="text-gray-400 hover:text-brand-blue transition-colors">
-                  <Instagram className="h-6 w-6" />
+                  <img src={insta} alt="Instagram" className="h-6 w-6" />
                 </a>
               </div>
             </div>

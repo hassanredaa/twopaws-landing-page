@@ -22,6 +22,7 @@ import {
   Twitter,
   Zap
 } from "lucide-react";
+import insta from "../../../attached_assets/instagram.svg"
 import twoPawsLogo from "../../../attached_assets/logotrans.png";
 import loopDropIcon from "@assets/loopdrop[1]_1748299425142.png";
 import { Button } from "@/components/ui/button";
@@ -234,12 +235,12 @@ export default function Landing() {
                 Privacy Policy
               </a>
 
-              <Button
+              {/* <Button
                 onClick={() => scrollToSection("cta")}
                 className="bg-brand-green-dark text-white hover:bg-brand-olive"
               >
                 Download Now
-              </Button>
+              </Button> */}
             </div>
 
             <div className="md:hidden">
@@ -495,7 +496,7 @@ export default function Landing() {
                 and attention they deserve. From bustling Cairo to beautiful Alexandria, we're connecting pet families across Egypt.
               </p>
 
-              <div className="grid grid-cols-3 gap-6">
+              {/* <div className="grid grid-cols-3 gap-6">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-brand-blue">10k+</div>
                   <div className="text-sm text-gray-600">Happy Pets</div>
@@ -508,7 +509,7 @@ export default function Landing() {
                   <div className="text-2xl font-bold text-brand-yellow">1000+</div>
                   <div className="text-sm text-gray-600">Pet Places</div>
                 </div>
-              </div>
+              </div> */}
             </motion.div>
           </div>
         </div>
@@ -613,7 +614,7 @@ export default function Landing() {
       </section>
 
       {/* Call to Action Section */}
-      <section id="cta" className="py-20 bg-gradient-to-br from-brand-blue to-brand-green">
+      <section id="cta" className="bg-brand-dark py-20 bg-gradient-to-br from-brand-blue to-brand-green">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -625,10 +626,10 @@ export default function Landing() {
               Ready to Give Your Pet the Best Life?
             </h2>
             <p className="text-xl text-blue-100 mb-8">
-              Join thousands of Egyptian pet families who trust TwoPaws for their pet care needs.
+              Join thousands of pet families who trust TwoPaws for their pet care needs.
             </p>
 
-            <p className="text-lg font-semibold mb-8">
+            <p className="text-lg text-white font-semibold mb-8">
               Follow us to know the latest updates
             </p>
 
@@ -642,7 +643,7 @@ export default function Landing() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-brand-dark text-white py-16">
+      <footer className="bg-white text-black py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-3 gap-8 mb-8">
             <div>
@@ -654,7 +655,7 @@ export default function Landing() {
               </p>
               <div className="flex space-x-4">
                 <a href="https://www.instagram.com/twopaws.app/" className="text-gray-400 hover:text-brand-blue transition-colors">
-                  <Instagram className="h-6 w-6" />
+                  <img src={insta} alt="Instagram" className="h-6 w-6" />
                 </a>
               </div>
             </div>
@@ -709,7 +710,7 @@ export default function Landing() {
                 </li>
                 <li>
                   <a href="/terms" className="hover:text-white transition-colors">
-                    Terms of Service
+                    Terms & Conditions
                   </a>
                 </li>
               </ul>
