@@ -6,12 +6,14 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Landing from "@/pages/landing";
 import NotFound from "@/pages/not-found";
 import Terms from "@/pages/terms";
+import DeleteAccount from "@/pages/delete-account";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Landing} />
       <Route path="/terms" component={Terms} />
+      <Route path="/delete-account" component={DeleteAccount} />
       <Route component={NotFound} />
     </Switch>
   );
