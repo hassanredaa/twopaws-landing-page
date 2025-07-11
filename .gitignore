@@ -5,3 +5,6 @@ server/public
 vite.config.ts.*
 *.tar.gz
 .firebase
+.env
+functions/node_modules
+functions/lib

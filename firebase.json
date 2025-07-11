@@ -8,6 +8,10 @@
     ],
     "rewrites": [
       {
+        "source": "/delete-account/**",
+        "destination": "/index.html"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }
