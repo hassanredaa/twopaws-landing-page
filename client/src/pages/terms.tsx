@@ -278,44 +278,51 @@ export default function Terms() {
       </main>
       <footer className="bg-white text-black py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* --- Top Grid -------------------------------------------------- */}
           <div className="grid md:grid-cols-3 gap-8 mb-8">
+            {/* Brand + Socials */}
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <img src={twoPawsLogo} alt="TwoPaws" className="h-20" />
               </div>
               <p className="text-gray-400 mb-4">
-                Your pet's best friend in Egypt. Connecting pet families with the care and community they deserve.
+                Your pet's best friend in Egypt. Connecting pet families with the
+                care and community they deserve.
               </p>
               <div className="flex space-x-4">
-                <a href="https://www.instagram.com/twopaws.app/" className="text-gray-400 hover:text-brand-blue transition-colors">
+                <a
+                  href="https://www.instagram.com/twopaws.app/"
+                  className="text-gray-400 hover:text-brand-blue transition-colors"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   <img src={insta} alt="Instagram" className="h-6 w-6" />
                 </a>
               </div>
             </div>
 
+            {/* Quick Links */}
             <div>
               <h3 className="font-semibold mb-4">Quick Links</h3>
               <ul className="space-y-2 text-gray-400">
                 <li>
                   <a
-                    href="/"
-                    className="hover:text-white transition-colors"
+                    href="/" className="hover:text-black transition-colors"
                   >
                     Features
                   </a>
                 </li>
                 <li>
                   <a
-                    href="/"
-                    className="hover:text-white transition-colors"
+                    href="/" className="hover:text-black transition-colors"
                   >
-                    About Us
+                    About&nbsp;Us
                   </a>
                 </li>
                 <li>
                   <a
                     href="/"
-                    className="hover:text-white transition-colors"
+                    className="hover:text-black transition-colors"
                   >
                     Reviews
                   </a>
@@ -323,7 +330,7 @@ export default function Terms() {
                 <li>
                   <a
                     href="/"
-                    className="hover:text-white transition-colors"
+                    className="hover:text-black transition-colors"
                   >
                     FAQ
                   </a>
@@ -331,63 +338,40 @@ export default function Terms() {
               </ul>
             </div>
 
+            {/* Support */}
             <div>
               <h3 className="font-semibold mb-4">Support</h3>
               <ul className="space-y-2 text-gray-400">
-                {/* <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact Us</a></li> */}
                 <li>
-                  <a href="/terms" className="hover:text-white transition-colors">
-                    Privacy Policy
+                  <a
+                    href="mailto:info@twopaws.pet"
+                    className="hover:text-black transition-colors"
+                  >
+                    Contact&nbsp;Us
                   </a>
                 </li>
                 <li>
-                  <a href="/terms" className="hover:text-white transition-colors">
-                    Terms of Service
+                  <a
+                    href="/terms"
+                    className="hover:text-black transition-colors"
+                  >
+                    Privacy&nbsp;Policy
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="/terms"
+                    className="hover:text-black transition-colors"
+                  >
+                    Terms&nbsp;&amp;&nbsp;Conditions
                   </a>
                 </li>
               </ul>
             </div>
-            {/* 
-            <div>
-              <h3 className="font-semibold mb-4">Stay Updated</h3>
-              <p className="text-gray-400 mb-4 text-sm">
-                Get pet care tips and app updates delivered to your inbox.
-              </p>
-              <Form {...newsletterForm}>
-                <form
-                  onSubmit={newsletterForm.handleSubmit((data) => newsletterMutation.mutate(data))}
-                  className="space-y-2"
-                >
-                  <FormField
-                    control={newsletterForm.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <Input
-                            placeholder="Your email"
-                            className="bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:border-brand-blue"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button
-                    type="submit"
-                    disabled={newsletterMutation.isPending}
-                    className="w-full bg-brand-blue hover:bg-blue-600"
-                  >
-                    {newsletterMutation.isPending ? "Subscribing..." : "Subscribe"}
-                  </Button>
-                </form>
-              </Form>
-            </div> */}
           </div>
 
-          <div className="border-t border-gray-800 pt-8 flex flex-col sm:flex-row justify-between items-center">
+          {/* --- Bottom Bar ---------------------------------------------- */}
+          <div className="border-t border-gray-200 pt-8 flex flex-col sm:flex-row justify-between items-center">
             <p className="text-gray-400 text-sm">
               © {new Date().getFullYear()} TwoPaws. All rights reserved.
             </p>
