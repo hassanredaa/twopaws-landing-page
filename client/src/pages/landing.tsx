@@ -105,7 +105,7 @@ export default function Landing() {
     {
       icon: Stethoscope,
       title: "Find Trusted Vets",
-      description: "Book appointments with verified veterinarians near you. Read reviews, compare prices, and ensure your pet gets the best care in Egypt.",
+      description: "Find veterinarians near you. Read reviews, and ensure your pet gets the best care in Egypt.",
       color: "bg-brand-green-dark",
       bgColor: "from-brand-cream to-green-50",
     },
@@ -123,13 +123,13 @@ export default function Landing() {
       color: "bg-brand-green-dark",
       bgColor: "from-brand-cream to-green-50",
     },
-    {
-      icon: Users,
-      title: "Pet Owner Community",
-      description: "Connect with fellow pet lovers, share tips, arrange playdates, and get advice from experienced pet owners in your area.",
-      color: "bg-brand-olive",
-      bgColor: "from-brand-cream to-yellow-50",
-    },
+    // {
+    //   icon: Users,
+    //   title: "Pet Owner Community",
+    //   description: "Connect with fellow pet lovers, share tips, arrange playdates, and get advice from experienced pet owners in your area.",
+    //   color: "bg-brand-olive",
+    //   bgColor: "from-brand-cream to-yellow-50",
+    // },
     {
       icon: ShoppingCart,
       title: "Pet Supplies Marketplace",
@@ -137,13 +137,13 @@ export default function Landing() {
       color: "bg-brand-green-dark",
       bgColor: "from-brand-cream to-green-50",
     },
-    {
-      icon: Ambulance,
-      title: "Emergency Care",
-      description: "Quick access to emergency vet services and 24/7 pet helpline. Get immediate help when your pet needs it most.",
-      color: "bg-brand-olive",
-      bgColor: "from-brand-cream to-yellow-50",
-    },
+    // {
+    //   icon: Ambulance,
+    //   title: "Emergency Care",
+    //   description: "Quick access to emergency vet services and 24/7 pet helpline. Get immediate help when your pet needs it most.",
+    //   color: "bg-brand-olive",
+    //   bgColor: "from-brand-cream to-yellow-50",
+    // },
   ];
 
   const testimonials = [
@@ -413,65 +413,65 @@ export default function Landing() {
         </div>
       </section>
 
-{/* ▼ TwoPaws About */}
-<section id="about" className="py-16 bg-gray-50">
-  <div className="max-w-4xl mx-auto px-4 text-center">
-    <h2 className="text-3xl font-semibold mb-4">About TwoPaws</h2>
+      {/* ▼ TwoPaws About */}
+      <section id="about" className="py-16 ">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <h2 className="text-3xl text-brand-dark font-semibold mb-4">About TwoPaws</h2>
 
-    <p className="text-lg text-gray-700">
-      TwoPaws began as a passion project between two best friends who wanted a
-      <strong> single, joyful space to track their pets’ health, meet other owners, book vets, and
-      grab supplies</strong>—something that simply didn’t exist in our part of the world.
-    </p>
+          <p className="text-lg text-gray-700">
+            TwoPaws began as a passion project between two best friends who wanted a
+            <strong> single, joyful space to track their pets’ health, meet other owners, book vets, and
+              grab supplies</strong>—something that simply didn’t exist in our part of the world.
+          </p>
 
-    <p className="mt-4 text-gray-700">
-      Instead of juggling spreadsheets for vaccines, scrolling through scattered social
-      groups, and hopping between apps to order food, we decided to build one intuitive
-      experience that puts <em>everything</em> a pet parent needs in the palm of their hand.
-    </p>
+          <p className="mt-4 text-gray-700">
+            Instead of juggling spreadsheets for vaccines, scrolling through scattered social
+            groups, and hopping between apps to order food, we decided to build one intuitive
+            experience that puts <em>everything</em> a pet parent needs in the palm of their hand.
+          </p>
 
-    <p className="mt-4 text-gray-700">
-      We're not a corporation—just two lifelong friends (and their furry co-founders) on a mission
-      to make pet care simpler, more connected, and a lot more fun. Thanks for joining us on the
-      journey!
-    </p>
-  </div>
-</section>
-{/* ▲ TwoPaws About */}
+          <p className="mt-4 text-gray-700">
+            We're not a corporation—just two lifelong friends (and their furry co-founders) on a mission
+            to make pet care simpler, more connected, and a lot more fun. Thanks for joining us on the
+            journey!
+          </p>
+        </div>
+      </section>
+      {/* ▲ TwoPaws About */}
 
-{/* ▼ TwoPaws Problem → Solution */}
-{/* ▼ TwoPaws Problem → Solution */}
-<section id="problem-solution" className="py-16">
-  <div className="max-w-6xl mx-auto px-4 grid gap-8 md:grid-cols-2">
-    {/* Problem Card */}
-    <article className="bg-white border border-brand-dark rounded-2xl shadow-md p-8 hover:shadow-lg transition-shadow">
-      <h3 className="text-2xl font-semibold mb-4 text-brand-dark flex items-center gap-2">
+      {/* ▼ TwoPaws Problem → Solution */}
+      {/* ▼ TwoPaws Problem → Solution */}
+      <section id="problem-solution" className="py-16">
+        <div className="max-w-6xl mx-auto px-4 grid gap-8 md:grid-cols-2">
+          {/* Problem Card */}
+          <article className="bg-white border border-brand-dark rounded-2xl shadow-md p-8 hover:shadow-lg transition-shadow">
+            <h3 className="text-2xl font-semibold mb-4 text-brand-dark flex items-center gap-2">
 
-        The Problem
-      </h3>
-      <p className="text-gray-700 leading-relaxed">
-        Caring for a pet today means juggling vaccine cards, scrolling countless groups for advice,
-        calling around to book vets, and hopping between stores for food and supplies. Everything is
-        fragmented, time-consuming, and often unreliable—especially in our region where resources
-        are scarce and scattered.
-      </p>
-    </article>
+              The Problem
+            </h3>
+            <p className="text-gray-700 leading-relaxed">
+              Caring for a pet today means juggling vaccine cards, scrolling countless groups for advice,
+              calling around to book vets, and hopping between stores for food and supplies. Everything is
+              fragmented, time-consuming, and often unreliable—especially in our region where resources
+              are scarce and scattered.
+            </p>
+          </article>
 
-    {/* Solution Card */}
-    <article className="bg-white border border-green-200 rounded-2xl shadow-md p-8 hover:shadow-lg transition-shadow">
-      <h3 className="text-2xl font-semibold mb-4 text-brand-dark flex items-center gap-2">
+          {/* Solution Card */}
+          <article className="bg-white border border-green-200 rounded-2xl shadow-md p-8 hover:shadow-lg transition-shadow">
+            <h3 className="text-2xl font-semibold mb-4 text-brand-dark flex items-center gap-2">
 
-        Our Solution
-      </h3>
-      <p className="text-gray-700 leading-relaxed">
-        <strong>TwoPaws</strong> unifies <em>health tracking, nearby-vet discovery, and a same-day
-        pet-supply marketplace</em> into one intuitive app. Set vaccine reminders, track heat cycles,
-        chat with local owners, and have food delivered to your door—all without leaving the app.
-      </p>
-    </article>
-  </div>
-</section>
-{/* ▲ TwoPaws Problem → Solution */}
+              Our Solution
+            </h3>
+            <p className="text-gray-700 leading-relaxed">
+              <strong>TwoPaws</strong> unifies <em>health tracking, nearby-vet discovery, and a same-day
+                pet-supply marketplace</em> into one intuitive app. Set vaccine reminders, track heat cycles,
+              chat with local owners, and have food delivered to your door—all without leaving the app.
+            </p>
+          </article>
+        </div>
+      </section>
+      {/* ▲ TwoPaws Problem → Solution */}
 
 
       {/* Features Section */}
@@ -523,7 +523,7 @@ export default function Landing() {
       </section>
 
       {/* About Section */}
-    
+
 
       {/* Testimonials Section */}
       {/* <section id="testimonials" className="py-20 bg-white">
@@ -655,52 +655,61 @@ export default function Landing() {
       {/* Footer */}
       <footer className="bg-white text-black py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* --- Top Grid -------------------------------------------------- */}
           <div className="grid md:grid-cols-3 gap-8 mb-8">
+            {/* Brand + Socials */}
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <img src={twoPawsLogo} alt="TwoPaws" className="h-20" />
               </div>
               <p className="text-gray-400 mb-4">
-                Your pet's best friend in Egypt. Connecting pet families with the care and community they deserve.
+                Your pet's best friend in Egypt. Connecting pet families with the
+                care and community they deserve.
               </p>
               <div className="flex space-x-4">
-                <a href="https://www.instagram.com/twopaws.app/" className="text-gray-400 hover:text-brand-blue transition-colors">
+                <a
+                  href="https://www.instagram.com/twopaws.app/"
+                  className="text-gray-400 hover:text-brand-blue transition-colors"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   <img src={insta} alt="Instagram" className="h-6 w-6" />
                 </a>
               </div>
             </div>
 
+            {/* Quick Links */}
             <div>
               <h3 className="font-semibold mb-4">Quick Links</h3>
               <ul className="space-y-2 text-gray-400">
                 <li>
                   <button
-                    onClick={() => scrollToSection("features")}
-                    className="hover:text-white transition-colors"
+                    onClick={() => scrollToSection?.("features")}
+                    className="hover:text-black transition-colors"
                   >
                     Features
                   </button>
                 </li>
                 <li>
                   <button
-                    onClick={() => scrollToSection("about")}
-                    className="hover:text-white transition-colors"
+                    onClick={() => scrollToSection?.("about")}
+                    className="hover:text-black transition-colors"
                   >
-                    About Us
+                    About&nbsp;Us
                   </button>
                 </li>
                 <li>
                   <button
-                    onClick={() => scrollToSection("testimonials")}
-                    className="hover:text-white transition-colors"
+                    onClick={() => scrollToSection?.("testimonials")}
+                    className="hover:text-black transition-colors"
                   >
                     Reviews
                   </button>
                 </li>
                 <li>
                   <button
-                    onClick={() => scrollToSection("faq")}
-                    className="hover:text-white transition-colors"
+                    onClick={() => scrollToSection?.("faq")}
+                    className="hover:text-black transition-colors"
                   >
                     FAQ
                   </button>
@@ -708,69 +717,47 @@ export default function Landing() {
               </ul>
             </div>
 
+            {/* Support */}
             <div>
               <h3 className="font-semibold mb-4">Support</h3>
               <ul className="space-y-2 text-gray-400">
-                {/* <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact Us</a></li> */}
                 <li>
-                  <a href="/terms" className="hover:text-white transition-colors">
-                    Privacy Policy
+                  <a
+                    href="mailto:info@twopaws.pet"
+                    className="hover:text-black transition-colors"
+                  >
+                    Contact&nbsp;Us
                   </a>
                 </li>
                 <li>
-                  <a href="/terms" className="hover:text-white transition-colors">
-                    Terms & Conditions
+                  <a
+                    href="/terms"
+                    className="hover:text-black transition-colors"
+                  >
+                    Privacy&nbsp;Policy
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="/terms"
+                    className="hover:text-black transition-colors"
+                  >
+                    Terms&nbsp;&amp;&nbsp;Conditions
                   </a>
                 </li>
               </ul>
             </div>
-            {/* 
-            <div>
-              <h3 className="font-semibold mb-4">Stay Updated</h3>
-              <p className="text-gray-400 mb-4 text-sm">
-                Get pet care tips and app updates delivered to your inbox.
-              </p>
-              <Form {...newsletterForm}>
-                <form
-                  onSubmit={newsletterForm.handleSubmit((data) => newsletterMutation.mutate(data))}
-                  className="space-y-2"
-                >
-                  <FormField
-                    control={newsletterForm.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <Input
-                            placeholder="Your email"
-                            className="bg-gray-800 border-gray-700 text-white placeholder-gray-400 focus:border-brand-blue"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button
-                    type="submit"
-                    disabled={newsletterMutation.isPending}
-                    className="w-full bg-brand-blue hover:bg-blue-600"
-                  >
-                    {newsletterMutation.isPending ? "Subscribing..." : "Subscribe"}
-                  </Button>
-                </form>
-              </Form>
-            </div> */}
           </div>
 
-          <div className="border-t border-gray-800 pt-8 flex flex-col sm:flex-row justify-between items-center">
+          {/* --- Bottom Bar ---------------------------------------------- */}
+          <div className="border-t border-gray-200 pt-8 flex flex-col sm:flex-row justify-between items-center">
             <p className="text-gray-400 text-sm">
               © {new Date().getFullYear()} TwoPaws. All rights reserved.
             </p>
           </div>
         </div>
       </footer>
+
     </div>
   );
 }
