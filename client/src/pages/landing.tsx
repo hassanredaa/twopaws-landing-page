@@ -282,7 +282,7 @@ export default function Landing() {
               >
                 FAQ
               </button>
-                            <a href="/terms" className="text-gray-600 hover:text-brand-green-dark transition-colors">
+              <a href="/terms" className="text-gray-600 hover:text-brand-green-dark transition-colors">
                 Terms
               </a>
               <a href="/terms" className="text-gray-600 hover:text-brand-green-dark transition-colors">
@@ -314,11 +314,10 @@ export default function Landing() {
                 Your Pet's <span className="text-brand-green-dark">Best Friend</span> in Egypt
               </h1>
               <p className="text-xl text-gray-600 mb-6 leading-relaxed">
-                Discover vets, track health, find pet-friendly places, and connect with fellow pet lovers. Everything your furry friend needs in one app! 🐾
-              </p>
+                All-in-one app for pet owners—health tracking, community & marketplace</p>
 
               {/* Featured Highlights */}
-              <div className="space-y-3 mb-8">
+              {/* <div className="space-y-3 mb-8">
                 <div className="bg-gradient-to-r from-brand-olive/10 to-yellow-100/50 border border-brand-olive/20 rounded-2xl p-4">
                   <div className="flex items-center space-x-3">
                     <img src={loopDropIcon} alt="LoopDrop" className="h-8 w-8" />
@@ -344,13 +343,13 @@ export default function Landing() {
                     </span>
                   </div>
                 </div>
-              </div>
+              </div> */}
 
-              <div className="flex justify-center lg:justify-start mb-8">
+              {/* <div className="flex justify-center lg:justify-start mb-8">
                 <Button className="bg-brand-olive text-brand-dark hover:bg-yellow-400 font-semibold">
                   Coming Soon
                 </Button>
-              </div>
+              </div> */}
 
               {/* <div className="flex items-center justify-center lg:justify-start space-x-6 text-sm text-gray-500">
                 <div className="flex items-center space-x-2">
@@ -414,6 +413,67 @@ export default function Landing() {
         </div>
       </section>
 
+{/* ▼ TwoPaws About */}
+<section id="about" className="py-16 bg-gray-50">
+  <div className="max-w-4xl mx-auto px-4 text-center">
+    <h2 className="text-3xl font-semibold mb-4">About TwoPaws</h2>
+
+    <p className="text-lg text-gray-700">
+      TwoPaws began as a passion project between two best friends who wanted a
+      <strong> single, joyful space to track their pets’ health, meet other owners, book vets, and
+      grab supplies</strong>—something that simply didn’t exist in our part of the world.
+    </p>
+
+    <p className="mt-4 text-gray-700">
+      Instead of juggling spreadsheets for vaccines, scrolling through scattered social
+      groups, and hopping between apps to order food, we decided to build one intuitive
+      experience that puts <em>everything</em> a pet parent needs in the palm of their hand.
+    </p>
+
+    <p className="mt-4 text-gray-700">
+      We're not a corporation—just two lifelong friends (and their furry co-founders) on a mission
+      to make pet care simpler, more connected, and a lot more fun. Thanks for joining us on the
+      journey!
+    </p>
+  </div>
+</section>
+{/* ▲ TwoPaws About */}
+
+{/* ▼ TwoPaws Problem → Solution */}
+{/* ▼ TwoPaws Problem → Solution */}
+<section id="problem-solution" className="py-16">
+  <div className="max-w-6xl mx-auto px-4 grid gap-8 md:grid-cols-2">
+    {/* Problem Card */}
+    <article className="bg-white border border-brand-dark rounded-2xl shadow-md p-8 hover:shadow-lg transition-shadow">
+      <h3 className="text-2xl font-semibold mb-4 text-brand-dark flex items-center gap-2">
+
+        The Problem
+      </h3>
+      <p className="text-gray-700 leading-relaxed">
+        Caring for a pet today means juggling vaccine cards, scrolling countless groups for advice,
+        calling around to book vets, and hopping between stores for food and supplies. Everything is
+        fragmented, time-consuming, and often unreliable—especially in our region where resources
+        are scarce and scattered.
+      </p>
+    </article>
+
+    {/* Solution Card */}
+    <article className="bg-white border border-green-200 rounded-2xl shadow-md p-8 hover:shadow-lg transition-shadow">
+      <h3 className="text-2xl font-semibold mb-4 text-brand-dark flex items-center gap-2">
+
+        Our Solution
+      </h3>
+      <p className="text-gray-700 leading-relaxed">
+        <strong>TwoPaws</strong> unifies <em>health tracking, nearby-vet discovery, and a same-day
+        pet-supply marketplace</em> into one intuitive app. Set vaccine reminders, track heat cycles,
+        chat with local owners, and have food delivered to your door—all without leaving the app.
+      </p>
+    </article>
+  </div>
+</section>
+{/* ▲ TwoPaws Problem → Solution */}
+
+
       {/* Features Section */}
       <section id="features" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -463,58 +523,7 @@ export default function Landing() {
       </section>
 
       {/* About Section */}
-      <section id="about" className="py-20 bg-gradient-to-br from-brand-light to-blue-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
-              viewport={{ once: true }}
-            >
-              <img
-                src="https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600"
-                alt="Veterinary clinic with caring professionals"
-                className="rounded-2xl shadow-xl"
-              />
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
-              viewport={{ once: true }}
-            >
-              <h2 className="text-3xl sm:text-4xl font-bold text-brand-dark mb-6">
-                Built by Pet Lovers, for Pet Lovers
-              </h2>
-              <p className="text-lg text-gray-600 mb-6 leading-relaxed">
-                TwoPaws was born from our own struggles as pet parents in Egypt. We couldn't find reliable vet information,
-                struggled to keep track of vaccinations, and often felt isolated in our pet parenting journey.
-              </p>
-              <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                That's why we created TwoPaws - to build a supportive community where every pet gets the love, care,
-                and attention they deserve. From bustling Cairo to beautiful Alexandria, we're connecting pet families across Egypt.
-              </p>
-
-              {/* <div className="grid grid-cols-3 gap-6">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-brand-blue">10k+</div>
-                  <div className="text-sm text-gray-600">Happy Pets</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-brand-green">500+</div>
-                  <div className="text-sm text-gray-600">Verified Vets</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-brand-yellow">1000+</div>
-                  <div className="text-sm text-gray-600">Pet Places</div>
-                </div>
-              </div> */}
-            </motion.div>
-          </div>
-        </div>
-      </section>
+    
 
       {/* Testimonials Section */}
       {/* <section id="testimonials" className="py-20 bg-white">
@@ -573,7 +582,7 @@ export default function Landing() {
       </section> */}
 
       {/* FAQ Section */}
-      <section id="faq" className="py-20 bg-brand-light">
+      <section id="faq" className="py-20 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -716,7 +725,7 @@ export default function Landing() {
                 </li>
               </ul>
             </div>
-{/* 
+            {/* 
             <div>
               <h3 className="font-semibold mb-4">Stay Updated</h3>
               <p className="text-gray-400 mb-4 text-sm">
