@@ -9,6 +9,8 @@ import { Menu, X, Facebook, Instagram, Twitter } from "lucide-react";
 import twoPawsLogo from "../../../attached_assets/logotrans.png";
 import { useToast } from '@/hooks/use-toast';
 import insta from "../../../attached_assets/instagram.svg"
+import facebook from "../../../attached_assets/facebook.svg"
+import tiktok from "../../../attached_assets/tiktok.svg"
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -57,6 +59,9 @@ export default function DeleteAccount() {
               <a href="/terms" className="text-gray-600 hover:text-brand-green-dark transition-colors">
                 Terms
               </a>
+              <a href="/privacy" className="text-gray-600 hover:text-brand-green-dark transition-colors">
+                Privacy
+              </a>
             </div>
             <div className="md:hidden">
               <Button variant="ghost" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
@@ -73,6 +78,9 @@ export default function DeleteAccount() {
               </a>
               <a href="/terms" className="block w-full text-left text-gray-600">
                 Terms
+              </a>
+              <a href="/privacy" className="block w-full text-left text-gray-600">
+                Privacy
               </a>
             </div>
           </div>
@@ -104,8 +112,14 @@ export default function DeleteAccount() {
                 Your pet's best friend in Egypt. Connecting pet families with the care and community they deserve.
               </p>
               <div className="flex space-x-4">
-                <a href="https://www.instagram.com/twopaws.app/" className="text-gray-400 hover:text-brand-blue transition-colors">
+                <a href="https://www.instagram.com/twopaws.app/" className="text-gray-400 hover:text-brand-dark transition-colors">
                   <img src={insta} alt="Instagram" className="h-6 w-6" />
+                </a>
+                <a href="https://www.facebook.com/twopawsapp/" className="text-gray-400 hover:text-brand-dark transition-colors" target="_blank" rel="noopener noreferrer">
+                  <img src={facebook} alt="Facebook" className="h-6 w-6" />
+                </a>
+                <a href="https://www.tiktok.com/@twopaws.app" className="text-gray-400 hover:text-brand-dark transition-colors" target="_blank" rel="noopener noreferrer">
+                  <img src={tiktok} alt="TikTok" className="h-6 w-6" />
                 </a>
               </div>
             </div>
@@ -154,7 +168,7 @@ export default function DeleteAccount() {
                 {/* <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Contact Us</a></li> */}
                 <li>
-                  <a href="/terms" className="hover:text-white transition-colors">
+                  <a href="/privacy" className="hover:text-white transition-colors">
                     Privacy Policy
                   </a>
                 </li>

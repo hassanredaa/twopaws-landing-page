@@ -23,6 +23,8 @@ import {
   Zap
 } from "lucide-react";
 import insta from "../../../attached_assets/instagram.svg"
+import facebook from "../../../attached_assets/facebook.svg"
+import tiktok from "../../../attached_assets/tiktok.svg"
 import ss from "../../../attached_assets/ss.png"
 import twoPawsLogo from "../../../attached_assets/logotrans.png";
 import loopDropIcon from "@assets/loopdrop[1]_1748299425142.png";
@@ -232,7 +234,7 @@ export default function Landing() {
               <a href="/terms" className="text-gray-600 hover:text-brand-green-dark transition-colors">
                 Terms
               </a>
-              <a href="/terms" className="text-gray-600 hover:text-brand-green-dark transition-colors">
+              <a href="/privacy" className="text-gray-600 hover:text-brand-green-dark transition-colors">
                 Privacy Policy
               </a>
 
@@ -285,7 +287,7 @@ export default function Landing() {
               <a href="/terms" className="text-gray-600 hover:text-brand-green-dark transition-colors">
                 Terms
               </a>
-              <a href="/terms" className="text-gray-600 hover:text-brand-green-dark transition-colors">
+              <a href="/privacy" className="text-gray-600 hover:text-brand-green-dark transition-colors">
                 Privacy Policy
               </a>
 
@@ -301,7 +303,12 @@ export default function Landing() {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-20 pb-16 bg-gradient-to-br from-brand-cream to-green-50">
+      <section className="relative isolate overflow-hidden pt-20 pb-16 bg-gradient-to-br from-brand-cream to-green-50">
+        {/* Decorative radial gradients for upscale feel */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+          <div className="absolute -left-16 -top-20 h-72 w-72 rounded-full bg-[radial-gradient(ellipse_at_center,_rgba(254,195,41,0.35),_transparent_60%)] blur-2xl" />
+          <div className="absolute -right-24 -bottom-24 h-96 w-96 rounded-full bg-[radial-gradient(ellipse_at_center,_rgba(119,63,105,0.25),_transparent_60%)] blur-3xl" />
+        </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <motion.div
@@ -310,10 +317,10 @@ export default function Landing() {
               transition={{ duration: 0.6 }}
               className="text-center lg:text-left"
             >
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-brand-dark leading-tight mb-6">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-brand-dark leading-[1.1] tracking-tight mb-6">
                 Your Pet's <span className="text-brand-green-dark">Best Friend</span> in Egypt
               </h1>
-              <p className="text-xl text-gray-600 mb-6 leading-relaxed">
+              <p className="text-xl text-gray-600 mb-8 leading-relaxed">
                 All-in-one app for pet owners—health tracking, community & marketplace</p>
 
               {/* Featured Highlights */}
@@ -370,7 +377,7 @@ export default function Landing() {
               className="relative"
             >
               <div className="relative mx-auto max-w-sm">
-                <div className="bg-transparent rounded-3xl p-2 ">
+                <div className="bg-white/40 backdrop-blur-xl rounded-3xl p-2 shadow-2xl ring-1 ring-black/5">
                   <img
                     src={ss}
                     alt="TwoPaws App Interface"
@@ -440,7 +447,6 @@ export default function Landing() {
       {/* ▲ TwoPaws About */}
 
       {/* ▼ TwoPaws Problem → Solution */}
-      {/* ▼ TwoPaws Problem → Solution */}
       <section id="problem-solution" className="py-16">
         <div className="max-w-6xl mx-auto px-4 grid gap-8 md:grid-cols-2">
           {/* Problem Card */}
@@ -472,6 +478,57 @@ export default function Landing() {
         </div>
       </section>
       {/* ▲ TwoPaws Problem → Solution */}
+
+      {/* ▼ Company & Founders (updated order & copy) */}
+      <section id="company" className="py-16 bg-white">
+        <div className="max-w-5xl mx-auto px-4">
+          {/* Company blurb */}
+          <h2 className="text-3xl text-brand-dark font-semibold text-center mb-6">
+            About the Company
+          </h2>
+          <p className="text-gray-700 text-lg leading-relaxed text-center mb-12">
+            <strong>TwoPaws</strong> is an Egyptian start‑up on a mission to build the
+            country’s first all‑in‑one pet community platform—uniting health
+            tracking, adoption, shopping, and social features so every pet family can
+            thrive.
+          </p>
+
+          {/* Founders */}
+          <div className="space-y-14">
+            {/* Amira (left‑aligned, first) */}
+            <div className="flex">
+              <div className="md:w-1/2">
+                <h3 className="text-2xl font-semibold text-brand-dark mb-1">
+                  Amira Sameh
+                </h3>
+                <p className="text-sm text-brand-dark mb-2">Co‑Founder</p>
+                <p className="text-gray-700 text-lg leading-relaxed">
+                  Vision‑driven community champion and self‑taught developer who loves
+                  turning everyday pet‑parent struggles into intuitive,
+                  tech‑powered solutions for the whole community.
+                </p>
+              </div>
+            </div>
+
+            {/* Hassan (right‑aligned, second) */}
+            <div className="flex justify-end">
+              <div className="md:w-1/2 text-left md:text-right">
+                <h3 className="text-2xl font-semibold text-brand-dark mb-1">
+                  Hassan Reda
+                </h3>
+                <p className="text-sm text-brand-dark mb-2">Co‑Founder</p>
+                <p className="text-gray-700 text-lg leading-relaxed">
+                  Product strategist and full‑stack engineer who prototypes ideas at
+                  lightning speed—obsessed with details that make Egypt’s pet
+                  community smarter, safer, and more fun.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      {/* ▲ Company & Founders */}
+
 
 
       {/* Features Section */}
@@ -624,7 +681,7 @@ export default function Landing() {
       </section>
 
       {/* Call to Action Section */}
-      <section id="cta" className="bg-brand-dark py-20 bg-gradient-to-br from-brand-blue to-brand-green">
+      <section id="cta" className="py-20 bg-gradient-to-br from-brand-dark to-brand-olive">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -635,7 +692,7 @@ export default function Landing() {
             <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">
               Ready to Give Your Pet the Best Life?
             </h2>
-            <p className="text-xl text-blue-100 mb-8">
+            <p className="text-xl text-white/80 mb-8">
               Join thousands of pet families who trust TwoPaws for their pet care needs.
             </p>
 
@@ -644,7 +701,7 @@ export default function Landing() {
             </p>
 
             <div className="flex justify-center">
-              <Button className="bg-brand-olive text-brand-dark hover:bg-yellow-400 font-semibold">
+              <Button className="bg-brand-olive text-brand-dark hover:bg-yellow-400 font-semibold shadow-lg shadow-yellow-200/30">
                 Coming Soon
               </Button>
             </div>
@@ -669,11 +726,27 @@ export default function Landing() {
               <div className="flex space-x-4">
                 <a
                   href="https://www.instagram.com/twopaws.app/"
-                  className="text-gray-400 hover:text-brand-blue transition-colors"
+                  className="text-gray-400 hover:text-brand-dark transition-colors"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
                   <img src={insta} alt="Instagram" className="h-6 w-6" />
+                </a>
+                <a
+                  href="https://www.facebook.com/twopawsapp/"
+                  className="text-gray-400 hover:text-brand-dark transition-colors"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <img src={facebook} alt="Facebook" className="h-6 w-6" />
+                </a>
+                <a
+                  href="https://www.tiktok.com/@twopaws.app"
+                  className="text-gray-400 hover:text-brand-dark transition-colors"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <img src={tiktok} alt="TikTok" className="h-6 w-6" />
                 </a>
               </div>
             </div>
@@ -731,7 +804,7 @@ export default function Landing() {
                 </li>
                 <li>
                   <a
-                    href="/terms"
+                    href="/privacy"
                     className="hover:text-black transition-colors"
                   >
                     Privacy&nbsp;Policy

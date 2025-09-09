@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Landing from "@/pages/landing";
 import NotFound from "@/pages/not-found";
 import Terms from "@/pages/terms";
+import Privacy from "@/pages/privacy";
 import DeleteAccount from "@/pages/delete-account";
 
 function Router() {
@@ -13,6 +14,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Landing} />
       <Route path="/terms" component={Terms} />
+      <Route path="/privacy" component={Privacy} />
       <Route path="/delete-account" component={DeleteAccount} />
       <Route component={NotFound} />
     </Switch>
