@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "framer-motion";
+import { Helmet } from "react-helmet-async";
 import {
   Heart,
   MapPin,
@@ -198,6 +199,14 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-white">
+      <Helmet>
+        <title>TwoPaws - Pet Care & Community in Egypt</title>
+        <meta
+          name="description"
+          content="TwoPaws helps pet families in Egypt find trusted vets and pet-friendly places, track health and vaccinations, and get auto-delivery for essentials."
+        />
+        <link rel="canonical" href="https://twopaws.pet/" />
+      </Helmet>
       {/* Navigation */}
       <nav className="fixed top-0 w-full bg-white/90 backdrop-blur-md z-50 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -232,7 +241,7 @@ export default function Landing() {
                 Reviews
               </button> */}
               <a href="/terms" className="text-gray-600 hover:text-brand-green-dark transition-colors">
-                Terms
+                Terms & Conditions
               </a>
               <a href="/privacy" className="text-gray-600 hover:text-brand-green-dark transition-colors">
                 Privacy Policy

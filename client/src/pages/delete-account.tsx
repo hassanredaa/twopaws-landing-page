@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import insta from "../../../attached_assets/instagram.svg"
 import facebook from "../../../attached_assets/facebook.svg"
 import tiktok from "../../../attached_assets/tiktok.svg"
+import { Helmet } from "react-helmet-async";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -44,6 +45,12 @@ export default function DeleteAccount() {
 
   return (
   <div className="min-h-screen flex flex-col items-center bg-gray-50 p-4">
+      <Helmet>
+        <title>Delete Account | TwoPaws</title>
+        <meta name="description" content="Request deletion of your TwoPaws account." />
+        <meta name="robots" content="noindex, nofollow" />
+        <link rel="canonical" href="https://twopaws.pet/delete-account" />
+      </Helmet>
       <nav className="fixed top-0 w-full bg-white/90 backdrop-blur-md z-50 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">

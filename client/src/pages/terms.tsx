@@ -7,12 +7,18 @@ import facebook from "../../../attached_assets/facebook.svg"
 import tiktok from "../../../attached_assets/tiktok.svg"
 
 import { Menu, X, Facebook, Instagram, Twitter } from "lucide-react";
+import { Helmet } from "react-helmet-async";
 
 export default function Terms() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
+      <Helmet>
+        <title>Terms & Conditions | TwoPaws</title>
+        <meta name="description" content="Read the TwoPaws Terms & Conditions." />
+        <link rel="canonical" href="https://twopaws.pet/terms" />
+      </Helmet>
       {/* Navigation */}
       <nav className="fixed top-0 w-full bg-white/90 backdrop-blur-md z-50 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -27,10 +33,10 @@ export default function Terms() {
                 Home
               </a>
               <a href="/terms" className="text-gray-600 hover:text-brand-green-dark transition-colors">
-                Terms
+                Terms & Conditions
               </a>
               <a href="/privacy" className="text-gray-600 hover:text-brand-green-dark transition-colors">
-                Privacy
+                Privacy Policy
               </a>
             </div>
             <div className="md:hidden">
