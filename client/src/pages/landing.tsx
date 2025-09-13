@@ -173,15 +173,11 @@ export default function Landing() {
   const faqs = [
     {
       question: "Is TwoPaws free to use?",
-      answer: "Yes! TwoPaws is completely free to download and use. We offer premium features like priority vet booking and exclusive marketplace deals for a small monthly fee, but all core features are free forever.",
+      answer: "Yes! TwoPaws is completely free to download and use.",
     },
     {
       question: "Which cities in Egypt do you cover?",
-      answer: "We currently cover Cairo, Giza, Alexandria, and Sharm El-Sheikh, with plans to expand to more governorates soon. Our vet network includes over 500 verified professionals across these cities.",
-    },
-    {
-      question: "How do you verify veterinarians?",
-      answer: "All veterinarians go through a rigorous verification process including license verification, clinic inspection, and background checks. We also monitor reviews and maintain high standards for our network.",
+      answer: "We currently cover Cairo with plans to expand to more governorates soon.",
     },
     {
       question: "Can I track multiple pets?",
