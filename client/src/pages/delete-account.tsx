@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Menu, X, Facebook, Instagram, Twitter } from "lucide-react";
-import twoPawsLogo from "../../../attached_assets/logotrans.png";
+import twoPawsLogo from "../../../attached_assets/logotrans.webp";
 import { useToast } from '@/hooks/use-toast';
 import insta from "../../../attached_assets/instagram.svg"
 import facebook from "../../../attached_assets/facebook.svg"

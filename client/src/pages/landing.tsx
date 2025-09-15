@@ -26,9 +26,9 @@ import {
 import insta from "../../../attached_assets/instagram.svg"
 import facebook from "../../../attached_assets/facebook.svg"
 import tiktok from "../../../attached_assets/tiktok.svg"
-import ss from "../../../attached_assets/ss.png"
-import twoPawsLogo from "../../../attached_assets/logotrans.png";
-import loopDropIcon from "@assets/loopdrop[1]_1748299425142.png";
+import ss from "../../../attached_assets/ss.webp"
+import twoPawsLogo from "../../../attached_assets/logotrans.webp";
+import loopDropIcon from "@assets/loopdrop[1]_1748299425142.webp";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
