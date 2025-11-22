@@ -9,6 +9,7 @@ import NotFound from "@/pages/not-found";
 import Terms from "@/pages/terms";
 import Privacy from "@/pages/privacy";
 import DeleteAccount from "@/pages/delete-account";
+import DownloadRedirect from "@/pages/download";
 
 function Router() {
   return (
@@ -16,6 +17,7 @@ function Router() {
       <Route path="/" component={Landing} />
       <Route path="/terms" component={Terms} />
       <Route path="/privacy" component={Privacy} />
+      <Route path="/download" component={DownloadRedirect} />
       <Route path="/delete-account" component={DeleteAccount} />
       <Route component={NotFound} />
     </Switch>
