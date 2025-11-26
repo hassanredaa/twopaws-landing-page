@@ -5,7 +5,7 @@ import { initializeApp } from 'firebase/app';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Menu, X, Facebook, Instagram, Twitter } from "lucide-react";
+import { Menu, X, Linkedin } from "lucide-react";
 import twoPawsLogo from "../../../attached_assets/logotrans.webp";
 import { useToast } from '@/hooks/use-toast';
 import insta from "../../../attached_assets/instagram.svg"
@@ -46,8 +46,8 @@ export default function DeleteAccount() {
   return (
   <div className="min-h-screen flex flex-col items-center bg-gray-50 p-4">
       <Helmet>
-        <title>Delete Account | TwoPaws</title>
-        <meta name="description" content="Request deletion of your TwoPaws account." />
+        <title>Delete Account | TwoPaws Digital Solutions</title>
+        <meta name="description" content="Request deletion of your TwoPaws Digital Solutions account." />
         <meta name="robots" content="noindex, nofollow" />
         <link rel="canonical" href="https://twopaws.pet/delete-account" />
       </Helmet>
@@ -56,7 +56,7 @@ export default function DeleteAccount() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
               <a href="/">
-                <img src={twoPawsLogo} alt="TwoPaws" className="h-16" />
+                <img src={twoPawsLogo} alt="TwoPaws Digital Solutions" className="h-16" />
               </a>
             </div>
             <div className="hidden md:flex items-center space-x-8">
@@ -113,7 +113,7 @@ export default function DeleteAccount() {
           <div className="grid md:grid-cols-3 gap-8 mb-8">
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <img src={twoPawsLogo} alt="TwoPaws" className="h-20" />
+                <img src={twoPawsLogo} alt="TwoPaws Digital Solutions" className="h-20" />
               </div>
               <p className="text-gray-400 mb-4">
                 Your pet's best friend in Egypt. Connecting pet families with the care and community they deserve.
@@ -127,6 +127,15 @@ export default function DeleteAccount() {
                 </a>
                 <a href="https://www.tiktok.com/@twopaws.app" className="text-gray-400 hover:text-brand-dark transition-colors" target="_blank" rel="noopener noreferrer">
                   <img src={tiktok} alt="TikTok" className="h-6 w-6" />
+                </a>
+                <a
+                  href="https://www.linkedin.com/company/twopaws/"
+                  className="text-gray-400 hover:text-brand-dark transition-colors"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="LinkedIn"
+                >
+                  <Linkedin className="h-6 w-6" />
                 </a>
               </div>
             </div>
@@ -227,7 +236,7 @@ export default function DeleteAccount() {
 
           <div className="border-t border-gray-800 pt-8 flex flex-col sm:flex-row justify-between items-center">
             <p className="text-gray-400 text-sm">
-              © {new Date().getFullYear()} TwoPaws. All rights reserved.
+              © {new Date().getFullYear()} TwoPaws Digital Solutions. All rights reserved.
             </p>
           </div>
         </div>

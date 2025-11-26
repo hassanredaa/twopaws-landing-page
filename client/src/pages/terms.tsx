@@ -6,7 +6,7 @@ import insta from "../../../attached_assets/instagram.svg"
 import facebook from "../../../attached_assets/facebook.svg"
 import tiktok from "../../../attached_assets/tiktok.svg"
 
-import { Menu, X, Facebook, Instagram, Twitter } from "lucide-react";
+import { Menu, X, Linkedin } from "lucide-react";
 import { Helmet } from "react-helmet-async";
 
 export default function Terms() {
@@ -15,8 +15,8 @@ export default function Terms() {
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Helmet>
-        <title>Terms & Conditions | TwoPaws</title>
-        <meta name="description" content="Read the TwoPaws Terms & Conditions." />
+        <title>Terms & Conditions | TwoPaws Digital Solutions</title>
+        <meta name="description" content="Read the TwoPaws Digital Solutions Terms & Conditions." />
         <link rel="canonical" href="https://twopaws.pet/terms" />
       </Helmet>
       {/* Navigation */}
@@ -25,7 +25,7 @@ export default function Terms() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
               <a href="/">
-                <img src={twoPawsLogo} alt="TwoPaws" className="h-16" />
+                <img src={twoPawsLogo} alt="TwoPaws Digital Solutions" className="h-16" />
               </a>
             </div>
             <div className="hidden md:flex items-center space-x-8">
@@ -66,7 +66,7 @@ export default function Terms() {
       <main className="flex-grow pt-24 px-4 pb-16 bg-gray-50 flex items-start justify-center">
         <Card className="w-full max-w-4xl mx-auto">
         <CardContent className="prose prose-zinc lg:prose-lg max-w-none pt-6">
-            <h1 className="text-3xl font-bold mb-2">TwoPaws — Terms &amp; Conditions</h1>
+            <h1 className="text-3xl font-bold mb-2">TwoPaws Digital Solutions — Terms &amp; Conditions</h1>
             <p className="text-gray-500">Last updated: August 23, 2025</p>
 
             <h2 className="text-2xl font-bold mt-6">1) Who we are</h2>
@@ -183,7 +183,7 @@ export default function Terms() {
             {/* Brand + Socials */}
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <img src={twoPawsLogo} alt="TwoPaws" className="h-20" />
+                <img src={twoPawsLogo} alt="TwoPaws Digital Solutions" className="h-20" />
               </div>
               <p className="text-gray-400 mb-4">
                 Your pet's best friend in Egypt. Connecting pet families with the
@@ -213,6 +213,15 @@ export default function Terms() {
                   rel="noopener noreferrer"
                 >
                   <img src={tiktok} alt="TikTok" className="h-6 w-6" />
+                </a>
+                <a
+                  href="https://www.linkedin.com/company/twopaws/"
+                  className="text-gray-400 hover:text-brand-blue transition-colors"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="LinkedIn"
+                >
+                  <Linkedin className="h-6 w-6" />
                 </a>
               </div>
             </div>
@@ -289,7 +298,7 @@ export default function Terms() {
           {/* --- Bottom Bar ---------------------------------------------- */}
           <div className="border-t border-gray-200 pt-8 flex flex-col sm:flex-row justify-between items-center">
             <p className="text-gray-400 text-sm">
-              © {new Date().getFullYear()} TwoPaws. All rights reserved.
+              © {new Date().getFullYear()} TwoPaws Digital Solutions. All rights reserved.
             </p>
           </div>
         </div>

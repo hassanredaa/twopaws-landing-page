@@ -5,7 +5,7 @@ import twoPawsLogo from "../../../attached_assets/logotrans.webp";
 import insta from "../../../attached_assets/instagram.svg";
 import facebook from "../../../attached_assets/facebook.svg";
 import tiktok from "../../../attached_assets/tiktok.svg";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Linkedin } from "lucide-react";
 import { Helmet } from "react-helmet-async";
 
 export default function Privacy() {
@@ -14,8 +14,8 @@ export default function Privacy() {
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Helmet>
-        <title>Privacy Policy | TwoPaws</title>
-        <meta name="description" content="Learn how TwoPaws collects, uses, and protects your data." />
+        <title>Privacy Policy | TwoPaws Digital Solutions</title>
+        <meta name="description" content="Learn how TwoPaws Digital Solutions collects, uses, and protects your data." />
         <link rel="canonical" href="https://twopaws.pet/privacy" />
       </Helmet>
       {/* Navigation */}
@@ -24,7 +24,7 @@ export default function Privacy() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
               <a href="/">
-                <img src={twoPawsLogo} alt="TwoPaws" className="h-16" />
+                <img src={twoPawsLogo} alt="TwoPaws Digital Solutions" className="h-16" />
               </a>
             </div>
             <div className="hidden md:flex items-center space-x-8">
@@ -65,7 +65,7 @@ export default function Privacy() {
       <main className="flex-grow pt-24 px-4 pb-16 bg-gray-50 flex items-start justify-center">
         <Card className="w-full max-w-4xl mx-auto">
           <CardContent className="prose prose-zinc lg:prose-lg max-w-none pt-6">
-            <h1 className="text-3xl font-bold mb-2">TwoPaws — Privacy Policy (EN)</h1>
+            <h1 className="text-3xl font-bold mb-2">TwoPaws Digital Solutions — Privacy Policy (EN)</h1>
             <p className="text-gray-500">Last updated: August 23, 2025</p>
 
             <h2 className="text-2xl font-bold mt-6">1) Who we are &amp; scope</h2>
@@ -145,7 +145,7 @@ export default function Privacy() {
           <div className="grid md:grid-cols-3 gap-8 mb-8">
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <img src={twoPawsLogo} alt="TwoPaws" className="h-20" />
+                <img src={twoPawsLogo} alt="TwoPaws Digital Solutions" className="h-20" />
               </div>
               <p className="text-gray-400 mb-4">
                 Your pet's best friend in Egypt. Connecting pet families with the
@@ -160,6 +160,15 @@ export default function Privacy() {
                 </a>
                 <a href="https://www.tiktok.com/@twopaws.app" className="text-gray-400 hover:text-brand-blue transition-colors" target="_blank" rel="noopener noreferrer">
                   <img src={tiktok} alt="TikTok" className="h-6 w-6" />
+                </a>
+                <a
+                  href="https://www.linkedin.com/company/twopaws/"
+                  className="text-gray-400 hover:text-brand-blue transition-colors"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="LinkedIn"
+                >
+                  <Linkedin className="h-6 w-6" />
                 </a>
               </div>
             </div>

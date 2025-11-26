@@ -9,19 +9,11 @@ import {
   Heart,
   MapPin,
   ShoppingCart,
-  Users,
   Stethoscope,
   Activity,
-  Ambulance,
-  Star,
-  ChevronDown,
   Menu,
   X,
-  Download,
-  Facebook,
-  Instagram,
-  Twitter,
-  Zap
+  Linkedin
 } from "lucide-react";
 import insta from "../../../attached_assets/instagram.svg"
 import facebook from "../../../attached_assets/facebook.svg"
@@ -53,6 +45,9 @@ const emailSchema = z.object({
 });
 
 type EmailForm = z.infer<typeof emailSchema>;
+
+const IOS_STORE_URL = "https://apps.apple.com/app/twopaws/id6745481497";
+const ANDROID_STORE_URL = "https://play.google.com/store/apps/details?id=com.twopaws.app";
 
 export default function Landing() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -196,10 +191,10 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-white">
       <Helmet>
-        <title>TwoPaws - Pet Care & Community in Egypt</title>
+        <title>TwoPaws Digital Solutions - Pet Care & Community in Egypt</title>
         <meta
           name="description"
-          content="TwoPaws helps pet families in Egypt find trusted vets and pet-friendly places, track health and vaccinations, and get auto-delivery for essentials."
+          content="TwoPaws Digital Solutions helps pet families in Egypt find trusted vets and pet-friendly places, track health and vaccinations, and get auto-delivery for essentials."
         />
         <link rel="canonical" href="https://twopaws.pet/" />
       </Helmet>
@@ -208,7 +203,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
-              <img src={twoPawsLogo} alt="TwoPaws" className="h-16" />
+              <img src={twoPawsLogo} alt="TwoPaws Digital Solutions" className="h-16" />
             </div>
 
             <div className="hidden md:flex items-center space-x-8">
@@ -242,13 +237,12 @@ export default function Landing() {
               <a href="/privacy" className="text-gray-600 hover:text-brand-green-dark transition-colors">
                 Privacy Policy
               </a>
-
-              {/* <Button
-                onClick={() => scrollToSection("cta")}
+              <Button
+                asChild
                 className="bg-brand-green-dark text-white hover:bg-brand-olive"
               >
-                Download Now
-              </Button> */}
+                <a href="/download">Download</a>
+              </Button>
             </div>
 
             <div className="md:hidden">
@@ -296,11 +290,8 @@ export default function Landing() {
                 Privacy Policy
               </a>
 
-              <Button
-                onClick={() => scrollToSection("cta")}
-                className="w-full bg-brand-blue text-white"
-              >
-                Download Now
+              <Button asChild className="w-full bg-brand-blue text-white">
+                <a href="/download">Download</a>
               </Button>
             </div>
           </div>
@@ -327,6 +318,19 @@ export default function Landing() {
               </h1>
               <p className="text-xl text-gray-600 mb-8 leading-relaxed">
                 All-in-one app for pet owners—health tracking, community & marketplace</p>
+
+              <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start mb-10">
+                <Button asChild className="bg-brand-green-dark text-white hover:bg-brand-olive">
+                  <a href={IOS_STORE_URL} target="_blank" rel="noreferrer">
+                    Download on App Store
+                  </a>
+                </Button>
+                <Button asChild variant="outline" className="border-brand-green-dark text-brand-green-dark hover:bg-green-50">
+                  <a href={ANDROID_STORE_URL} target="_blank" rel="noreferrer">
+                    Get it on Google Play
+                  </a>
+                </Button>
+              </div>
 
               {/* Featured Highlights */}
               {/* <div className="space-y-3 mb-8">
@@ -428,10 +432,10 @@ export default function Landing() {
       {/* ▼ TwoPaws About */}
       <section id="about" className="py-16 ">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-3xl text-brand-dark font-semibold mb-4">About TwoPaws</h2>
+          <h2 className="text-3xl text-brand-dark font-semibold mb-4">About TwoPaws Digital Solutions</h2>
 
           <p className="text-lg text-gray-700">
-            TwoPaws began as a passion project between two best friends who wanted a
+            TwoPaws Digital Solutions began as a passion project between two best friends who wanted a
             <strong> single, joyful space to track their pets’ health, meet other owners, book vets, and
               grab supplies</strong>—something that simply didn’t exist in our part of the world.
           </p>
@@ -657,7 +661,7 @@ export default function Landing() {
               Frequently Asked Questions
             </h2>
             <p className="text-xl text-gray-600">
-              Everything you need to know about TwoPaws
+              Everything you need to know about TwoPaws Digital Solutions
             </p>
           </motion.div>
 
@@ -698,16 +702,23 @@ export default function Landing() {
               Ready to Give Your Pet the Best Life?
             </h2>
             <p className="text-xl text-white/80 mb-8">
-              Join thousands of pet families who trust TwoPaws for their pet care needs.
+              Join thousands of pet families who trust TwoPaws Digital Solutions for their pet care needs.
             </p>
 
             <p className="text-lg text-white font-semibold mb-8">
               Follow us to know the latest updates
             </p>
 
-            <div className="flex justify-center">
-              <Button className="bg-brand-olive text-brand-dark hover:bg-yellow-400 font-semibold shadow-lg shadow-yellow-200/30">
-                Coming Soon
+            <div className="flex flex-col sm:flex-row justify-center gap-4">
+              <Button asChild className="bg-brand-olive text-brand-dark hover:bg-yellow-400 font-semibold shadow-lg shadow-yellow-200/30">
+                <a href={IOS_STORE_URL} target="_blank" rel="noreferrer">
+                  Download on App Store
+                </a>
+              </Button>
+              <Button asChild variant="outline" className="border-white text-white hover:bg-white/10">
+                <a href={ANDROID_STORE_URL} target="_blank" rel="noreferrer">
+                  Get it on Google Play
+                </a>
               </Button>
             </div>
           </motion.div>
@@ -722,7 +733,7 @@ export default function Landing() {
             {/* Brand + Socials */}
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <img src={twoPawsLogo} alt="TwoPaws" className="h-20" />
+                <img src={twoPawsLogo} alt="TwoPaws Digital Solutions" className="h-20" />
               </div>
               <p className="text-gray-400 mb-4">
                 Your pet's best friend in Egypt. Connecting pet families with the
@@ -752,6 +763,15 @@ export default function Landing() {
                   rel="noopener noreferrer"
                 >
                   <img src={tiktok} alt="TikTok" className="h-6 w-6" />
+                </a>
+                <a
+                  href="https://www.linkedin.com/company/twopaws/"
+                  className="text-gray-400 hover:text-brand-dark transition-colors"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="LinkedIn"
+                >
+                  <Linkedin className="h-6 w-6" />
                 </a>
               </div>
             </div>
@@ -830,7 +850,7 @@ export default function Landing() {
           {/* --- Bottom Bar ---------------------------------------------- */}
           <div className="border-t border-gray-200 pt-8 flex flex-col sm:flex-row justify-between items-center">
             <p className="text-gray-400 text-sm">
-              © {new Date().getFullYear()} TwoPaws. All rights reserved.
+              © {new Date().getFullYear()} TwoPaws Digital Solutions. All rights reserved.
             </p>
           </div>
         </div>
