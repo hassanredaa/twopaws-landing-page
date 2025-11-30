@@ -698,24 +698,24 @@ export default function Landing() {
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">
               Ready to Give Your Pet the Best Life?
             </h2>
-            <p className="text-xl text-white/80 mb-8">
-              Join thousands of pet families who trust TwoPaws Digital Solutions for their pet care needs.
+            <p className="text-xl text-gray-800 mb-8">
+              Join thousands of pet families who trust TwoPaws for their pet care needs.
             </p>
 
-            <p className="text-lg text-white font-semibold mb-8">
+            <p className="text-lg text-gray-900 font-semibold mb-8">
               Follow us to know the latest updates
             </p>
 
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Button asChild className="bg-brand-olive text-brand-dark hover:bg-yellow-400 font-semibold shadow-lg shadow-yellow-200/30">
+              <Button asChild className="bg-white text-gray-900 border border-gray-900/10 hover:bg-gray-100 font-semibold shadow-lg shadow-yellow-200/30">
                 <a href={IOS_STORE_URL} target="_blank" rel="noreferrer">
                   Download on App Store
                 </a>
               </Button>
-              <Button asChild variant="outline" className="border-white text-white hover:bg-white/10">
+              <Button asChild variant="outline" className="border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white">
                 <a href={ANDROID_STORE_URL} target="_blank" rel="noreferrer">
                   Get it on Google Play
                 </a>
