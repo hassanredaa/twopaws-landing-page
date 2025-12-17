@@ -14,7 +14,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-export const deleteUserRequest = functions.https.onCall(async (data, context) => {
+export const deleteUserRequest = functions.https.onCall(async (data: any, context: any) => {
   const email = data?.email;
   if (typeof email !== 'string') {
     throw new functions.https.HttpsError('invalid-argument', 'Email is required');
@@ -34,7 +34,7 @@ export const deleteUserRequest = functions.https.onCall(async (data, context) =>
   return { success: true };
 });
 
-export const confirmDeletion = functions.https.onRequest(async (req, res) => {
+export const confirmDeletion = functions.https.onRequest(async (req: any, res: any) => {
   const requestId = req.query.requestId as string | undefined;
   if (!requestId) {
     res.status(400).send('Missing requestId');
@@ -57,5 +57,74 @@ export const confirmDeletion = functions.https.onRequest(async (req, res) => {
   } catch (err: any) {
     console.error(err);
     res.status(500).send('Error deleting account');
+  }
+});
+
+export const boardingChatRedirect = functions.https.onRequest(async (req: any, res: any) => {
+  res.set('Cache-Control', 'no-store');
+
+  const path = req.path || '';
+  const prefix = '/w/boarding';
+
+  const safeDecode = (value: string) => {
+    try {
+      return decodeURIComponent(value);
+    } catch {
+      return value;
+    }
+  };
+
+  let chatToken = '';
+  if (path === prefix || path === `${prefix}/`) {
+    chatToken = '';
+  } else if (path.startsWith(`${prefix}/`)) {
+    const rawSegment = path.slice(`${prefix}/`.length).split('/').filter(Boolean)[0] || '';
+    const decodedSegment = safeDecode(rawSegment);
+    chatToken = decodedSegment.replace(/^\{\{\d+\}\}/, '');
+  }
+
+  if (!chatToken) {
+    res.status(404).send('Not found');
+    return;
+  }
+
+  try {
+    const snap = await db.doc(`waChatTokens/${chatToken}`).get();
+    if (!snap.exists) {
+      res.status(404).send('Not found');
+      return;
+    }
+
+    const data = snap.data() as {
+      bookingId?: unknown;
+      ownerPhoneE164?: unknown;
+      ownerName?: unknown;
+      expiresAt?: admin.firestore.Timestamp | unknown;
+    };
+
+    const expiresAt = data?.expiresAt as admin.firestore.Timestamp | undefined;
+    const expiresAtMillis = expiresAt?.toMillis?.();
+    if (typeof expiresAtMillis !== 'number' || expiresAtMillis < Date.now()) {
+      res.status(410).send('Gone');
+      return;
+    }
+
+    const ownerPhoneE164 = typeof data?.ownerPhoneE164 === 'string' ? data.ownerPhoneE164 : '';
+    const digits = ownerPhoneE164.replace(/\D/g, '');
+    if (!digits) {
+      res.status(500).send('Invalid token');
+      return;
+    }
+
+    const ownerName = typeof data?.ownerName === 'string' ? data.ownerName : '';
+    const bookingId = typeof data?.bookingId === 'string' ? data.bookingId : String(data?.bookingId ?? '');
+
+    const message = `Hi ${ownerName}, this is regarding booking ${bookingId} via TwoPaws.`;
+    const url = `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
+
+    res.set('Location', url).status(302).send('');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Internal error');
   }
 });

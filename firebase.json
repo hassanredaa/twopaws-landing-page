@@ -8,6 +8,10 @@
     ],
     "rewrites": [
       {
+        "source": "/w/boarding/**",
+        "function": "boardingChatRedirect"
+      },
+      {
         "source": "/delete-account/**",
         "destination": "/index.html"
       },
@@ -16,5 +20,21 @@
         "destination": "/index.html"
       }
     ]
-  }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ],
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run build"
+      ]
+    }
+  ]
 }
