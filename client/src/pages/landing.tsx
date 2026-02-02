@@ -4,7 +4,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "framer-motion";
-import { Helmet } from "react-helmet-async";
 import {
   Heart,
   MapPin,
@@ -39,15 +38,19 @@ import {
 } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import Seo from "@/lib/seo/Seo";
+import {
+  ANDROID_STORE_URL,
+  BASE_URL,
+  INSTAGRAM_URL,
+  IOS_STORE_URL,
+} from "@/lib/seo/constants";
 
 const emailSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
 });
 
 type EmailForm = z.infer<typeof emailSchema>;
-
-const IOS_STORE_URL = "https://apps.apple.com/app/twopaws/id6745481497";
-const ANDROID_STORE_URL = "https://play.google.com/store/apps/details?id=com.twopaws.app";
 
 export default function Landing() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -65,7 +68,7 @@ export default function Landing() {
     },
     onSuccess: (data) => {
       toast({
-        title: "Thanks for subscribing! 📧",
+        title: "Thanks for subscribing!",
         description: data.message,
       });
       newsletterForm.reset();
@@ -117,7 +120,7 @@ export default function Landing() {
     {
       icon: MapPin,
       title: "Pet-Friendly Places",
-      description: "Discover parks, cafés, hotels, and restaurants that welcome your furry friends. Explore Egypt with your pet by your side!",
+      description: "Discover parks, cafes, hotels, and restaurants that welcome your furry friends. Explore Egypt with your pet by your side!",
       color: "bg-brand-green-dark",
       bgColor: "from-brand-cream to-green-50",
     },
@@ -147,19 +150,19 @@ export default function Landing() {
   const testimonials = [
     {
       name: "Sarah Ahmed",
-      location: "Cat Mom • Cairo",
+      location: "Cat Mom - Cairo",
       content: "TwoPaws helped me find the perfect vet for Whiskers when we moved to New Cairo. The booking system is so easy, and I love the vaccination reminders!",
       avatar: "https://images.unsplash.com/photo-1494790108755-2616b612c25b?ixlib=rb-4.0.3&auto=format&fit=crop&w=80&h=80",
     },
     {
       name: "Ahmed Hassan",
-      location: "Dog Dad • Alexandria",
-      content: "The pet-friendly places feature is amazing! Max and I discovered so many new cafés and parks in Alex. The community is super friendly too.",
+      location: "Dog Dad - Alexandria",
+      content: "The pet-friendly places feature is amazing! Max and I discovered so many new cafes and parks in Alex. The community is super friendly too.",
       avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=80&h=80",
     },
     {
       name: "Fatma El-Sayed",
-      location: "Multi-Pet Mom • Giza",
+      location: "Multi-Pet Mom - Giza",
       content: "With 3 cats and a dog, keeping track of everything was chaos. TwoPaws organized my life! The marketplace saves me so much time too.",
       avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=80&h=80",
     },
@@ -180,6 +183,29 @@ export default function Landing() {
     },
   ];
 
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "TwoPaws",
+    url: BASE_URL,
+    areaServed: "Egypt",
+    sameAs: [INSTAGRAM_URL, IOS_STORE_URL, ANDROID_STORE_URL],
+  };
+
+  const mobileApplicationSchema = {
+    "@context": "https://schema.org",
+    "@type": "MobileApplication",
+    name: "TwoPaws",
+    operatingSystem: ["iOS", "Android"],
+    applicationCategory: "Lifestyle",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
+    },
+    downloadUrl: [IOS_STORE_URL, ANDROID_STORE_URL],
+  };
+
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
@@ -190,20 +216,18 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-white">
-      <Helmet>
-        <title>TwoPaws Digital Solutions - Pet Care & Community in Egypt</title>
-        <meta
-          name="description"
-          content="TwoPaws Digital Solutions helps pet families in Egypt find trusted vets and pet-friendly places, track health and vaccinations, and get auto-delivery for essentials."
-        />
-        <link rel="canonical" href="https://twopaws.pet/" />
-      </Helmet>
+      <Seo
+        title="TwoPaws | Pet care app in Egypt (Cairo)"
+        description="TwoPaws connects pet families in Egypt with vets, clinics, a supplies marketplace, community features, and delivery."
+        canonicalUrl="/"
+        structuredData={[organizationSchema, mobileApplicationSchema]}
+      />
       {/* Navigation */}
       <nav className="fixed top-0 w-full bg-white/90 backdrop-blur-md z-50 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
-              <img src={twoPawsLogo} alt="TwoPaws Digital Solutions" className="h-16" />
+              <img src={twoPawsLogo} alt="TwoPaws" className="h-16" />
             </div>
 
             <div className="hidden md:flex items-center space-x-8">
@@ -317,7 +341,8 @@ export default function Landing() {
                 Your Pet's <span className="text-brand-green-dark">Best Friend</span> in Egypt
               </h1>
               <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-                All-in-one app for pet owners—health tracking, community & marketplace</p>
+                All-in-one app for pet owners: health tracking, community, and marketplace.
+              </p>
 
               <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start mb-10">
                 <Button asChild className="bg-brand-green-dark text-white hover:bg-brand-olive">
@@ -429,15 +454,16 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* ▼ TwoPaws About */}
+
+      {/* TwoPaws About */}
       <section id="about" className="py-16 ">
         <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-3xl text-brand-dark font-semibold mb-4">About TwoPaws Digital Solutions</h2>
+          <h2 className="text-3xl text-brand-dark font-semibold mb-4">About TwoPaws</h2>
 
           <p className="text-lg text-gray-700">
-            TwoPaws Digital Solutions began as a passion project between two best friends who wanted a
-            <strong> single, joyful space to track their pets’ health, meet other owners, book vets, and
-              grab supplies</strong>—something that simply didn’t exist in our part of the world.
+            TwoPaws began as a passion project between two best friends who wanted a
+            <strong> single, joyful space to track their pets' health, meet other owners, book vets, and
+              grab supplies</strong> - something that simply didn't exist in our part of the world.
           </p>
 
           <p className="mt-4 text-gray-700">
@@ -447,15 +473,15 @@ export default function Landing() {
           </p>
 
           <p className="mt-4 text-gray-700">
-            We're not a corporation—just two lifelong friends (and their furry co-founders) on a mission
+            We're not a corporation - just two lifelong friends (and their furry co-founders) on a mission
             to make pet care simpler, more connected, and a lot more fun. Thanks for joining us on the
             journey!
           </p>
         </div>
       </section>
-      {/* ▲ TwoPaws About */}
+      {/* TwoPaws About */}
 
-      {/* ▼ TwoPaws Problem → Solution */}
+      {/* TwoPaws Problem - Solution */}
       <section id="problem-solution" className="py-16">
         <div className="max-w-6xl mx-auto px-4 grid gap-8 md:grid-cols-2">
           {/* Problem Card */}
@@ -467,7 +493,7 @@ export default function Landing() {
             <p className="text-gray-700 leading-relaxed">
               Caring for a pet today means juggling vaccine cards, scrolling countless groups for advice,
               calling around to book vets, and hopping between stores for food and supplies. Everything is
-              fragmented, time-consuming, and often unreliable—especially in our region where resources
+              fragmented, time-consuming, and often unreliable, especially in our region where resources
               are scarce and scattered.
             </p>
           </article>
@@ -481,14 +507,14 @@ export default function Landing() {
             <p className="text-gray-700 leading-relaxed">
               <strong>TwoPaws</strong> unifies <em>health tracking, nearby-vet discovery, and a same-day
                 pet-supply marketplace</em> into one intuitive app. Set vaccine reminders, track heat cycles,
-              chat with local owners, and have food delivered to your door—all without leaving the app.
+              chat with local owners, and have food delivered to your door without leaving the app.
             </p>
           </article>
         </div>
       </section>
-      {/* ▲ TwoPaws Problem → Solution */}
+      {/* TwoPaws Problem - Solution */}
 
-      {/* ▼ Company & Founders (updated order & copy) */}
+      {/* Company & Founders (updated order & copy) */}
       <section id="company" className="py-16 bg-white">
         <div className="max-w-5xl mx-auto px-4">
           {/* Company blurb */}
@@ -496,39 +522,39 @@ export default function Landing() {
             About the Company
           </h2>
           <p className="text-gray-700 text-lg leading-relaxed text-center mb-12">
-            <strong>TwoPaws</strong> is an Egyptian start‑up on a mission to build the
-            country’s first all‑in‑one pet community platform—uniting health
+            <strong>TwoPaws</strong> is an Egyptian start-up on a mission to build the
+            country's first all-in-one pet community platform, uniting health
             tracking, adoption, shopping, and social features so every pet family can
             thrive.
           </p>
 
           {/* Founders */}
           <div className="space-y-14">
-            {/* Amira (left‑aligned, first) */}
+            {/* Amira (left-aligned, first) */}
             <div className="flex">
               <div className="md:w-1/2">
                 <h3 className="text-2xl font-semibold text-brand-dark mb-1">
-                  Amira Sameh
+                  Amira Sameh
                 </h3>
-                <p className="text-sm text-brand-dark mb-2">Co‑Founder</p>
+                <p className="text-sm text-brand-dark mb-2">Co-Founder</p>
                 <p className="text-gray-700 text-lg leading-relaxed">
-                  Vision‑driven community champion and self‑taught developer who loves
-                  turning everyday pet‑parent struggles into intuitive,
-                  tech‑powered solutions for the whole community.
+                  Vision-driven community champion and self-taught developer who loves
+                  turning everyday pet parent struggles into intuitive,
+                  tech-powered solutions for the whole community.
                 </p>
               </div>
             </div>
 
-            {/* Hassan (right‑aligned, second) */}
+            {/* Hassan (right-aligned, second) */}
             <div className="flex justify-end">
               <div className="md:w-1/2 text-left md:text-right">
                 <h3 className="text-2xl font-semibold text-brand-dark mb-1">
-                  Hassan Reda
+                  Hassan Reda
                 </h3>
-                <p className="text-sm text-brand-dark mb-2">Co‑Founder</p>
+                <p className="text-sm text-brand-dark mb-2">Co-Founder</p>
                 <p className="text-gray-700 text-lg leading-relaxed">
-                  Product strategist and full‑stack engineer who prototypes ideas at
-                  lightning speed—obsessed with details that make Egypt’s pet
+                  Product strategist and full-stack engineer who prototypes ideas at
+                  lightning speed, obsessed with details that make Egypt's pet
                   community smarter, safer, and more fun.
                 </p>
               </div>
@@ -536,7 +562,7 @@ export default function Landing() {
           </div>
         </div>
       </section>
-      {/* ▲ Company & Founders */}
+      {/*  Company & Founders */}
 
 
 
@@ -554,7 +580,7 @@ export default function Landing() {
               Everything Your Pet Needs in One App
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              From finding the best vets in Cairo to discovering pet-friendly cafés in Alexandria, TwoPaws has got you covered.
+              From finding the best vets in Cairo to discovering pet-friendly cafes in Alexandria, TwoPaws has got you covered.
             </p>
           </motion.div>
 
@@ -661,7 +687,7 @@ export default function Landing() {
               Frequently Asked Questions
             </h2>
             <p className="text-xl text-gray-600">
-              Everything you need to know about TwoPaws Digital Solutions
+              Everything you need to know about TwoPaws
             </p>
           </motion.div>
 
@@ -733,7 +759,7 @@ export default function Landing() {
             {/* Brand + Socials */}
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <img src={twoPawsLogo} alt="TwoPaws Digital Solutions" className="h-20" />
+                <img src={twoPawsLogo} alt="TwoPaws" className="h-20" />
               </div>
               <p className="text-gray-400 mb-4">
                 Your pet's best friend in Egypt. Connecting pet families with the
@@ -850,7 +876,7 @@ export default function Landing() {
           {/* --- Bottom Bar ---------------------------------------------- */}
           <div className="border-t border-gray-200 pt-8 flex flex-col sm:flex-row justify-between items-center">
             <p className="text-gray-400 text-sm">
-              © {new Date().getFullYear()} TwoPaws Digital Solutions. All rights reserved.
+              (c) {new Date().getFullYear()} TwoPaws Digital Solutions. All rights reserved.
             </p>
           </div>
         </div>

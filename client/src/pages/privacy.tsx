@@ -6,18 +6,19 @@ import insta from "../../../attached_assets/instagram.svg";
 import facebook from "../../../attached_assets/facebook.svg";
 import tiktok from "../../../attached_assets/tiktok.svg";
 import { Menu, X, Linkedin } from "lucide-react";
-import { Helmet } from "react-helmet-async";
+import Seo from "@/lib/seo/Seo";
+import MarketingIntro from "@/pages/marketing/MarketingIntro";
 
 export default function Privacy() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      <Helmet>
-        <title>Privacy Policy | TwoPaws Digital Solutions</title>
-        <meta name="description" content="Learn how TwoPaws Digital Solutions collects, uses, and protects your data." />
-        <link rel="canonical" href="https://twopaws.pet/privacy" />
-      </Helmet>
+      <Seo
+        title="Privacy Policy | TwoPaws"
+        description="Privacy policy for TwoPaws, the pet care app for Egypt with vets, clinics, community features, and delivery."
+        canonicalUrl="/privacy"
+      />
       {/* Navigation */}
       <nav className="fixed top-0 w-full bg-white/90 backdrop-blur-md z-50 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -62,82 +63,85 @@ export default function Privacy() {
         )}
       </nav>
 
-      <main className="flex-grow pt-24 px-4 pb-16 bg-gray-50 flex items-start justify-center">
-        <Card className="w-full max-w-4xl mx-auto">
-          <CardContent className="prose prose-zinc lg:prose-lg max-w-none pt-6">
-            <h1 className="text-3xl font-bold mb-2">TwoPaws Digital Solutions — Privacy Policy (EN)</h1>
-            <p className="text-gray-500">Last updated: August 23, 2025</p>
+      <main className="flex-grow bg-gray-50 pb-16 pt-24 px-4">
+        <div className="w-full max-w-4xl mx-auto space-y-8">
+          <MarketingIntro />
+          <Card className="w-full">
+            <CardContent className="prose prose-zinc lg:prose-lg max-w-none pt-6">
+              <h1 className="text-3xl font-bold mb-2">TwoPaws Digital Solutions - Privacy Policy (EN)</h1>
+              <p className="text-gray-500">Last updated: August 23, 2025</p>
 
-            <h2 className="text-2xl font-bold mt-6">1) Who we are &amp; scope</h2>
-            <p>
-              This Privacy Policy explains how TwoPaws Digital Solutions LLC ("TwoPaws," "we," "us," "our") collects, uses, shares,
-              and protects personal data when you use the App and our Services. Contact: <a href="mailto:info@twopaws.pet">info@twopaws.pet</a>
-            </p>
+              <h2 className="text-2xl font-bold mt-6">1) Who we are &amp; scope</h2>
+              <p>
+                This Privacy Policy explains how TwoPaws Digital Solutions LLC ("TwoPaws," "we," "us," "our") collects, uses, shares,
+                and protects personal data when you use the App and our Services. Contact: <a href="mailto:info@twopaws.pet">info@twopaws.pet</a>
+              </p>
 
-            <h2 className="text-2xl font-bold mt-6">2) Data we collect</h2>
-            <ul>
-              <li><strong>Identity &amp; contact:</strong> name, username, email, phone, addresses.</li>
-              <li><strong>Account &amp; usage:</strong> profile photo, preferences, device identifiers, app interactions, diagnostics/crash logs.</li>
-              <li><strong>Pet &amp; content data:</strong> pet profiles, photos, vaccination/health records you upload for pets, listings, reviews, messages.</li>
-              <li><strong>Transactions:</strong> orders, invoices, payment status, refunds/chargebacks.</li>
-              <li><strong>Payments:</strong> processed via a secure, hosted payment flow. We do not store full card numbers, CVV, or saved-card tokens. We receive minimal transaction metadata (e.g., success/failure).</li>
-            </ul>
+              <h2 className="text-2xl font-bold mt-6">2) Data we collect</h2>
+              <ul>
+                <li><strong>Identity &amp; contact:</strong> name, username, email, phone, addresses.</li>
+                <li><strong>Account &amp; usage:</strong> profile photo, preferences, device identifiers, app interactions, diagnostics/crash logs.</li>
+                <li><strong>Pet &amp; content data:</strong> pet profiles, photos, vaccination/health records you upload for pets, listings, reviews, messages.</li>
+                <li><strong>Transactions:</strong> orders, invoices, payment status, refunds/chargebacks.</li>
+                <li><strong>Payments:</strong> processed via a secure, hosted payment flow. We do not store full card numbers, CVV, or saved-card tokens. We receive minimal transaction metadata (e.g., success/failure).</li>
+              </ul>
 
-            <h2 className="text-2xl font-bold mt-6">3) How we collect data</h2>
-            <p>Directly from you (forms, listings, uploads, messages); automatically (app events, device data, diagnostics/crash); and from partners you engage (e.g., vets, stores, shelters) and the payment processor (transaction confirmations).</p>
+              <h2 className="text-2xl font-bold mt-6">3) How we collect data</h2>
+              <p>Directly from you (forms, listings, uploads, messages); automatically (app events, device data, diagnostics/crash); and from partners you engage (e.g., vets, stores, shelters) and the payment processor (transaction confirmations).</p>
 
-            <h2 className="text-2xl font-bold mt-6">4) Why we use data (purposes &amp; legal bases)</h2>
-            <ul>
-              <li>Provide the Services and your account (contract necessity).</li>
-              <li>Process orders and payments (contract necessity).</li>
-              <li>Safety, fraud prevention, moderation (legitimate interests; legal obligations).</li>
-              <li>Support &amp; service communications (contract necessity/legitimate interests).</li>
-              <li>Personalization &amp; analytics to improve features and performance (legitimate interests; consent where required).</li>
-              <li>Marketing (with your consent; you can opt out at any time).</li>
-              <li>Legal/compliance (e.g., tax, accounting, responding to lawful requests).</li>
-            </ul>
-            <p>We do not use your data for incompatible purposes without your consent.</p>
+              <h2 className="text-2xl font-bold mt-6">4) Why we use data (purposes &amp; legal bases)</h2>
+              <ul>
+                <li>Provide the Services and your account (contract necessity).</li>
+                <li>Process orders and payments (contract necessity).</li>
+                <li>Safety, fraud prevention, moderation (legitimate interests; legal obligations).</li>
+                <li>Support &amp; service communications (contract necessity/legitimate interests).</li>
+                <li>Personalization &amp; analytics to improve features and performance (legitimate interests; consent where required).</li>
+                <li>Marketing (with your consent; you can opt out at any time).</li>
+                <li>Legal/compliance (e.g., tax, accounting, responding to lawful requests).</li>
+              </ul>
+              <p>We do not use your data for incompatible purposes without your consent.</p>
 
-            <h2 className="text-2xl font-bold mt-6">5) Sharing your data</h2>
-            <p>We share personal data only as needed to provide and operate the Services:</p>
-            <ul>
-              <li><strong>Service providers (processors):</strong> cloud hosting, analytics/crash reporting, customer support, anti-fraud, and payment processing—under contracts that restrict their use to performing services for us.</li>
-              <li><strong>Partners you choose to engage:</strong> vets, stores, shelters—only the details needed to fulfill your request (e.g., order details, delivery name/phone/address).</li>
-              <li><strong>Legal/compliance:</strong> regulators, law enforcement, or to protect rights, safety, and compliance with law.</li>
-            </ul>
-            <p>We do not sell or rent your personal information.</p>
+              <h2 className="text-2xl font-bold mt-6">5) Sharing your data</h2>
+              <p>We share personal data only as needed to provide and operate the Services:</p>
+              <ul>
+                <li><strong>Service providers (processors):</strong> cloud hosting, analytics/crash reporting, customer support, anti-fraud, and payment processingunder contracts that restrict their use to performing services for us.</li>
+                <li><strong>Partners you choose to engage:</strong> vets, stores, sheltersonly the details needed to fulfill your request (e.g., order details, delivery name/phone/address).</li>
+                <li><strong>Legal/compliance:</strong> regulators, law enforcement, or to protect rights, safety, and compliance with law.</li>
+              </ul>
+              <p>We do not sell or rent your personal information.</p>
 
-            <h2 className="text-2xl font-bold mt-6">6) Data retention</h2>
-            <p>We keep personal data only as long as needed for the purposes above and to meet legal requirements. Examples:</p>
-            <ul>
-              <li><strong>Account data:</strong> while your account is active, then for a limited period for queries/disputes.</li>
-              <li><strong>Transaction records:</strong> retained as required by tax/accounting laws.</li>
-              <li><strong>Content (posts, chats):</strong> while visible to you/recipients or until you delete; limited backups may persist briefly.</li>
-              <li><strong>Payments:</strong> no card numbers, CVV, or saved-card tokens are stored by TwoPaws.</li>
-            </ul>
+              <h2 className="text-2xl font-bold mt-6">6) Data retention</h2>
+              <p>We keep personal data only as long as needed for the purposes above and to meet legal requirements. Examples:</p>
+              <ul>
+                <li><strong>Account data:</strong> while your account is active, then for a limited period for queries/disputes.</li>
+                <li><strong>Transaction records:</strong> retained as required by tax/accounting laws.</li>
+                <li><strong>Content (posts, chats):</strong> while visible to you/recipients or until you delete; limited backups may persist briefly.</li>
+                <li><strong>Payments:</strong> no card numbers, CVV, or saved-card tokens are stored by TwoPaws.</li>
+              </ul>
 
-            <h2 className="text-2xl font-bold mt-6">7) International transfers</h2>
-            <p>Your personal data may be transferred to, stored, and processed on secure servers outside Egypt. We use contractual and technical safeguards with reputable providers and will comply with applicable cross-border transfer requirements. Where required, we will implement additional measures or obtain approvals.</p>
+              <h2 className="text-2xl font-bold mt-6">7) International transfers</h2>
+              <p>Your personal data may be transferred to, stored, and processed on secure servers outside Egypt. We use contractual and technical safeguards with reputable providers and will comply with applicable cross-border transfer requirements. Where required, we will implement additional measures or obtain approvals.</p>
 
-            <h2 className="text-2xl font-bold mt-6">8) Your rights</h2>
-            <p>Subject to applicable law, you can access, correct, delete, restrict or object to processing, and withdraw consent (e.g., for marketing). Use in-app settings where available or email <a href="mailto:info@twopaws.pet">info@twopaws.pet</a>. We may request proof of identity and will respond within applicable timelines.</p>
+              <h2 className="text-2xl font-bold mt-6">8) Your rights</h2>
+              <p>Subject to applicable law, you can access, correct, delete, restrict or object to processing, and withdraw consent (e.g., for marketing). Use in-app settings where available or email <a href="mailto:info@twopaws.pet">info@twopaws.pet</a>. We may request proof of identity and will respond within applicable timelines.</p>
 
-            <h2 className="text-2xl font-bold mt-6">9) Security</h2>
-            <p>We use organizational and technical measures including encryption in transit and at rest, access controls, least-privilege, and monitoring. No system is 100% secure.</p>
+              <h2 className="text-2xl font-bold mt-6">9) Security</h2>
+              <p>We use organizational and technical measures including encryption in transit and at rest, access controls, least-privilege, and monitoring. No system is 100% secure.</p>
 
-            <h2 className="text-2xl font-bold mt-6">10) Children</h2>
-            <p>The App is intended for adults (18+). If we learn we collected data from a minor without required guardian consent, we will delete it.</p>
+              <h2 className="text-2xl font-bold mt-6">10) Children</h2>
+              <p>The App is intended for adults (18+). If we learn we collected data from a minor without required guardian consent, we will delete it.</p>
 
-            <h2 className="text-2xl font-bold mt-6">11) Deleting your account</h2>
-            <p>You can delete your account in the App or by emailing <a href="mailto:info@twopaws.pet">info@twopaws.pet</a>. If transactions or amounts are pending, deletion may be delayed until resolved. Some records may be retained where the law requires (e.g., fraud prevention, tax).</p>
+              <h2 className="text-2xl font-bold mt-6">11) Deleting your account</h2>
+              <p>You can delete your account in the App or by emailing <a href="mailto:info@twopaws.pet">info@twopaws.pet</a>. If transactions or amounts are pending, deletion may be delayed until resolved. Some records may be retained where the law requires (e.g., fraud prevention, tax).</p>
 
-            <h2 className="text-2xl font-bold mt-6">12) Changes to this Policy</h2>
-            <p>We may update this Policy; we’ll change the “Last updated” date above and, where required, provide in-app or email notice. If changes materially affect your rights, we will seek consent where required.</p>
+              <h2 className="text-2xl font-bold mt-6">12) Changes to this Policy</h2>
+              <p>We may update this Policy; well change the Last updated date above and, where required, provide in-app or email notice. If changes materially affect your rights, we will seek consent where required.</p>
 
-            <h2 className="text-2xl font-bold mt-6">13) Contact</h2>
-            <p>TwoPaws Digital Solutions LLC — Privacy<br />Email: <a href="mailto:info@twopaws.pet">info@twopaws.pet</a></p>
-          </CardContent>
-        </Card>
+              <h2 className="text-2xl font-bold mt-6">13) Contact</h2>
+              <p>TwoPaws Digital Solutions LLC - Privacy<br />Email: <a href="mailto:info@twopaws.pet">info@twopaws.pet</a></p>
+            </CardContent>
+          </Card>
+        </div>
       </main>
 
       <footer className="bg-white text-black py-16">

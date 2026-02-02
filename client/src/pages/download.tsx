@@ -38,10 +38,10 @@ export default function DownloadRedirect() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-white px-6 py-12 text-center">
       <Helmet>
-        <title>Download TwoPaws Digital Solutions</title>
+        <title>Download TwoPaws</title>
         <meta
           name="description"
-          content="Get the TwoPaws Digital Solutions app on the App Store or Google Play."
+          content="Get the TwoPaws app on the App Store or Google Play."
         />
         <link rel="canonical" href="https://twopaws.pet/download" />
         <meta name="robots" content="noindex,follow" />
@@ -50,11 +50,11 @@ export default function DownloadRedirect() {
       <div className="max-w-md space-y-6">
         <div className="space-y-2">
           <h1 className="text-3xl font-semibold text-brand-green-dark">
-            Redirecting you to TwoPaws Digital Solutions
+            Redirecting you to TwoPaws
           </h1>
           <p className="text-gray-600">
             Hang tight! We&apos;re sending you to the best place to download the
-            TwoPaws Digital Solutions app based on your device.
+            TwoPaws app based on your device.
           </p>
         </div>
 

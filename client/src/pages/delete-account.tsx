@@ -46,8 +46,8 @@ export default function DeleteAccount() {
   return (
   <div className="min-h-screen flex flex-col items-center bg-gray-50 p-4">
       <Helmet>
-        <title>Delete Account | TwoPaws Digital Solutions</title>
-        <meta name="description" content="Request deletion of your TwoPaws Digital Solutions account." />
+        <title>Delete Account | TwoPaws</title>
+        <meta name="description" content="Request deletion of your TwoPaws account." />
         <meta name="robots" content="noindex, nofollow" />
         <link rel="canonical" href="https://twopaws.pet/delete-account" />
       </Helmet>
@@ -56,7 +56,7 @@ export default function DeleteAccount() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
               <a href="/">
-                <img src={twoPawsLogo} alt="TwoPaws Digital Solutions" className="h-16" />
+                <img src={twoPawsLogo} alt="TwoPaws" className="h-16" />
               </a>
             </div>
             <div className="hidden md:flex items-center space-x-8">
@@ -113,7 +113,7 @@ export default function DeleteAccount() {
           <div className="grid md:grid-cols-3 gap-8 mb-8">
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <img src={twoPawsLogo} alt="TwoPaws Digital Solutions" className="h-20" />
+                <img src={twoPawsLogo} alt="TwoPaws" className="h-20" />
               </div>
               <p className="text-gray-400 mb-4">
                 Your pet's best friend in Egypt. Connecting pet families with the care and community they deserve.
@@ -236,7 +236,7 @@ export default function DeleteAccount() {
 
           <div className="border-t border-gray-800 pt-8 flex flex-col sm:flex-row justify-between items-center">
             <p className="text-gray-400 text-sm">
-              © {new Date().getFullYear()} TwoPaws Digital Solutions. All rights reserved.
+              © {new Date().getFullYear()} TwoPaws. All rights reserved.
             </p>
           </div>
         </div>

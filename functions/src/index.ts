@@ -1,20 +1,41 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
+import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import nodemailer from 'nodemailer';
 
 admin.initializeApp();
 const db = admin.firestore();
 
-const APP_BASE_URL = functions.config().app?.base_url || 'https://example.com';
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: functions.config().email?.user,
-    pass: functions.config().email?.pass,
-  },
-});
+const getFunctionsConfig = () => {
+  if (process.env.K_CONFIGURATION) {
+    return {};
+  }
+  try {
+    return functions.config();
+  } catch {
+    return {};
+  }
+};
+
+let cachedTransporter: nodemailer.Transporter | null = null;
+const getTransporter = () => {
+  if (!cachedTransporter) {
+    const config = getFunctionsConfig();
+    cachedTransporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: config.email?.user,
+        pass: config.email?.pass,
+      },
+    });
+  }
+  return cachedTransporter;
+};
 
 export const deleteUserRequest = functions.https.onCall(async (data: any, context: any) => {
+  const config = getFunctionsConfig();
+  const appBaseUrl = config.app?.base_url || 'https://example.com';
+  const transporter = getTransporter();
   const email = data?.email;
   if (typeof email !== 'string') {
     throw new functions.https.HttpsError('invalid-argument', 'Email is required');
@@ -24,9 +45,9 @@ export const deleteUserRequest = functions.https.onCall(async (data: any, contex
     status: 'pending',
     created: admin.firestore.FieldValue.serverTimestamp(),
   });
-  const link = `${APP_BASE_URL}/delete-account/confirm?requestId=${record.id}`;
+  const link = `${appBaseUrl}/delete-account/confirm?requestId=${record.id}`;
   await transporter.sendMail({
-    from: functions.config().email?.user,
+    from: config.email?.user,
     to: email,
     subject: 'Confirm account deletion',
     text: `Click the link to confirm deletion: ${link}`,
@@ -128,3 +149,16 @@ export const boardingChatRedirect = functions.https.onRequest(async (req: any, r
     res.status(500).send('Internal error');
   }
 });
+
+export const touchCartUpdatedAt = onDocumentWritten(
+  {
+    document: 'carts/{cartId}/cartItems/{itemId}'
+  },
+  async (event) => {
+    if (!event.data) return;
+
+    const { cartId } = event.params;
+    const cartRef = db.collection('carts').doc(cartId);
+    await cartRef.set({ updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+  }
+);
