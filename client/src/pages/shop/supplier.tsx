@@ -5,6 +5,11 @@ import ProductCard from "@/components/shop/ProductCard";
 import { useProducts } from "@/hooks/useProducts";
 import { useSuppliers } from "@/hooks/useSuppliers";
 
+const getUnitPrice = (price?: number, salePrice?: number, onSale?: boolean) => {
+  if (onSale && typeof salePrice === "number" && salePrice > 0) return salePrice;
+  return typeof price === "number" ? price : 0;
+};
+
 export default function SupplierShopPage() {
   const { supplierId } = useParams();
   const { products, loading } = useProducts();
@@ -19,7 +24,13 @@ export default function SupplierShopPage() {
   const supplierProducts = useMemo(() => {
     if (!supplierId) return [];
     return products.filter(
-      (product) => product.supplierRef && product.supplierRef.id === supplierId
+      (product) => {
+        const quantity =
+          typeof product.quantity === "number" ? product.quantity : 1;
+        const price = getUnitPrice(product.price, product.sale_price, product.on_sale);
+        if (quantity <= 0 || price <= 0) return false;
+        return product.supplierRef && product.supplierRef.id === supplierId;
+      }
     );
   }, [products, supplierId]);
 

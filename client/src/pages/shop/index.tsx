@@ -44,6 +44,47 @@ const getCategoryIds = (categories?: unknown[]) => {
 };
 
 const PER_PAGE_OPTIONS = [12, 24, 48];
+const ELLIPSIS = "ellipsis" as const;
+type PageItem = number | typeof ELLIPSIS;
+
+const getPageItems = (totalPages: number, currentPage: number): PageItem[] => {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+
+  const pages = new Set<number>();
+  pages.add(1);
+  pages.add(totalPages);
+
+  for (let page = currentPage - 1; page <= currentPage + 1; page += 1) {
+    if (page > 1 && page < totalPages) {
+      pages.add(page);
+    }
+  }
+
+  if (currentPage <= 3) {
+    pages.add(2);
+    pages.add(3);
+  }
+
+  if (currentPage >= totalPages - 2) {
+    pages.add(totalPages - 1);
+    pages.add(totalPages - 2);
+  }
+
+  const sorted = Array.from(pages).sort((a, b) => a - b);
+  const items: PageItem[] = [];
+
+  sorted.forEach((page, index) => {
+    items.push(page);
+    const nextPage = sorted[index + 1];
+    if (nextPage && nextPage - page > 1) {
+      items.push(ELLIPSIS);
+    }
+  });
+
+  return items;
+};
 
 export default function ShopPage() {
   const { products, loading } = useProducts();
@@ -91,6 +132,13 @@ export default function ShopPage() {
 
   const filteredProducts = useMemo(() => {
     let data = [...products];
+
+    data = data.filter((product) => {
+      const quantity =
+        typeof product.quantity === "number" ? product.quantity : 1;
+      const price = getUnitPrice(product.price, product.sale_price, product.on_sale);
+      return quantity > 0 && price > 0;
+    });
 
     if (search.trim()) {
       const needle = search.trim().toLowerCase();
@@ -539,20 +587,30 @@ export default function ShopPage() {
                 <ChevronLeft className="h-4 w-4" />
               </button>
               <div className="flex items-center gap-1">
-                {Array.from({ length: totalPages }).map((_, index) => {
-                  const pageNumber = index + 1;
+                {getPageItems(totalPages, currentPage).map((item, index) => {
+                  if (item === ELLIPSIS) {
+                    return (
+                      <span
+                        key={`ellipsis-${index}`}
+                        className="flex h-8 w-8 items-center justify-center text-sm text-slate-400"
+                      >
+                        ...
+                      </span>
+                    );
+                  }
                   return (
                     <button
-                      key={pageNumber}
+                      key={item}
                       type="button"
-                      onClick={() => setPage(pageNumber)}
+                      onClick={() => setPage(item)}
+                      aria-current={currentPage === item ? "page" : undefined}
                       className={`h-8 w-8 rounded-md border text-sm ${
-                        currentPage === pageNumber
+                        currentPage === item
                           ? "border-brand-dark text-brand-dark"
                           : "border-slate-200 text-slate-700"
                       }`}
                     >
-                      {pageNumber}
+                      {item}
                     </button>
                   );
                 })}

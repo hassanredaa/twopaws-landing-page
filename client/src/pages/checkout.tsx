@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   collection,
   doc,
@@ -298,9 +298,9 @@ export default function CheckoutPage() {
           <CardContent className="p-6">
             <p className="text-slate-600">Sign in to continue to checkout.</p>
             <Button asChild className="mt-4 bg-brand-green-dark text-white">
-              <a href={`/login?redirect=${encodeURIComponent(location.pathname)}`}>
+              <Link to={`/login?redirect=${encodeURIComponent(location.pathname)}`}>
                 Sign in
-              </a>
+              </Link>
             </Button>
           </CardContent>
         </Card>

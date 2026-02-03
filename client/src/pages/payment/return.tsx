@@ -1,5 +1,5 @@
 ﻿import { useEffect, useMemo, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { doc, onSnapshot } from "firebase/firestore";
 import ShopShell from "@/components/shop/ShopShell";
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,7 +39,7 @@ export default function PaymentReturnPage() {
           </p>
           {orderId && (
             <Button asChild className="bg-brand-green-dark text-white">
-              <a href={`/orders/${orderId}`}>View order</a>
+              <Link to={`/orders/${orderId}`}>View order</Link>
             </Button>
           )}
         </CardContent>

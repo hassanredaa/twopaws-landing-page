@@ -1,5 +1,6 @@
 ﻿import type { ReactNode } from "react";
 import { ShoppingCart } from "lucide-react";
+import { Link } from "react-router-dom";
 import twoPawsLogo from "../../../../attached_assets/logotrans.webp";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -25,24 +26,24 @@ export default function ShopShell({ children }: ShopShellProps) {
       <header className="sticky top-0 z-50 border-b border-slate-100 bg-white/90 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4">
-            <a href="/" className="flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-2">
               <img src={twoPawsLogo} alt="TwoPaws" className="h-10" />
-            </a>
+            </Link>
             <nav className="hidden items-center gap-6 text-sm text-slate-600 md:flex">
               {navLinks.map((link) => (
-                <a
+                <Link
                   key={link.href}
-                  href={link.href}
+                  to={link.href}
                   className="hover:text-brand-green-dark"
                 >
                   {link.label}
-                </a>
+                </Link>
               ))}
             </nav>
           </div>
           <div className="flex items-center gap-3">
-            <a
-              href="/cart"
+            <Link
+              to="/cart"
               className="relative inline-flex items-center justify-center rounded-full border border-slate-200 p-2 text-slate-700 hover:border-brand-green-dark hover:text-brand-green-dark"
               aria-label="Cart"
             >
@@ -52,7 +53,7 @@ export default function ShopShell({ children }: ShopShellProps) {
                   {itemCount}
                 </span>
               )}
-            </a>
+            </Link>
             {user ? (
               <Button
                 variant="outline"
@@ -63,7 +64,7 @@ export default function ShopShell({ children }: ShopShellProps) {
               </Button>
             ) : (
               <Button asChild className="bg-brand-green-dark text-white">
-                <a href="/login">Sign in</a>
+                <Link to="/login">Sign in</Link>
               </Button>
             )}
           </div>
@@ -78,15 +79,15 @@ export default function ShopShell({ children }: ShopShellProps) {
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <p className="font-semibold text-slate-900">TwoPaws Shop</p>
           <div className="flex flex-wrap gap-4">
-            <a className="hover:text-slate-900" href="/terms">
+            <Link className="hover:text-slate-900" to="/terms">
               Terms
-            </a>
-            <a className="hover:text-slate-900" href="/privacy">
+            </Link>
+            <Link className="hover:text-slate-900" to="/privacy">
               Privacy
-            </a>
-            <a className="hover:text-slate-900" href="/contact">
+            </Link>
+            <Link className="hover:text-slate-900" to="/contact">
               Contact
-            </a>
+            </Link>
           </div>
         </div>
       </footer>

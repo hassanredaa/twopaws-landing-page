@@ -1,5 +1,5 @@
 ﻿import { useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { httpsCallable } from "firebase/functions";
 import { doc, onSnapshot } from "firebase/firestore";
 import ShopShell from "@/components/shop/ShopShell";
@@ -96,7 +96,7 @@ export default function PaymobPaymentPage() {
           )}
           <div className="flex flex-wrap gap-3">
             <Button asChild className="bg-brand-green-dark text-white">
-              <a href={`/orders/${orderId}`}>View order</a>
+              <Link to={`/orders/${orderId}`}>View order</Link>
             </Button>
             <Button variant="outline" className="border-slate-200" onClick={() => navigate("/shop")}>Continue shopping</Button>
           </div>

@@ -1,4 +1,5 @@
 ﻿import ShopShell from "@/components/shop/ShopShell";
+import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -26,7 +27,7 @@ export default function OrdersPage() {
           <CardContent className="p-6">
             <p className="text-slate-600">Sign in to see your orders.</p>
             <Button asChild className="mt-4 bg-brand-green-dark text-white">
-              <a href="/login?redirect=/orders">Sign in</a>
+              <Link to="/login?redirect=/orders">Sign in</Link>
             </Button>
           </CardContent>
         </Card>
@@ -62,7 +63,7 @@ export default function OrdersPage() {
                   {formatCurrency(order.totalPrice ?? 0)}
                 </p>
                 <Button asChild variant="outline" className="border-slate-200">
-                  <a href={`/orders/${order.id}`}>View</a>
+                  <Link to={`/orders/${order.id}`}>View</Link>
                 </Button>
               </div>
             </CardContent>

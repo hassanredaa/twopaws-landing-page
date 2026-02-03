@@ -1,4 +1,5 @@
 ﻿import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { httpsCallable } from "firebase/functions";
 import ShopShell from "@/components/shop/ShopShell";
 import { Button } from "@/components/ui/button";
@@ -151,7 +152,7 @@ export default function CartPage() {
           <CardContent className="p-6">
             <p className="text-slate-600">Sign in to view your cart.</p>
             <Button asChild className="mt-4 bg-brand-green-dark text-white">
-              <a href="/login">Sign in</a>
+              <Link to="/login">Sign in</Link>
             </Button>
           </CardContent>
         </Card>
@@ -305,7 +306,7 @@ export default function CartPage() {
               className="w-full bg-brand-olive text-brand-dark"
               disabled={cartEmpty}
             >
-              <a href="/checkout">Proceed to checkout</a>
+              <Link to="/checkout">Proceed to checkout</Link>
             </Button>
           </div>
         </div>

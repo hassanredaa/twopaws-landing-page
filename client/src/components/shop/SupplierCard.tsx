@@ -1,5 +1,6 @@
 ﻿import { Card, CardContent } from "@/components/ui/card";
 import type { SupplierDoc } from "@/hooks/useSuppliers";
+import { Link } from "react-router-dom";
 
 const getLogo = (supplier: SupplierDoc) =>
   (supplier.logo_url as string) || (supplier.logoUrl as string) || (supplier.logo as string);
@@ -12,7 +13,7 @@ export default function SupplierCard({ supplier }: SupplierCardProps) {
   const logo = getLogo(supplier);
 
   return (
-    <a href={`/shop/supplier/${supplier.id}`}>
+    <Link to={`/shop/supplier/${supplier.id}`}>
       <Card className="flex h-full items-center gap-4 border-slate-100 p-4 shadow-sm transition hover:shadow-md">
         {logo ? (
           <img src={logo} alt={supplier.name ?? "Supplier"} className="h-14 w-14 rounded-full object-cover" />
@@ -28,6 +29,6 @@ export default function SupplierCard({ supplier }: SupplierCardProps) {
           <p className="text-sm text-slate-500">Browse products</p>
         </CardContent>
       </Card>
-    </a>
+    </Link>
   );
 }
