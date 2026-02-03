@@ -7,6 +7,7 @@ import {
 } from "@/lib/seo/constants";
 
 const navLinks = [
+  { href: "/shop", label: "Shop" },
   { href: "/about", label: "About" },
   { href: "/features", label: "Features" },
   { href: "/egypt", label: "Egypt" },

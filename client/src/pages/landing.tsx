@@ -249,6 +249,9 @@ export default function Landing() {
               >
                 FAQ
               </button>
+              <a href="/shop" className="text-gray-600 hover:text-brand-green-dark transition-colors">
+                Shop
+              </a>
               {/* <button
                 onClick={() => scrollToSection("testimonials")}
                 className="text-gray-600 hover:text-brand-green-dark transition-colors"
@@ -307,6 +310,9 @@ export default function Landing() {
               >
                 FAQ
               </button>
+              <a href="/shop" className="block w-full text-left text-gray-600">
+                Shop
+              </a>
               <a href="/terms" className="text-gray-600 hover:text-brand-green-dark transition-colors">
                 Terms
               </a>

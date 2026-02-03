@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { HelmetProvider } from "react-helmet-async";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/hooks/useAuth";
 import Landing from "@/pages/landing";
 import AboutPage from "@/pages/marketing/about";
 import ContactPage from "@/pages/marketing/contact";
@@ -14,27 +15,51 @@ import Terms from "@/pages/terms";
 import Privacy from "@/pages/privacy";
 import DeleteAccount from "@/pages/delete-account";
 import DownloadRedirect from "@/pages/download";
+import ShopPage from "@/pages/shop";
+import SuppliersPage from "@/pages/shop/suppliers";
+import SupplierShopPage from "@/pages/shop/supplier";
+import ProductDetailPage from "@/pages/shop/product";
+import CartPage from "@/pages/cart";
+import CheckoutPage from "@/pages/checkout";
+import OrdersPage from "@/pages/orders";
+import OrderDetailPage from "@/pages/order-detail";
+import LoginPage from "@/pages/login";
+import PaymobPaymentPage from "@/pages/payment/paymob";
+import PaymentReturnPage from "@/pages/payment/return";
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <HelmetProvider>
         <TooltipProvider>
-          <BrowserRouter>
-            <Toaster />
-            <Routes>
-              <Route path="/" element={<Landing />} />
-              <Route path="/about" element={<AboutPage />} />
-              <Route path="/features" element={<FeaturesPage />} />
-              <Route path="/egypt" element={<EgyptPage />} />
-              <Route path="/contact" element={<ContactPage />} />
-              <Route path="/terms" element={<Terms />} />
-              <Route path="/privacy" element={<Privacy />} />
-              <Route path="/download" element={<DownloadRedirect />} />
-              <Route path="/delete-account" element={<DeleteAccount />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
+          <AuthProvider>
+            <BrowserRouter>
+              <Toaster />
+              <Routes>
+                <Route path="/" element={<Landing />} />
+                <Route path="/about" element={<AboutPage />} />
+                <Route path="/features" element={<FeaturesPage />} />
+                <Route path="/egypt" element={<EgyptPage />} />
+                <Route path="/contact" element={<ContactPage />} />
+                <Route path="/terms" element={<Terms />} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/download" element={<DownloadRedirect />} />
+                <Route path="/delete-account" element={<DeleteAccount />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/shop" element={<ShopPage />} />
+                <Route path="/shop/suppliers" element={<SuppliersPage />} />
+                <Route path="/shop/supplier/:supplierId" element={<SupplierShopPage />} />
+                <Route path="/shop/product/:productId" element={<ProductDetailPage />} />
+                <Route path="/cart" element={<CartPage />} />
+                <Route path="/checkout" element={<CheckoutPage />} />
+                <Route path="/orders" element={<OrdersPage />} />
+                <Route path="/orders/:orderId" element={<OrderDetailPage />} />
+                <Route path="/payment/paymob" element={<PaymobPaymentPage />} />
+                <Route path="/payment/return" element={<PaymentReturnPage />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </AuthProvider>
         </TooltipProvider>
       </HelmetProvider>
     </QueryClientProvider>

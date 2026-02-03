@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { initializeApp } from 'firebase/app';
+import { httpsCallable } from 'firebase/functions';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,15 +12,7 @@ import facebook from "../../../attached_assets/facebook.svg"
 import tiktok from "../../../attached_assets/tiktok.svg"
 import { Helmet } from "react-helmet-async";
 
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-};
-
-const app = initializeApp(firebaseConfig);
-const functions = getFunctions(app);
+import { functions } from '@/lib/firebase';
 
 export default function DeleteAccount() {
   const { toast } = useToast();
@@ -63,6 +54,9 @@ export default function DeleteAccount() {
               <a href="/" className="text-gray-600 hover:text-brand-green-dark transition-colors">
                 Home
               </a>
+              <a href="/shop" className="text-gray-600 hover:text-brand-green-dark transition-colors">
+                Shop
+              </a>
               <a href="/terms" className="text-gray-600 hover:text-brand-green-dark transition-colors">
                 Terms
               </a>
@@ -82,6 +76,9 @@ export default function DeleteAccount() {
             <div className="px-4 py-4 space-y-3">
               <a href="/" className="block w-full text-left text-gray-600">
                 Home
+              </a>
+              <a href="/shop" className="block w-full text-left text-gray-600">
+                Shop
               </a>
               <a href="/terms" className="block w-full text-left text-gray-600">
                 Terms

@@ -104,3 +104,28 @@ For questions about TwoPaws, please visit our website or contact our support tea
 ---
 
 Built with ❤️ for pet lovers in Egypt 🇪🇬
+## Shop Setup
+
+### Firebase client env vars
+Set these in your root `.env` (see `.env.example`):
+
+- `VITE_FIREBASE_API_KEY`
+- `VITE_FIREBASE_AUTH_DOMAIN`
+- `VITE_FIREBASE_PROJECT_ID`
+- `VITE_FIREBASE_APP_ID`
+- `VITE_FIREBASE_STORAGE_BUCKET`
+- `VITE_FIREBASE_MESSAGING_SENDER_ID`
+- `VITE_FIREBASE_MEASUREMENT_ID`
+
+### Paymob (Functions)
+The Paymob integration is implemented in Firebase Functions and requires server-side environment variables:
+
+- `PAYMOB_API_KEY`
+- `PAYMOB_INTEGRATION_ID`
+- `PAYMOB_IFRAME_ID`
+- `PAYMOB_HMAC_SECRET`
+
+Configure your Paymob dashboard to send webhooks to the deployed `paymobWebhook` HTTPS function and use the same HMAC secret.
+
+### Firestore indexes
+No new composite indexes are required with the current queries. If you later add `orderBy` clauses to the cart, address, or order queries, Firestore may prompt you to create composite indexes.
