@@ -4,6 +4,7 @@ import {
   collection,
   doc,
   GeoPoint,
+  getDocs,
   getDoc,
   onSnapshot,
   serverTimestamp,
@@ -375,7 +376,8 @@ export default function CheckoutPage() {
         throw new Error("Unable to generate order number.");
       }
       const orderRef = doc(collection(db, "orders"));
-      const orderStatus = "Pending";
+      const isPaymob = paymentMethod === "paymob";
+      const orderStatus = isPaymob ? "PAYMENT_INITIALIZING" : "Pending";
       await setDoc(orderRef, {
         buyerId: userRef,
         supplierRef: activeSupplierRef,
@@ -387,8 +389,9 @@ export default function CheckoutPage() {
         updated_at: serverTimestamp(),
         status: orderStatus,
         orderStatus,
-        success: true,
+        success: paymentMethod === "cod",
         paymentMethod: paymentMethod === "cod" ? "cash" : "card",
+        paymentStatus: paymentMethod === "cod" ? "PENDING_COD" : "PAYMENT_INITIALIZING",
       });
 
       const batch = writeBatch(db);
@@ -425,16 +428,26 @@ export default function CheckoutPage() {
       }
 
       if (paymentMethod === "paymob") {
-        const createPaymobPayment = httpsCallable(functions, "createPaymobPayment");
-        const result = await createPaymobPayment({ orderId: orderRef.id });
-        const data = result.data as { iframeUrl?: string };
-        if (!data?.iframeUrl) {
-          throw new Error("Unable to start Paymob payment.");
+        try {
+          const createPaymobPayment = httpsCallable(functions, "createPaymobPayment");
+          const result = await createPaymobPayment({ orderId: orderRef.id });
+          const data = result.data as { clientSecret?: string; publicKey?: string };
+          if (!data?.clientSecret || !data?.publicKey) {
+            throw new Error("Unable to start Paymob payment.");
+          }
+          navigate(`/payment/paymob?orderId=${orderRef.id}`, {
+            state: { clientSecret: data.clientSecret, publicKey: data.publicKey },
+          });
+          return;
+        } catch (paymobErr) {
+          // Roll back the draft order if we fail to initialize the payment session.
+          const orderItemsSnap = await getDocs(collection(orderRef, "orderItems"));
+          const cleanupBatch = writeBatch(db);
+          orderItemsSnap.docs.forEach((docSnap) => cleanupBatch.delete(docSnap.ref));
+          cleanupBatch.delete(orderRef);
+          await cleanupBatch.commit();
+          throw paymobErr;
         }
-        navigate(`/payment/paymob?orderId=${orderRef.id}`, {
-          state: { iframeUrl: data.iframeUrl },
-        });
-        return;
       }
 
       await clearCart();

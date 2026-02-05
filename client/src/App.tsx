@@ -32,14 +32,17 @@ import PaymentReturnPage from "@/pages/payment/return";
 
 function MetaPixelTracker() {
   const location = useLocation();
+  const enablePixel = import.meta.env.PROD;
 
   useEffect(() => {
+    if (!enablePixel) return;
     initMetaPixel();
-  }, []);
+  }, [enablePixel]);
 
   useEffect(() => {
+    if (!enablePixel) return;
     trackPageView();
-  }, [location.pathname, location.search]);
+  }, [enablePixel, location.pathname, location.search]);
 
   return null;
 }
@@ -50,7 +53,7 @@ function App() {
       <HelmetProvider>
         <TooltipProvider>
           <AuthProvider>
-            <BrowserRouter>
+            <BrowserRouter future={{ v7_relativeSplatPath: true }}>
               <Toaster />
               <MetaPixelTracker />
               <Routes>

@@ -51,14 +51,15 @@ export function useOrders() {
         id: docSnap.id,
         ...docSnap.data(),
       })) as OrderDoc[];
+      const successfulOrders = next.filter((order) => order.success === true);
 
-      next.sort((a, b) => {
+      successfulOrders.sort((a, b) => {
         const aTime = toMillis(a.created_at ?? a.createdAt);
         const bTime = toMillis(b.created_at ?? b.createdAt);
         return bTime - aTime;
       });
 
-      setOrders(next);
+      setOrders(successfulOrders);
       setLoading(false);
     });
 

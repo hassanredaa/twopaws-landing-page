@@ -10,7 +10,14 @@ import { META_PIXEL_CURRENCY, trackMetaEvent } from "@/lib/metaPixel";
 export default function PaymentReturnPage() {
   const location = useLocation();
   const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
-  const orderId = params.get("orderId");
+  const orderId = useMemo(() => {
+    return (
+      params.get("orderId") ||
+      params.get("merchant_order_id") ||
+      params.get("special_reference") ||
+      null
+    );
+  }, [params]);
   const [status, setStatus] = useState<string | null>(null);
   const [orderSummary, setOrderSummary] = useState<{
     totalPrice?: number;
@@ -38,6 +45,23 @@ export default function PaymentReturnPage() {
     });
     return () => unsubscribe();
   }, [orderId]);
+
+  useEffect(() => {
+    if (status) return;
+    const successParam = params.get("success");
+    const pendingParam = params.get("pending");
+    if (successParam === "true") {
+      setStatus("PAID");
+      return;
+    }
+    if (successParam === "false") {
+      setStatus("PAYMENT_FAILED");
+      return;
+    }
+    if (pendingParam === "true") {
+      setStatus("PAYMENT_PENDING");
+    }
+  }, [params, status]);
 
   useEffect(() => {
     if (!orderId || !status) return;

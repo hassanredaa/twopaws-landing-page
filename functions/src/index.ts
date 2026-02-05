@@ -1,6 +1,7 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
+import { onSchedule } from 'firebase-functions/v2/scheduler';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 
@@ -174,8 +175,85 @@ const requireEnv = (key: string) => {
   return value;
 };
 
+const toPositiveInt = (value: unknown, fallback: number) => {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric) || numeric <= 0) return fallback;
+  return Math.floor(numeric);
+};
+
+const getTimestampMillis = (value: any) => {
+  if (!value) return 0;
+  if (typeof value.toMillis === 'function') return value.toMillis();
+  return 0;
+};
+
+const getOrderLastUpdatedMillis = (order: Record<string, any>) => {
+  return (
+    getTimestampMillis(order?.updated_at) ||
+    getTimestampMillis(order?.updatedAt) ||
+    getTimestampMillis(order?.created_at) ||
+    getTimestampMillis(order?.createdAt) ||
+    0
+  );
+};
+
+const cleanupUnfinishedOrdersInternal = async (olderThanMinutes: number, maxDeletes: number) => {
+  const cutoffMillis = Date.now() - olderThanMinutes * 60 * 1000;
+  let deleted = 0;
+  let scanned = 0;
+  let lastDoc: admin.firestore.QueryDocumentSnapshot | null = null;
+
+  while (deleted < maxDeletes) {
+    let query = db.collection('orders').where('success', '==', false).limit(200);
+    if (lastDoc) {
+      query = query.startAfter(lastDoc);
+    }
+
+    const snapshot = await query.get();
+    if (snapshot.empty) break;
+    lastDoc = snapshot.docs[snapshot.docs.length - 1];
+
+    for (const docSnap of snapshot.docs) {
+      scanned += 1;
+      const data = docSnap.data() as Record<string, any>;
+      if (data?.success === true) continue;
+
+      const orderStatus = String(data?.status ?? data?.orderStatus ?? '').toUpperCase();
+      if (orderStatus === 'PAID') continue;
+
+      const lastUpdatedMillis = getOrderLastUpdatedMillis(data);
+      if (!lastUpdatedMillis || lastUpdatedMillis > cutoffMillis) continue;
+
+      await admin.firestore().recursiveDelete(docSnap.ref);
+      deleted += 1;
+      if (deleted >= maxDeletes) break;
+    }
+
+    if (snapshot.size < 200) break;
+  }
+
+  return {
+    deleted,
+    scanned,
+    cutoffIso: new Date(cutoffMillis).toISOString(),
+  };
+};
+
 const getNestedValue = (obj: Record<string, any>, path: string) => {
   return path.split('.').reduce((acc, key) => (acc ? acc[key] : undefined), obj);
+};
+
+const getPaymobErrorMessage = (payload: any) => {
+  if (!payload) return 'Unable to create Paymob intention';
+  if (typeof payload?.message === 'string' && payload.message.trim()) return payload.message;
+  if (typeof payload?.detail === 'string' && payload.detail.trim()) return payload.detail;
+  if (Array.isArray(payload?.detail)) {
+    const parts = payload.detail
+      .map((item: any) => item?.msg || item?.message || JSON.stringify(item))
+      .filter(Boolean);
+    if (parts.length) return parts.join(', ');
+  }
+  return 'Unable to create Paymob intention';
 };
 
 const buildPaymobHmac = (payload: Record<string, any>, secret: string) => {
@@ -222,9 +300,12 @@ export const createPaymobPayment = functions.https.onCall(async (data: any, cont
     throw new functions.https.HttpsError('invalid-argument', 'orderId is required');
   }
 
-  const apiKey = requireEnv('PAYMOB_API_KEY');
+  const secretKey = requireEnv('PAYMOB_SECRET_KEY');
+  const publicKey = requireEnv('PAYMOB_PUBLIC_KEY');
+  const intentionUrl = requireEnv('PAYMOB_INTENTION_API_URL');
   const integrationId = Number(requireEnv('PAYMOB_INTEGRATION_ID'));
-  const iframeId = Number(requireEnv('PAYMOB_IFRAME_ID'));
+  const notificationUrl = getEnv('PAYMOB_NOTIFICATION_URL');
+  const redirectionUrl = getEnv('PAYMOB_REDIRECTION_URL');
 
   const orderRef = db.collection('orders').doc(orderId);
   const orderSnap = await orderRef.get();
@@ -247,85 +328,98 @@ export const createPaymobPayment = functions.https.onCall(async (data: any, cont
     throw new functions.https.HttpsError('failed-precondition', 'Order total is invalid');
   }
 
-  const authResponse = await fetch('https://accept.paymob.com/api/auth/tokens', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ api_key: apiKey }),
-  });
-  const authJson = await authResponse.json();
-  if (!authJson?.token) {
-    throw new functions.https.HttpsError('internal', 'Unable to authenticate with Paymob');
-  }
-
-  const paymobOrderResponse = await fetch('https://accept.paymob.com/api/ecommerce/orders', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      auth_token: authJson.token,
-      delivery_needed: false,
-      amount_cents: amountCents,
-      currency: 'EGP',
-      items: [
-        {
-          name: `Order ${orderData.orderNumber ?? orderId}`,
-          amount_cents: amountCents,
-          quantity: 1,
-          description: 'TwoPaws order',
-        },
-      ],
-      merchant_order_id: orderId,
-    }),
-  });
-  const paymobOrderJson = await paymobOrderResponse.json();
-  if (!paymobOrderJson?.id) {
-    throw new functions.https.HttpsError('internal', 'Unable to create Paymob order');
+  if (!notificationUrl) {
+    throw new functions.https.HttpsError('failed-precondition', 'PAYMOB_NOTIFICATION_URL is not set');
   }
 
   const addressSnap = orderData.shippingAddress ? await orderData.shippingAddress.get() : null;
   const addressData = (addressSnap?.exists ? addressSnap.data() : {}) as Record<string, any>;
-  const recipientName = addressData?.recipientName || addressData?.name || '';
-  const [firstName = 'Customer', lastName = ''] = String(recipientName).split(' ');
+  const buyerUid = orderData?.buyerId?.id || context.auth.uid;
+  let recipientName = String(addressData?.recipientName || addressData?.name || '').trim();
+  if (!recipientName && buyerUid) {
+    const userSnap = await db.collection('users').doc(buyerUid).get();
+    if (userSnap.exists) {
+      const userData = (userSnap.data() || {}) as Record<string, any>;
+      recipientName = String(
+        userData?.display_name ||
+          userData?.displayName ||
+          userData?.name ||
+          context.auth.token?.name ||
+          ''
+      ).trim();
+    }
+  }
+  if (!recipientName) {
+    recipientName = String(context.auth.token?.name || 'Customer').trim() || 'Customer';
+  }
+  const nameParts = recipientName.split(/\s+/).filter(Boolean);
+  const firstName = nameParts[0] || 'Customer';
+  const lastName = nameParts.slice(1).join(' ') || 'TwoPaws';
 
-  const paymentKeyResponse = await fetch('https://accept.paymob.com/api/acceptance/payment_keys', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      auth_token: authJson.token,
-      amount_cents: amountCents,
-      expiration: 3600,
-      order_id: paymobOrderJson.id,
-      currency: 'EGP',
-      integration_id: integrationId,
-      billing_data: {
-        first_name: firstName || 'Customer',
-        last_name: lastName || 'TwoPaws',
-        email: context.auth.token?.email || 'support@twopaws.pet',
-        phone_number: addressData?.phone || 'NA',
-        apartment: addressData?.apartment || 'NA',
-        floor: addressData?.floor || 'NA',
-        street: addressData?.street || 'NA',
-        building: addressData?.building || 'NA',
-        shipping_method: 'PKG',
-        postal_code: addressData?.postalCode || '00000',
-        city: addressData?.city || 'Cairo',
-        country: addressData?.country || 'EG',
-        state: addressData?.area || 'NA',
+  const payload: Record<string, any> = {
+    amount: amountCents,
+    currency: 'EGP',
+    payment_methods: [integrationId],
+    items: [
+      {
+        name: `Order ${orderData.orderNumber ?? orderId}`,
+        amount: amountCents,
+        quantity: 1,
+        description: 'TwoPaws order',
       },
-      lock_order_when_paid: true,
-    }),
-  });
-  const paymentKeyJson = await paymentKeyResponse.json();
-  if (!paymentKeyJson?.token) {
-    throw new functions.https.HttpsError('internal', 'Unable to initialize payment');
+    ],
+    billing_data: {
+      first_name: firstName || 'Customer',
+      last_name: lastName || 'TwoPaws',
+      email: context.auth.token?.email || 'support@twopaws.pet',
+      phone_number: addressData?.phone || 'NA',
+      apartment: addressData?.apartment || 'NA',
+      floor: addressData?.floor || 'NA',
+      street: addressData?.street || 'NA',
+      building: addressData?.building || 'NA',
+      shipping_method: 'PKG',
+      postal_code: addressData?.postalCode || '00000',
+      city: addressData?.city || 'Cairo',
+      country: addressData?.country || 'EG',
+      state: addressData?.area || 'NA',
+    },
+    special_reference: orderId,
+    notification_url: notificationUrl,
+  };
+
+  if (redirectionUrl) {
+    payload.redirection_url = redirectionUrl;
   }
 
-  const iframeUrl = `https://accept.paymob.com/api/acceptance/iframes/${iframeId}?payment_token=${paymentKeyJson.token}`;
+  const intentionResponse = await fetch(intentionUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Token ${secretKey}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  const intentionJson = await intentionResponse.json().catch(() => null);
+  if (!intentionResponse.ok) {
+    const errorMessage = getPaymobErrorMessage(intentionJson);
+    console.error('Paymob intention failed', {
+      orderId,
+      status: intentionResponse.status,
+      response: intentionJson,
+    });
+    throw new functions.https.HttpsError('internal', errorMessage);
+  }
+  if (!intentionJson?.client_secret) {
+    throw new functions.https.HttpsError('internal', 'Paymob did not return a client secret');
+  }
 
   await orderRef.set(
     {
       paymentProvider: 'paymob',
+      paymentMethod: 'card',
       paymentStatus: 'PAYMENT_PENDING',
-      paymobOrderId: paymobOrderJson.id,
+      paymobOrderId: intentionJson?.intention_order_id ?? null,
+      paymobIntentionId: intentionJson?.id ?? null,
       status: 'PAYMENT_PENDING',
       orderStatus: 'PAYMENT_PENDING',
       updated_at: admin.firestore.FieldValue.serverTimestamp(),
@@ -333,7 +427,11 @@ export const createPaymobPayment = functions.https.onCall(async (data: any, cont
     { merge: true }
   );
 
-  return { iframeUrl };
+  return {
+    clientSecret: intentionJson.client_secret,
+    publicKey,
+    intentionId: intentionJson?.id ?? null,
+  };
 });
 
 export const paymobWebhook = functions.https.onRequest(async (req, res) => {
@@ -344,9 +442,9 @@ export const paymobWebhook = functions.https.onRequest(async (req, res) => {
     }
 
     const secret = requireEnv('PAYMOB_HMAC_SECRET');
-    const payload = req.body as { hmac?: string; obj?: Record<string, any> };
+    const payload = (req.body ?? {}) as { hmac?: string; obj?: Record<string, any>; data?: Record<string, any> };
     const hmac = payload?.hmac || (req.query?.hmac as string | undefined);
-    const obj = payload?.obj;
+    const obj = payload?.obj || payload?.data || (payload as Record<string, any>);
 
     if (!hmac || !obj) {
       res.status(400).send('Missing payload');
@@ -360,12 +458,23 @@ export const paymobWebhook = functions.https.onRequest(async (req, res) => {
     }
 
     const paymobOrderId = obj?.order?.id;
-    const merchantOrderId = obj?.order?.merchant_order_id;
-    const success = Boolean(obj?.success);
+    const paymobIntentionId = obj?.intention?.id || obj?.intention_id || obj?.payment_intention?.id;
+    const merchantOrderId =
+      obj?.order?.merchant_order_id || obj?.merchant_order_id || obj?.special_reference;
+    const success = Boolean(obj?.success ?? obj?.is_success ?? obj?.transaction?.success);
 
     let orderRef: admin.firestore.DocumentReference | null = null;
     if (merchantOrderId) {
       orderRef = db.collection('orders').doc(String(merchantOrderId));
+    } else if (paymobIntentionId) {
+      const snapshot = await db
+        .collection('orders')
+        .where('paymobIntentionId', '==', paymobIntentionId)
+        .limit(1)
+        .get();
+      if (!snapshot.empty) {
+        orderRef = snapshot.docs[0].ref;
+      }
     } else if (paymobOrderId) {
       const snapshot = await db
         .collection('orders')
@@ -387,15 +496,18 @@ export const paymobWebhook = functions.https.onRequest(async (req, res) => {
       buyerId?: admin.firestore.DocumentReference;
     };
 
-    const nextStatus = success ? 'PAID' : 'PAYMENT_FAILED';
+    const nextPaymentStatus = success ? 'PAID' : 'PAYMENT_FAILED';
+    const nextOrderStatus = success ? 'Pending' : 'PAYMENT_FAILED';
     await orderRef.set(
       {
         paymentProvider: 'paymob',
-        paymentStatus: nextStatus,
-        paymobTransactionId: obj?.id ?? null,
+        paymentMethod: 'card',
+        paymentStatus: nextPaymentStatus,
+        paymobTransactionId: obj?.id ?? obj?.transaction?.id ?? null,
+        paymobClientSecret: admin.firestore.FieldValue.delete(),
         success,
-        status: nextStatus,
-        orderStatus: nextStatus,
+        status: nextOrderStatus,
+        orderStatus: nextOrderStatus,
         paidAt: success ? admin.firestore.FieldValue.serverTimestamp() : null,
         updated_at: admin.firestore.FieldValue.serverTimestamp(),
       },
@@ -425,3 +537,20 @@ export const paymobWebhook = functions.https.onRequest(async (req, res) => {
     res.status(500).send('Internal error');
   }
 });
+
+const cleanupSchedule = getEnv('ORDER_CLEANUP_SCHEDULE') || 'every 30 minutes';
+const cleanupTimeZone = getEnv('ORDER_CLEANUP_TIMEZONE') || 'Africa/Cairo';
+
+export const cleanupUnfinishedOrders = onSchedule(
+  { schedule: cleanupSchedule, timeZone: cleanupTimeZone, retryCount: 1 },
+  async () => {
+    const olderThanMinutes = toPositiveInt(getEnv('ORDER_CLEANUP_AGE_MINUTES'), 180);
+    const maxDeletes = toPositiveInt(getEnv('ORDER_CLEANUP_MAX_DELETES'), 100);
+    const result = await cleanupUnfinishedOrdersInternal(olderThanMinutes, maxDeletes);
+    console.log('cleanupUnfinishedOrders completed', {
+      olderThanMinutes,
+      maxDeletes,
+      ...result,
+    });
+  }
+);
