@@ -10,6 +10,7 @@ import {
   runTransaction,
   serverTimestamp,
   setDoc,
+  writeBatch,
   where,
   type DocumentData,
   type DocumentReference,
@@ -89,7 +90,14 @@ export function useCart() {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const syncInFlight = useRef(false);
   const productUnsubs = useRef<Record<string, () => void>>({});
+
+  const findExistingItem = useCallback(
+    (productId: string) =>
+      items.find((item) => getProductRef(item.productId)?.id === productId),
+    [items]
+  );
 
   useEffect(() => {
     setCartId(null);
@@ -231,6 +239,126 @@ export function useCart() {
     });
   }, [items, productsById]);
 
+  useEffect(() => {
+    if (!user || !cartId) return;
+
+    const updates: {
+      id: string;
+      nextQty: number;
+      nextUnitPrice: number;
+      shouldDelete: boolean;
+    }[] = [];
+
+    let nextItemCount = 0;
+    let nextTotal = 0;
+
+    const grouped = new Map<string, CartItemWithProduct[]>();
+    cartItems.forEach((item) => {
+      const key = item.productIdValue ?? item.id;
+      const list = grouped.get(key) ?? [];
+      list.push(item);
+      grouped.set(key, list);
+    });
+
+    grouped.forEach((group) => {
+      const primary = group[0];
+      const product = group.find((item) => item.product)?.product ?? null;
+      const combinedQty = group.reduce(
+        (sum, item) => sum + toNumber(item.quantity),
+        0
+      );
+
+      let nextQty = combinedQty;
+      let nextUnitPrice = toNumber(primary.unitPrice);
+
+      if (product) {
+        const available = toNumber(product.quantity);
+        nextUnitPrice = getProductUnitPrice(product);
+        nextQty = available > 0 ? Math.min(combinedQty, available) : 0;
+      }
+
+      if (nextQty > 0) {
+        nextItemCount += nextQty;
+        nextTotal += nextQty * nextUnitPrice;
+      }
+
+      const primaryQty = toNumber(primary.quantity);
+      const primaryUnitPrice = toNumber(primary.unitPrice);
+      const needsPrimaryUpdate =
+        nextQty !== primaryQty ||
+        nextUnitPrice !== primaryUnitPrice ||
+        group.length > 1;
+
+      if (needsPrimaryUpdate) {
+        updates.push({
+          id: primary.id,
+          nextQty,
+          nextUnitPrice,
+          shouldDelete: nextQty === 0,
+        });
+      }
+
+      group.slice(1).forEach((dup) => {
+        updates.push({
+          id: dup.id,
+          nextQty: 0,
+          nextUnitPrice,
+          shouldDelete: true,
+        });
+      });
+    });
+
+    const cartItemCount = toNumber(cart?.itemCount);
+    const cartTotal = toNumber(cart?.total);
+    const cartNeedsUpdate =
+      cartItemCount !== nextItemCount || cartTotal !== nextTotal;
+
+    if (updates.length === 0 && !cartNeedsUpdate) return;
+    if (syncInFlight.current) return;
+
+    syncInFlight.current = true;
+    const cartRef = doc(db, "carts", cartId);
+    const batch = writeBatch(db);
+
+    updates.forEach((update) => {
+      const itemRef = doc(cartRef, "cartItems", update.id);
+      if (update.shouldDelete) {
+        batch.delete(itemRef);
+        return;
+      }
+      batch.set(
+        itemRef,
+        {
+          quantity: update.nextQty,
+          unitPrice: update.nextUnitPrice,
+          lastPriceSyncAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+    });
+
+    if (cartNeedsUpdate) {
+      batch.set(
+        cartRef,
+        {
+          itemCount: nextItemCount,
+          total: Math.max(nextTotal, 0),
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+    }
+
+    batch
+      .commit()
+      .catch((err) => {
+        console.error("Cart sync failed:", err);
+      })
+      .finally(() => {
+        syncInFlight.current = false;
+      });
+  }, [user, cartId, cartItems, cart]);
+
   const activeSupplierRef = useMemo(() => {
     for (const item of cartItems) {
       if (item.product?.supplierRef) {
@@ -281,7 +409,8 @@ export function useCart() {
 
       const unitPrice = getProductUnitPrice(product);
       const cartRef = doc(db, "carts", cartId);
-      const itemRef = doc(cartRef, "cartItems", product.id);
+      const existingItem = findExistingItem(product.id);
+      const itemRef = doc(cartRef, "cartItems", existingItem?.id ?? product.id);
       await runTransaction(db, async (transaction) => {
         const cartSnap = await transaction.get(cartRef);
         const cartData = cartSnap.exists() ? (cartSnap.data() as DocumentData) : {};
@@ -325,7 +454,7 @@ export function useCart() {
         );
       });
     },
-    [user, cartId, activeSupplierRef, items]
+    [user, cartId, activeSupplierRef, items, findExistingItem]
   );
 
   const setItemQuantity = useCallback(
@@ -343,7 +472,8 @@ export function useCart() {
       const targetQty = Math.min(Math.max(nextQty, 0), available > 0 ? available : 0);
       const unitPrice = getProductUnitPrice(product);
       const cartRef = doc(db, "carts", cartId);
-      const itemRef = doc(cartRef, "cartItems", product.id);
+      const existingItem = findExistingItem(product.id);
+      const itemRef = doc(cartRef, "cartItems", existingItem?.id ?? product.id);
 
       await runTransaction(db, async (transaction) => {
         const cartSnap = await transaction.get(cartRef);
@@ -395,7 +525,7 @@ export function useCart() {
         }
       });
     },
-    [user, cartId]
+    [user, cartId, findExistingItem]
   );
 
   const removeItem = useCallback(

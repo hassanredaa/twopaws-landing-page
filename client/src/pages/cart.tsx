@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { httpsCallable } from "firebase/functions";
 import ShopShell from "@/components/shop/ShopShell";
@@ -11,6 +11,7 @@ import { useSuppliers } from "@/hooks/useSuppliers";
 import { formatCurrency } from "@/lib/format";
 import { functions } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
+import { META_PIXEL_CURRENCY, trackMetaEvent } from "@/lib/metaPixel";
 
 const PROMO_STORAGE_KEY = "twopawsPromo";
 
@@ -28,6 +29,8 @@ export default function CartPage() {
   const [promoCode, setPromoCode] = useState("");
   const [promo, setPromo] = useState<PromoState | null>(null);
   const [applying, setApplying] = useState(false);
+  const lastPromoRecalcKey = useRef<string | null>(null);
+  const promoRecalcTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const supplierName = activeSupplierRef ? supplierMap[activeSupplierRef.id]?.name : undefined;
 
@@ -49,6 +52,37 @@ export default function CartPage() {
   const subtotal = cart?.total ?? 0;
   const previewTotal = promo ? promo.total : subtotal;
   const discount = promo ? promo.discount : 0;
+  const activePromoCode = promo?.code ?? "";
+
+  const recalcPromo = async (code: string) => {
+    if (!cart?.id || !code) return;
+    setApplying(true);
+    try {
+      const fn = httpsCallable(functions, "validatePromo");
+      const result = await fn({ code, cartId: cart.id });
+      const data = result.data as { ok: boolean; discountapp?: number; total?: number };
+      if (!data?.ok) {
+        throw new Error("Promo code not valid.");
+      }
+      const nextPromo = {
+        code,
+        discount: data.discountapp ?? 0,
+        total: data.total ?? subtotal,
+      };
+      setPromo(nextPromo);
+      localStorage.setItem(PROMO_STORAGE_KEY, JSON.stringify(nextPromo));
+    } catch (err) {
+      setPromo(null);
+      localStorage.removeItem(PROMO_STORAGE_KEY);
+      toast({
+        title: "Promo removed",
+        description: (err as Error).message,
+        variant: "destructive",
+      });
+    } finally {
+      setApplying(false);
+    }
+  };
 
   const handleApplyPromo = async () => {
     if (!cart?.id || !promoCode.trim()) return;
@@ -85,10 +119,27 @@ export default function CartPage() {
   };
 
   useEffect(() => {
-    if (cartItems.length === 0 && promo) {
+    if (cartItems.length === 0 && activePromoCode) {
       handleClearPromo();
+      return;
     }
-  }, [cartItems.length, promo]);
+    if (!activePromoCode || !cart?.id) return;
+    const key = `${cart.id}:${activePromoCode}:${subtotal}:${cartItems.length}`;
+    if (lastPromoRecalcKey.current === key) return;
+    if (promoRecalcTimer.current) {
+      clearTimeout(promoRecalcTimer.current);
+    }
+    promoRecalcTimer.current = setTimeout(() => {
+      lastPromoRecalcKey.current = key;
+      recalcPromo(activePromoCode);
+    }, 300);
+    return () => {
+      if (promoRecalcTimer.current) {
+        clearTimeout(promoRecalcTimer.current);
+        promoRecalcTimer.current = null;
+      }
+    };
+  }, [cartItems.length, subtotal, activePromoCode, cart?.id]);
 
   const handleQuantityChange = async (productId: string, nextQty: number) => {
     const item = cartItems.find((entry) => entry.productIdValue === productId);
@@ -113,6 +164,21 @@ export default function CartPage() {
     if (!item?.product) return;
     try {
       await removeItem(item.product);
+      const unitPrice =
+        typeof item.unitPrice === "number"
+          ? item.unitPrice
+          : typeof item.product.price === "number"
+            ? item.product.price
+            : 0;
+      const quantity = item.quantity ?? 1;
+      trackMetaEvent("RemoveFromCart", {
+        content_ids: [item.product.id],
+        content_type: "product",
+        content_name: item.product.name ?? "Product",
+        value: unitPrice * quantity,
+        currency: META_PIXEL_CURRENCY,
+        contents: [{ id: item.product.id, quantity, item_price: unitPrice }],
+      });
     } catch (err) {
       toast({
         title: "Unable to remove",
@@ -123,9 +189,38 @@ export default function CartPage() {
   };
 
   const handleClearCart = async () => {
+    const removedItems = cartItems
+      .map((item) => {
+        const id = item.productIdValue ?? item.product?.id ?? item.id;
+        const unitPrice =
+          typeof item.unitPrice === "number"
+            ? item.unitPrice
+            : typeof item.product?.price === "number"
+              ? item.product.price
+              : 0;
+        return { id, quantity: item.quantity ?? 1, item_price: unitPrice };
+      })
+      .filter((item) => Boolean(item.id));
+    const removedTotal = removedItems.reduce(
+      (sum, item) => sum + item.item_price * (item.quantity ?? 1),
+      0
+    );
     try {
       await clearCart();
       handleClearPromo();
+      if (removedItems.length > 0) {
+        trackMetaEvent("RemoveFromCart", {
+          content_ids: removedItems.map((item) => item.id),
+          content_type: "product",
+          contents: removedItems,
+          value: removedTotal,
+          currency: META_PIXEL_CURRENCY,
+          num_items: removedItems.reduce(
+            (sum, item) => sum + (item.quantity ?? 1),
+            0
+          ),
+        });
+      }
     } catch (err) {
       toast({
         title: "Unable to clear cart",
@@ -185,19 +280,27 @@ export default function CartPage() {
               return (
                 <Card key={item.id} className="border-slate-100">
                   <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
-                    {photo ? (
-                      <img src={photo} alt={product.name} className="h-20 w-20 rounded-xl object-cover" />
-                    ) : (
-                      <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-slate-100 text-xs text-slate-400">
-                        No image
-                      </div>
-                    )}
+                    <Link
+                      to={`/shop/product/${product.id}`}
+                      className="flex h-20 w-20 items-center justify-center"
+                    >
+                      {photo ? (
+                        <img src={photo} alt={product.name} className="h-20 w-20 rounded-xl object-cover" />
+                      ) : (
+                        <div className="flex h-20 w-20 items-center justify-center rounded-xl bg-slate-100 text-xs text-slate-400">
+                          No image
+                        </div>
+                      )}
+                    </Link>
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-slate-900">
+                      <Link
+                        to={`/shop/product/${product.id}`}
+                        className="text-lg font-semibold text-slate-900 hover:text-brand-green-dark"
+                      >
                         {product.name}
-                      </h3>
+                      </Link>
                       <p className="text-sm text-slate-500">
-                        {formatCurrency(unitPrice)} · {stock} in stock
+                        {formatCurrency(unitPrice)}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "postbuild": "react-snap && node scripts/generate-sitemap.mjs",
+    "postbuild": "node scripts/run-react-snap.mjs && node scripts/generate-sitemap.mjs",
     "serve": "vite preview",
     "check": "tsc"
   },
@@ -92,6 +92,8 @@
       "/about",
       "/features",
       "/egypt",
+      "/shop",
+      "/shop/suppliers",
       "/privacy",
       "/terms",
       "/contact"

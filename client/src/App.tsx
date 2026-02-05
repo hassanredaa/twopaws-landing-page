@@ -1,10 +1,12 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { useEffect } from "react";
+import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { HelmetProvider } from "react-helmet-async";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
+import { initMetaPixel, trackPageView } from "@/lib/metaPixel";
 import Landing from "@/pages/landing";
 import AboutPage from "@/pages/marketing/about";
 import ContactPage from "@/pages/marketing/contact";
@@ -23,9 +25,24 @@ import CartPage from "@/pages/cart";
 import CheckoutPage from "@/pages/checkout";
 import OrdersPage from "@/pages/orders";
 import OrderDetailPage from "@/pages/order-detail";
+import AccountPage from "@/pages/account";
 import LoginPage from "@/pages/login";
 import PaymobPaymentPage from "@/pages/payment/paymob";
 import PaymentReturnPage from "@/pages/payment/return";
+
+function MetaPixelTracker() {
+  const location = useLocation();
+
+  useEffect(() => {
+    initMetaPixel();
+  }, []);
+
+  useEffect(() => {
+    trackPageView();
+  }, [location.pathname, location.search]);
+
+  return null;
+}
 
 function App() {
   return (
@@ -35,6 +52,7 @@ function App() {
           <AuthProvider>
             <BrowserRouter>
               <Toaster />
+              <MetaPixelTracker />
               <Routes>
                 <Route path="/" element={<Landing />} />
                 <Route path="/about" element={<AboutPage />} />
@@ -54,6 +72,7 @@ function App() {
                 <Route path="/checkout" element={<CheckoutPage />} />
                 <Route path="/orders" element={<OrdersPage />} />
                 <Route path="/orders/:orderId" element={<OrderDetailPage />} />
+                <Route path="/account" element={<AccountPage />} />
                 <Route path="/payment/paymob" element={<PaymobPaymentPage />} />
                 <Route path="/payment/return" element={<PaymentReturnPage />} />
                 <Route path="*" element={<NotFound />} />

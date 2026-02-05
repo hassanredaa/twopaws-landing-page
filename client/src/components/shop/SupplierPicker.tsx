@@ -157,8 +157,8 @@ export function SupplierPicker({
   const isAllSelected = supplierMode === "all" || selectedSupplierId === "all";
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex gap-6 overflow-x-auto pb-2 no-scrollbar snap-x snap-mandatory">
+    <div className="flex min-w-0 flex-col gap-3">
+      <div className="flex max-w-full gap-6 overflow-x-auto pb-2 no-scrollbar snap-x snap-mandatory">
         <SupplierPickerCard
           label="All suppliers"
           etaLabel="Browse everything"

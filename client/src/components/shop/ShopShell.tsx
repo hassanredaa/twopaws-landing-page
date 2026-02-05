@@ -1,8 +1,15 @@
 ﻿import type { ReactNode } from "react";
-import { ShoppingCart } from "lucide-react";
+import { Menu, ShoppingCart } from "lucide-react";
 import { Link } from "react-router-dom";
 import twoPawsLogo from "../../../../attached_assets/logotrans.webp";
 import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
 
@@ -10,6 +17,7 @@ const navLinks = [
   { href: "/shop", label: "Shop" },
   { href: "/shop/suppliers", label: "Suppliers" },
   { href: "/orders", label: "Orders" },
+  { href: "/account", label: "Account" },
 ];
 
 type ShopShellProps = {
@@ -24,8 +32,31 @@ export default function ShopShell({ children }: ShopShellProps) {
   return (
     <div className="min-h-screen bg-white text-slate-900">
       <header className="sticky top-0 z-50 border-b border-slate-100 bg-white/90 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 w-full items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4">
+            <Sheet>
+              <SheetTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-center rounded-lg border border-slate-200 p-2 text-slate-700 hover:border-brand-green-dark hover:text-brand-green-dark md:hidden"
+                  aria-label="Open menu"
+                >
+                  <Menu className="h-5 w-5" />
+                </button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-72 p-6">
+                <SheetHeader className="text-left">
+                  <SheetTitle>Menu</SheetTitle>
+                </SheetHeader>
+                <nav className="mt-6 flex flex-col gap-4 text-sm text-slate-700">
+                  {navLinks.map((link) => (
+                    <Link key={link.href} to={link.href} className="hover:text-brand-green-dark">
+                      {link.label}
+                    </Link>
+                  ))}
+                </nav>
+              </SheetContent>
+            </Sheet>
             <Link to="/" className="flex items-center gap-2">
               <img src={twoPawsLogo} alt="TwoPaws" className="h-10" />
             </Link>
@@ -71,12 +102,12 @@ export default function ShopShell({ children }: ShopShellProps) {
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 pb-16 pt-8 sm:px-6 lg:px-8">
+      <main className="mx-auto flex w-full max-w-[1440px] flex-col gap-8 px-4 pb-16 pt-8 sm:px-6 lg:px-8">
         {children}
       </main>
 
       <footer className="border-t border-slate-100 bg-white py-8">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+        <div className="flex w-full flex-col gap-4 px-4 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <p className="font-semibold text-slate-900">TwoPaws Shop</p>
           <div className="flex flex-wrap gap-4">
             <Link className="hover:text-slate-900" to="/terms">

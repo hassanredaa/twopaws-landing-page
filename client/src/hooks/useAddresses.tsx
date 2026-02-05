@@ -2,19 +2,26 @@
 import {
   addDoc,
   collection,
+  doc,
+  GeoPoint,
   onSnapshot,
   query,
   serverTimestamp,
+  setDoc,
   where,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/hooks/useAuth";
+
+export const ADDRESS_COUNTRY = "Egypt";
+export const ADDRESS_CITIES = ["Cairo", "Giza"] as const;
 
 export type AddressDoc = {
   id: string;
   label?: string;
   recipientName?: string;
   phone?: string;
+  country?: string;
   city?: string;
   area?: string;
   street?: string;
@@ -22,6 +29,7 @@ export type AddressDoc = {
   floor?: string;
   apartment?: string;
   notes?: string;
+  location?: GeoPoint;
   [key: string]: unknown;
 };
 
@@ -66,7 +74,25 @@ export function useAddresses() {
     [user, userRef]
   );
 
-  return { addresses, loading, addAddress };
+  const updateAddress = useCallback(
+    async (id: string, payload: Partial<Omit<AddressDoc, "id">>) => {
+      if (!user || !userRef) {
+        throw new Error("You must be signed in to update an address.");
+      }
+      await setDoc(
+        doc(db, "addresses", id),
+        {
+          ...payload,
+          userId: userRef,
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
+    },
+    [user, userRef]
+  );
+
+  return { addresses, loading, addAddress, updateAddress };
 }
 
 export const formatAddress = (address?: AddressDoc | null) => {
@@ -80,6 +106,7 @@ export const formatAddress = (address?: AddressDoc | null) => {
     address.floor,
     address.apartment,
     address.area,
+    address.country,
     address.city,
   ].filter(Boolean);
   if (parts.length) return parts.join(" • ");

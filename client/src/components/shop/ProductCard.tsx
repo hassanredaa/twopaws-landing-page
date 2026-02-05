@@ -47,7 +47,7 @@ export default function ProductCard({
   return (
     <Link to={`/shop/product/${product.id}`} className="block h-full">
       <Card className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md">
-        <div className="relative flex h-48 w-full items-center justify-center overflow-hidden bg-white">
+        <div className="relative flex h-56 w-full items-center justify-center overflow-hidden bg-white">
           {photo ? (
             <img
               src={photo}
@@ -74,13 +74,13 @@ export default function ProductCard({
           </button>
         </div>
 
-        <CardContent className="flex flex-1 flex-col gap-1 p-3">
+        <CardContent className="flex flex-1 flex-col gap-1 p-4">
           {categoryName ? (
             <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
               {categoryName}
             </p>
           ) : null}
-          <h3 className="text-sm font-semibold leading-snug text-slate-900 line-clamp-2">
+          <h3 className="text-base font-semibold leading-snug text-slate-900 line-clamp-2">
             {product.name ?? "Untitled product"}
           </h3>
           {unitLabel ? (

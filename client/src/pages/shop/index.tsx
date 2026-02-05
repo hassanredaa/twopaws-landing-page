@@ -5,10 +5,12 @@ import {
   ChevronRight,
   ChevronUp,
   Search,
+  SlidersHorizontal,
 } from "lucide-react";
 import ShopShell from "@/components/shop/ShopShell";
 import ProductCard from "@/components/shop/ProductCard";
 import { SupplierPicker } from "@/components/shop/SupplierPicker";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -23,6 +25,8 @@ import { useProducts } from "@/hooks/useProducts";
 import { useSuppliers } from "@/hooks/useSuppliers";
 import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/use-toast";
+import { META_PIXEL_CURRENCY, trackMetaEvent } from "@/lib/metaPixel";
+import Seo from "@/lib/seo/Seo";
 
 const getUnitPrice = (price?: number, salePrice?: number, onSale?: boolean) => {
   if (onSale && typeof salePrice === "number" && salePrice > 0) return salePrice;
@@ -108,6 +112,7 @@ export default function ShopPage() {
   const [maxPrice, setMaxPrice] = useState<string>("");
   const [perPage, setPerPage] = useState<number>(12);
   const [page, setPage] = useState<number>(1);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const sortOptions = useMemo(() => {
     const hasNewest = products.some((product) => product.created_at || product.createdAt);
@@ -241,6 +246,15 @@ export default function ShopPage() {
     if (!product) return;
     try {
       await addItem(product, 1);
+      const unitPrice = getUnitPrice(product.price, product.sale_price, product.on_sale);
+      trackMetaEvent("AddToCart", {
+        content_ids: [product.id],
+        content_type: "product",
+        content_name: product.name ?? "Product",
+        value: unitPrice,
+        currency: META_PIXEL_CURRENCY,
+        contents: [{ id: product.id, quantity: 1, item_price: unitPrice }],
+      });
       toast({ title: "Added to cart", description: product.name ?? "Item" });
     } catch (err: unknown) {
       const message =
@@ -251,22 +265,40 @@ export default function ShopPage() {
 
   return (
     <ShopShell>
-      <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
-        <aside className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <Input
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-              placeholder="Search..."
-              className="h-10 pl-9 text-sm"
-            />
+      <Seo
+        title="Shop | TwoPaws"
+        description="Browse pet food, supplies, and accessories from trusted suppliers."
+        canonicalUrl="/shop"
+        ogType="website"
+      />
+      <div className="grid min-w-0 gap-6 lg:grid-cols-[280px_1fr]">
+        <aside className="min-w-0 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex items-center justify-between lg:hidden">
+            <p className="text-sm font-semibold text-slate-800">Filters</p>
+            <Button
+              variant="outline"
+              className="border-slate-200"
+              onClick={() => setFiltersOpen((prev) => !prev)}
+            >
+              {filtersOpen ? "Hide" : "Show"}
+            </Button>
           </div>
 
-          <div className="mt-5 space-y-5">
+          <div className={`${filtersOpen ? "block" : "hidden"} lg:block`}>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Input
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                placeholder="Search..."
+                className="h-10 pl-9 text-sm"
+              />
+            </div>
+
+            <div className="mt-5 space-y-5">
             <div>
               <button
                 type="button"
@@ -470,12 +502,35 @@ export default function ShopPage() {
               <p className="font-semibold text-orange-900">Special promo</p>
               <p className="text-xs text-orange-800">Save on pet essentials today.</p>
             </div>
+            </div>
           </div>
         </aside>
 
-        <div className="flex flex-col gap-4">
+        <div className="flex min-w-0 flex-col gap-4">
+          <div className="flex items-center gap-2 lg:hidden">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Input
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                placeholder="Search..."
+                className="h-10 pl-9 text-sm"
+              />
+            </div>
+            <Button
+              variant="outline"
+              className="border-slate-200"
+              onClick={() => setFiltersOpen((prev) => !prev)}
+              aria-label="Toggle filters"
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+            </Button>
+          </div>
           <header className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-3 text-slate-800">
-            <div className="flex flex-wrap items-center gap-3 text-sm">
+            <div className="flex flex-wrap items-center gap-2 text-sm">
               <span className="font-semibold">Total items: {totalItems}</span>
               <div className="flex items-center gap-2">
                 <span>Show</span>
@@ -498,10 +553,10 @@ export default function ShopPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="ml-auto flex items-center gap-2">
+              <div className="flex w-full items-center gap-2 sm:ml-auto sm:w-auto">
                 <span>Sort by</span>
                 <Select value={sort} onValueChange={setSort}>
-                  <SelectTrigger className="h-8 w-40">
+                  <SelectTrigger className="h-8 w-full sm:w-40">
                     <SelectValue placeholder="Sort" />
                   </SelectTrigger>
                   <SelectContent>
@@ -545,7 +600,7 @@ export default function ShopPage() {
             </div>
           </section>
 
-          <section className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          <section className="grid grid-cols-2 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
             {loading && (
               <p className="text-sm text-slate-500">Loading products...</p>
             )}
@@ -576,8 +631,8 @@ export default function ShopPage() {
             })}
           </section>
 
-          <footer className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700">
-            <div className="flex items-center gap-2">
+          <footer className="flex flex-wrap items-center justify-center gap-4 rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700">
+            <div className="flex items-center justify-center gap-2">
               <button
                 type="button"
                 className="rounded-md border border-slate-200 px-3 py-1 disabled:opacity-50"
