@@ -95,7 +95,7 @@ function OfferCell({ item }: { item: OfferItem }) {
       )}
 
       {item.label ? (
-        <p className="font-marvin text-2xl uppercase leading-6 text-brand-purple sm:text-3xl sm:leading-7 lg:text-[2.05rem] lg:leading-8">
+        <p className="font-marvin text-xl uppercase leading-5 text-brand-purple sm:text-2xl sm:leading-6 lg:text-[1.75rem] lg:leading-7">
           {item.label}
         </p>
       ) : null}
@@ -365,9 +365,9 @@ export default function Landing() {
         {/* ABOUT (spacing + typography like reference) */}
         <section
           id="about"
-          className="relative z-0 overflow-hidden bg-white px-4 pb-10 pt-24 sm:px-8 sm:pb-12 sm:pt-28 lg:px-10 lg:pb-14 lg:pt-32"
+          className="relative overflow-visible bg-white px-4 pb-10 pt-24 sm:px-8 sm:pb-12 sm:pt-28 lg:px-10 lg:pb-14 lg:pt-32"
         >
-          <div className="mx-auto grid w-full max-w-[1366px] items-start gap-6 lg:grid-cols-[250px_minmax(0,1fr)] lg:gap-10">
+          <div className="relative z-20 mx-auto grid w-full max-w-[1366px] items-start gap-6 lg:grid-cols-[250px_minmax(0,1fr)] lg:gap-10">
             <div className="flex justify-center pt-1 lg:justify-start lg:pt-0">
               <img
                 src={phoneMockup}
@@ -376,12 +376,12 @@ export default function Landing() {
               />
             </div>
 
-            <div className="text-center">
-              <h2 className="font-marvin text-5xl uppercase text-brand-purple sm:text-6xl lg:text-[4.4rem]">
+            <div className="text-right">
+              <h2 className="font-marvin text-4xl uppercase text-brand-purple sm:text-5xl lg:text-[3.35rem]">
                 ABOUT TWOPAWS
               </h2>
 
-              <div className="mx-auto mt-5 max-w-[980px] space-y-5 text-lg leading-[1.35] sm:text-xl lg:text-[1.65rem]">
+              <div className="mx-auto mt-5 max-w-[980px] space-y-5 text-lg leading-[1.35] sm:text-xl lg:text-[1.45rem]">
                 <p className="text-brand-purple">
                   TwoPaws began as a passion project between two best friends
                   who wanted a{" "}
@@ -414,22 +414,22 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* Paw/diagonal shape: positioned like reference and clipped to About */}
+          {/* Paw/diagonal shape: overlaps About + Features and stays under text */}
           <img
             src="/shape-5.svg"
             alt=""
             aria-hidden
-            className="pointer-events-none absolute -bottom-40 -right-48 hidden w-[360px] opacity-95 sm:block lg:w-[420px]"
+            className="pointer-events-none absolute -bottom-56 -right-36 z-10 hidden w-[360px] opacity-95 sm:block lg:-bottom-34 lg:-right-44 lg:w-[430px]"
           />
         </section>
 
         {/* FEATURES */}
         <section
           id="features"
-          className="bg-white px-4 pb-14 sm:px-8 sm:pb-20 lg:px-12"
+          className="relative z-20 bg-white px-4 pb-14 sm:px-8 sm:pb-20 lg:px-12"
         >
-          <div className="mx-auto w-full max-w-[1650px]">
-            <h2 className="font-marvin text-5xl uppercase text-brand-purple sm:text-6xl lg:text-7xl">
+          <div className="relative z-20 mx-auto w-full max-w-[1650px]">
+            <h2 className="font-marvin text-5xl uppercase text-brand-purple sm:text-5xl lg:text-[3.35rem]">
               WHAT WE OFFER
             </h2>
 
