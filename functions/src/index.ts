@@ -548,6 +548,15 @@ const getPaymobErrorMessage = (payload: any) => {
   return 'Unable to create Paymob intention';
 };
 
+const parsePositiveIntegrationIds = (value: unknown) => {
+  if (value === null || value === undefined) return [] as number[];
+  const values = Array.isArray(value) ? value : String(value).split(',');
+  const ids = values
+    .map((entry) => Number(String(entry).trim()))
+    .filter((entry) => Number.isInteger(entry) && entry > 0);
+  return Array.from(new Set(ids));
+};
+
 const buildPaymobHmac = (payload: Record<string, any>, secret: string) => {
   const fields = [
     'amount_cents',
@@ -599,7 +608,38 @@ export const createPaymobPayment = functions.https.onCall(async (data: any, cont
   const secretKey = requireEnv('PAYMOB_SECRET_KEY');
   const publicKey = requireEnv('PAYMOB_PUBLIC_KEY');
   const intentionUrl = requireEnv('PAYMOB_INTENTION_API_URL');
-  const integrationId = Number(requireEnv('PAYMOB_INTEGRATION_ID'));
+  const configuredIntegrationIds = parsePositiveIntegrationIds(getEnv('PAYMOB_INTEGRATION_IDS'));
+  if (configuredIntegrationIds.length === 0) {
+    const singleIntegrationId = Number(getEnv('PAYMOB_INTEGRATION_ID'));
+    if (Number.isInteger(singleIntegrationId) && singleIntegrationId > 0) {
+      configuredIntegrationIds.push(singleIntegrationId);
+    }
+  }
+  if (configuredIntegrationIds.length === 0) {
+    throw new functions.https.HttpsError(
+      'failed-precondition',
+      'Set PAYMOB_INTEGRATION_IDS or PAYMOB_INTEGRATION_ID'
+    );
+  }
+
+  const requestedIntegrationIds = parsePositiveIntegrationIds(
+    Array.isArray(data?.integrationIds) && data.integrationIds.length
+      ? data.integrationIds
+      : data?.integrationId
+  );
+  let paymentMethods = configuredIntegrationIds;
+  if (requestedIntegrationIds.length > 0) {
+    const configuredSet = new Set(configuredIntegrationIds);
+    const invalidIds = requestedIntegrationIds.filter((id) => !configuredSet.has(id));
+    if (invalidIds.length) {
+      throw new functions.https.HttpsError(
+        'invalid-argument',
+        `Requested integration IDs are not allowed: ${invalidIds.join(', ')}`
+      );
+    }
+    paymentMethods = requestedIntegrationIds;
+  }
+
   const notificationUrl = getEnv('PAYMOB_NOTIFICATION_URL');
   const redirectionUrl = getEnv('PAYMOB_REDIRECTION_URL');
 
@@ -655,7 +695,7 @@ export const createPaymobPayment = functions.https.onCall(async (data: any, cont
   const payload: Record<string, any> = {
     amount: amountCents,
     currency: 'EGP',
-    payment_methods: [integrationId],
+    payment_methods: paymentMethods,
     items: [
       {
         name: `Order ${orderData.orderNumber ?? orderId}`,
@@ -714,6 +754,7 @@ export const createPaymobPayment = functions.https.onCall(async (data: any, cont
       paymentProvider: 'paymob',
       paymentMethod: 'card',
       paymentStatus: 'PAYMENT_PENDING',
+      paymobIntegrationIds: paymentMethods,
       paymobOrderId: intentionJson?.intention_order_id ?? null,
       paymobIntentionId: intentionJson?.id ?? null,
       status: 'PAYMENT_PENDING',

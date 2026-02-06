@@ -20,7 +20,7 @@ import shopIcon from "@assets/shop.png";
 import adoptionIcon from "@assets/adoption.png";
 import marriageIcon from "@assets/marriage.png";
 import periodTrackerIcon from "@assets/periodtracker.png";
-import freshFoodIcon from "@assets/loopdrop[1]_1748299425142.png";
+import freshFoodIcon from "@assets/fresh.png";
 import phoneMockup from "@assets/home.png";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
