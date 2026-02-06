@@ -419,9 +419,6 @@ export default function ProductDetailPage() {
                     {formatCurrency(price)}
                   </span>
                 )}
-                <span className="text-sm text-slate-500">
-                  {stock > 0 ? `${stock} in stock` : "Out of stock"}
-                </span>
               </div>
 
               <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">

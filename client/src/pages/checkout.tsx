@@ -304,7 +304,7 @@ export default function CheckoutPage() {
       const product = productSnap.data() as { quantity?: number };
       const available = typeof product.quantity === "number" ? product.quantity : 0;
       if ((item.quantity ?? 0) > available) {
-        throw new Error("Some items are out of stock. Please update your cart.");
+        throw new Error("Some items are unavailable. Please update your cart.");
       }
     }
   };

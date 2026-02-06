@@ -42,9 +42,7 @@ function ProductCard({
   const price = typeof product.price === "number" ? product.price : 0;
   const salePrice = typeof product.sale_price === "number" ? product.sale_price : 0;
   const showSale = product.on_sale && salePrice > 0;
-  const stock = typeof product.quantity === "number" ? product.quantity : 0;
   const unitLabel = getUnitLabel(product);
-  const isOutOfStock = stock <= 0;
   const isInCart = cartQuantity > 0;
 
   return (
@@ -55,7 +53,7 @@ function ProductCard({
             <img
               src={photo}
               alt={product.name ?? "Product"}
-              className={`h-full w-full object-contain p-4 transition ${isOutOfStock ? "opacity-60" : ""}`}
+              className="h-full w-full object-contain p-4 transition"
               loading="lazy"
               decoding="async"
             />
@@ -93,9 +91,6 @@ function ProductCard({
           {unitLabel ? (
             <p className="text-xs text-muted-foreground">{unitLabel}</p>
           ) : null}
-          {isOutOfStock && (
-            <p className="text-xs text-slate-500">Out of stock</p>
-          )}
 
           <div className="mt-auto flex items-end justify-between pt-3">
             <div className="flex items-center gap-2">
