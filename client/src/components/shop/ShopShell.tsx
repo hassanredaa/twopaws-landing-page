@@ -2,6 +2,7 @@
 import { Menu, ShoppingCart } from "lucide-react";
 import { Link } from "react-router-dom";
 import twoPawsLogo from "../../../../attached_assets/logotrans.webp";
+import SiteFooter from "@/components/layout/SiteFooter";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -22,9 +23,10 @@ const navLinks = [
 
 type ShopShellProps = {
   children: ReactNode;
+  headerContent?: ReactNode;
 };
 
-export default function ShopShell({ children }: ShopShellProps) {
+export default function ShopShell({ children, headerContent }: ShopShellProps) {
   const { user, signOutUser } = useAuth();
   const { cart } = useCart();
   const itemCount = cart?.itemCount ?? 0;
@@ -100,28 +102,18 @@ export default function ShopShell({ children }: ShopShellProps) {
             )}
           </div>
         </div>
+        {headerContent ? (
+          <div className="border-t border-slate-100 px-4 py-3 sm:px-6 lg:px-8">
+            {headerContent}
+          </div>
+        ) : null}
       </header>
 
       <main className="mx-auto flex w-full max-w-[1440px] flex-col gap-8 px-4 pb-16 pt-8 sm:px-6 lg:px-8">
         {children}
       </main>
 
-      <footer className="border-t border-slate-100 bg-white py-8">
-        <div className="flex w-full flex-col gap-4 px-4 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-          <p className="font-semibold text-slate-900">TwoPaws Shop</p>
-          <div className="flex flex-wrap gap-4">
-            <Link className="hover:text-slate-900" to="/terms">
-              Terms
-            </Link>
-            <Link className="hover:text-slate-900" to="/privacy">
-              Privacy
-            </Link>
-            <Link className="hover:text-slate-900" to="/contact">
-              Contact
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

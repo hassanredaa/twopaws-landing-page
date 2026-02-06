@@ -197,10 +197,186 @@ const getOrderLastUpdatedMillis = (order: Record<string, any>) => {
   );
 };
 
+const getNestedValue = (obj: Record<string, any>, path: string) => {
+  return path.split('.').reduce((acc, key) => (acc ? acc[key] : undefined), obj);
+};
+
+const toFiniteNumber = (value: unknown) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const getBackendUnitPrice = (productData: Record<string, any>) => {
+  const salePrice = toFiniteNumber(productData?.sale_price);
+  const price = toFiniteNumber(productData?.price);
+  if (Boolean(productData?.on_sale) && salePrice > 0) return salePrice;
+  return price;
+};
+
+const toDocRef = (value: any): admin.firestore.DocumentReference | null => {
+  if (
+    value &&
+    typeof value === 'object' &&
+    typeof value.id === 'string' &&
+    typeof value.path === 'string' &&
+    typeof value.get === 'function'
+  ) {
+    return value as admin.firestore.DocumentReference;
+  }
+  if (typeof value === 'string' && value.trim()) {
+    return db.collection('products').doc(value.trim());
+  }
+  return null;
+};
+
+const toUserRef = (value: any): admin.firestore.DocumentReference | null => {
+  if (
+    value &&
+    typeof value === 'object' &&
+    typeof value.id === 'string' &&
+    typeof value.path === 'string' &&
+    typeof value.get === 'function'
+  ) {
+    return value as admin.firestore.DocumentReference;
+  }
+  if (typeof value === 'string' && value.trim()) {
+    const raw = value.trim();
+    if (raw.includes('/')) return db.doc(raw);
+    return db.collection('users').doc(raw);
+  }
+  return null;
+};
+
+const restoreOrderItemsToBuyerCart = async (
+  orderRef: admin.firestore.DocumentReference,
+  buyerRef: admin.firestore.DocumentReference
+) => {
+  let cartRef: admin.firestore.DocumentReference | null = null;
+  let cartSnap: admin.firestore.DocumentSnapshot | null = null;
+
+  const existingCartQuery = await db.collection('carts').where('userId', '==', buyerRef).limit(1).get();
+
+  if (!existingCartQuery.empty) {
+    cartRef = existingCartQuery.docs[0].ref;
+    cartSnap = existingCartQuery.docs[0];
+  } else {
+    cartRef = db.collection('carts').doc();
+    await cartRef.set(
+      {
+        userId: buyerRef,
+        total: 0,
+        itemCount: 0,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+    cartSnap = await cartRef.get();
+  }
+
+  if (!cartRef || !cartSnap?.exists) {
+    return { restoredProducts: 0, restoredItemCount: 0, restoredTotal: 0 };
+  }
+
+  const orderItemsSnap = await orderRef.collection('orderItems').get();
+  if (orderItemsSnap.empty) {
+    return { restoredProducts: 0, restoredItemCount: 0, restoredTotal: 0 };
+  }
+
+  const cartItemsSnap = await cartRef.collection('cartItems').get();
+  const existingCartItems = new Map<string, Record<string, any>>();
+  cartItemsSnap.docs.forEach((docSnap) => {
+    existingCartItems.set(docSnap.id, docSnap.data() as Record<string, any>);
+  });
+
+  const batch = db.batch();
+  const mergedByProductId = new Map<
+    string,
+    { productRef: admin.firestore.DocumentReference; quantity: number; unitPrice: number }
+  >();
+
+  // Start from current cart so we only add missing/older order items.
+  existingCartItems.forEach((item) => {
+    const productRef = toDocRef(item?.productId);
+    if (!productRef) return;
+    mergedByProductId.set(productRef.id, {
+      productRef,
+      quantity: Math.max(0, Math.floor(toFiniteNumber(item?.quantity))),
+      unitPrice: toFiniteNumber(item?.unitPrice),
+    });
+  });
+
+  for (const orderItemDoc of orderItemsSnap.docs) {
+    const orderItem = orderItemDoc.data() as Record<string, any>;
+    const productRef = toDocRef(orderItem?.productRef || orderItem?.productId);
+    if (!productRef) continue;
+
+    const orderQty = Math.max(0, Math.floor(toFiniteNumber(orderItem?.quantity)));
+    if (orderQty <= 0) continue;
+
+    const productSnap = await productRef.get();
+    const productData = (productSnap.exists ? productSnap.data() : {}) as Record<string, any>;
+    const computedUnitPrice = getBackendUnitPrice(productData);
+
+    const existing = mergedByProductId.get(productRef.id);
+    const existingQty = existing?.quantity ?? 0;
+    const existingUnitPrice = existing?.unitPrice ?? 0;
+    const unitPrice = computedUnitPrice > 0 ? computedUnitPrice : existingUnitPrice;
+
+    mergedByProductId.set(productRef.id, {
+      productRef,
+      // Idempotent on retries/duplicate events.
+      quantity: Math.max(existingQty, orderQty),
+      unitPrice,
+    });
+  }
+
+  let total = 0;
+  let itemCount = 0;
+  mergedByProductId.forEach((item) => {
+    const quantity = Math.max(0, Math.floor(item.quantity));
+    const unitPrice = toFiniteNumber(item.unitPrice);
+    if (quantity <= 0) return;
+
+    itemCount += quantity;
+    total += quantity * unitPrice;
+
+    batch.set(
+      cartRef!.collection('cartItems').doc(item.productRef.id),
+      {
+        productId: item.productRef,
+        quantity,
+        unitPrice,
+        lastPriceSyncAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+  });
+
+  batch.set(
+    cartRef,
+    {
+      itemCount,
+      total: Math.max(total, 0),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+  await batch.commit();
+
+  return {
+    restoredProducts: mergedByProductId.size,
+    restoredItemCount: itemCount,
+    restoredTotal: Math.max(total, 0),
+  };
+};
+
 const cleanupUnfinishedOrdersInternal = async (olderThanMinutes: number, maxDeletes: number) => {
   const cutoffMillis = Date.now() - olderThanMinutes * 60 * 1000;
   let deleted = 0;
   let scanned = 0;
+  let restored = 0;
+  let restoreSkipped = 0;
   let lastDoc: admin.firestore.QueryDocumentSnapshot | null = null;
 
   while (deleted < maxDeletes) {
@@ -224,6 +400,25 @@ const cleanupUnfinishedOrdersInternal = async (olderThanMinutes: number, maxDele
       const lastUpdatedMillis = getOrderLastUpdatedMillis(data);
       if (!lastUpdatedMillis || lastUpdatedMillis > cutoffMillis) continue;
 
+      const buyerRef = toUserRef(data?.buyerId);
+      try {
+        if (buyerRef) {
+          await restoreOrderItemsToBuyerCart(docSnap.ref, buyerRef);
+          restored += 1;
+        } else {
+          restoreSkipped += 1;
+          console.warn('cleanupUnfinishedOrders skipped restore due to missing buyerId ref', {
+            orderId: docSnap.id,
+          });
+        }
+      } catch (restoreErr) {
+        console.error('cleanupUnfinishedOrders restore failed; skipping delete to avoid data loss', {
+          orderId: docSnap.id,
+          error: restoreErr,
+        });
+        continue;
+      }
+
       await admin.firestore().recursiveDelete(docSnap.ref);
       deleted += 1;
       if (deleted >= maxDeletes) break;
@@ -235,12 +430,10 @@ const cleanupUnfinishedOrdersInternal = async (olderThanMinutes: number, maxDele
   return {
     deleted,
     scanned,
+    restored,
+    restoreSkipped,
     cutoffIso: new Date(cutoffMillis).toISOString(),
   };
-};
-
-const getNestedValue = (obj: Record<string, any>, path: string) => {
-  return path.split('.').reduce((acc, key) => (acc ? acc[key] : undefined), obj);
 };
 
 const getPaymobErrorMessage = (payload: any) => {
@@ -292,8 +485,12 @@ const buildPaymobHmac = (payload: Record<string, any>, secret: string) => {
 };
 
 export const createPaymobPayment = functions.https.onCall(async (data: any, context: any) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError('unauthenticated', 'You must be signed in.');
+  const auth = context?.auth;
+  if (!auth?.uid) {
+    throw new functions.https.HttpsError(
+      'unauthenticated',
+      'You must be signed in. Call this endpoint as a Firebase callable function with a valid Firebase ID token.'
+    );
   }
   const orderId = typeof data?.orderId === 'string' ? data.orderId : '';
   if (!orderId) {
@@ -319,7 +516,7 @@ export const createPaymobPayment = functions.https.onCall(async (data: any, cont
     orderNumber?: number;
   };
 
-  if (orderData?.buyerId?.id && orderData.buyerId.id !== context.auth.uid) {
+  if (orderData?.buyerId?.id && orderData.buyerId.id !== auth.uid) {
     throw new functions.https.HttpsError('permission-denied', 'Order does not belong to user');
   }
 
@@ -334,23 +531,23 @@ export const createPaymobPayment = functions.https.onCall(async (data: any, cont
 
   const addressSnap = orderData.shippingAddress ? await orderData.shippingAddress.get() : null;
   const addressData = (addressSnap?.exists ? addressSnap.data() : {}) as Record<string, any>;
-  const buyerUid = orderData?.buyerId?.id || context.auth.uid;
+  const buyerUid = orderData?.buyerId?.id || auth.uid;
   let recipientName = String(addressData?.recipientName || addressData?.name || '').trim();
   if (!recipientName && buyerUid) {
     const userSnap = await db.collection('users').doc(buyerUid).get();
     if (userSnap.exists) {
       const userData = (userSnap.data() || {}) as Record<string, any>;
       recipientName = String(
-        userData?.display_name ||
+          userData?.display_name ||
           userData?.displayName ||
           userData?.name ||
-          context.auth.token?.name ||
+          auth.token?.name ||
           ''
       ).trim();
     }
   }
   if (!recipientName) {
-    recipientName = String(context.auth.token?.name || 'Customer').trim() || 'Customer';
+    recipientName = String(auth.token?.name || 'Customer').trim() || 'Customer';
   }
   const nameParts = recipientName.split(/\s+/).filter(Boolean);
   const firstName = nameParts[0] || 'Customer';
@@ -371,7 +568,7 @@ export const createPaymobPayment = functions.https.onCall(async (data: any, cont
     billing_data: {
       first_name: firstName || 'Customer',
       last_name: lastName || 'TwoPaws',
-      email: context.auth.token?.email || 'support@twopaws.pet',
+      email: auth.token?.email || 'support@twopaws.pet',
       phone_number: addressData?.phone || 'NA',
       apartment: addressData?.apartment || 'NA',
       floor: addressData?.floor || 'NA',
@@ -515,20 +712,39 @@ export const paymobWebhook = functions.https.onRequest(async (req, res) => {
     );
 
     if (success && orderData?.buyerId?.id) {
-      const cartRef = db.collection('carts').doc(orderData.buyerId.id);
-      const cartItemsSnap = await cartRef.collection('cartItems').get();
-      const batch = db.batch();
-      cartItemsSnap.docs.forEach((docSnap) => batch.delete(docSnap.ref));
-      batch.set(
-        cartRef,
-        {
-          total: 0,
-          itemCount: 0,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        },
-        { merge: true }
-      );
-      await batch.commit();
+      let cartRef = db.collection('carts').doc(orderData.buyerId.id);
+      let cartSnap = await cartRef.get();
+      if (!cartSnap.exists) {
+        const cartQuery = await db
+          .collection('carts')
+          .where('userId', '==', orderData.buyerId)
+          .limit(1)
+          .get();
+        if (!cartQuery.empty) {
+          cartRef = cartQuery.docs[0].ref;
+          cartSnap = cartQuery.docs[0];
+        }
+      }
+
+      if (cartSnap.exists) {
+        const cartItemsSnap = await cartRef.collection('cartItems').get();
+        const batch = db.batch();
+        cartItemsSnap.docs.forEach((docSnap) => batch.delete(docSnap.ref));
+        batch.set(
+          cartRef,
+          {
+            total: 0,
+            itemCount: 0,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+        await batch.commit();
+      }
+    }
+
+    if (!success && orderData?.buyerId) {
+      await restoreOrderItemsToBuyerCart(orderRef, orderData.buyerId);
     }
 
     res.status(200).send('ok');
@@ -538,13 +754,13 @@ export const paymobWebhook = functions.https.onRequest(async (req, res) => {
   }
 });
 
-const cleanupSchedule = getEnv('ORDER_CLEANUP_SCHEDULE') || 'every 30 minutes';
+const cleanupSchedule = getEnv('ORDER_CLEANUP_SCHEDULE') || 'every 5 minutes';
 const cleanupTimeZone = getEnv('ORDER_CLEANUP_TIMEZONE') || 'Africa/Cairo';
 
 export const cleanupUnfinishedOrders = onSchedule(
   { schedule: cleanupSchedule, timeZone: cleanupTimeZone, retryCount: 1 },
   async () => {
-    const olderThanMinutes = toPositiveInt(getEnv('ORDER_CLEANUP_AGE_MINUTES'), 180);
+    const olderThanMinutes = toPositiveInt(getEnv('ORDER_CLEANUP_AGE_MINUTES'), 10);
     const maxDeletes = toPositiveInt(getEnv('ORDER_CLEANUP_MAX_DELETES'), 100);
     const result = await cleanupUnfinishedOrdersInternal(olderThanMinutes, maxDeletes);
     console.log('cleanupUnfinishedOrders completed', {

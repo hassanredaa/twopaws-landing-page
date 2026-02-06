@@ -1,5 +1,5 @@
 ﻿import { useEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import {
   collection,
   doc,
@@ -129,7 +129,7 @@ export default function OrderDetailPage() {
     return items.map((item) => {
       const productId = item.productRef?.id;
       const product = productId ? productsById[productId] : undefined;
-      return { ...item, product };
+      return { ...item, product, productId };
     });
   }, [items, productsById]);
 
@@ -168,9 +168,18 @@ export default function OrderDetailPage() {
                 {orderItems.map((item) => (
                   <div key={item.id} className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-semibold text-slate-900">
-                        {item.product?.name ?? "Product"}
-                      </p>
+                      {item.productId ? (
+                        <Link
+                          to={`/shop/product/${item.productId}`}
+                          className="text-sm font-semibold text-slate-900 hover:text-brand-green-dark hover:underline"
+                        >
+                          {item.product?.name ?? "View product"}
+                        </Link>
+                      ) : (
+                        <p className="text-sm font-semibold text-slate-900">
+                          {item.product?.name ?? "Product"}
+                        </p>
+                      )}
                       <p className="text-xs text-slate-500">
                         Qty {item.quantity ?? 1}
                       </p>

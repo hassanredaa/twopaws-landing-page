@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+﻿import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   collection,
   doc,
@@ -51,6 +51,21 @@ type SupplierMismatchError = Error & {
   newSupplierId?: string;
 };
 
+type CartContextValue = {
+  cartId: string | null;
+  cart: CartDoc | null;
+  cartItems: CartItemWithProduct[];
+  activeSupplierRef: DocumentReference | null;
+  loading: boolean;
+  error: string | null;
+  addItem: (product: ProductDoc, quantity: number) => Promise<void>;
+  setItemQuantity: (product: ProductDoc, nextQty: number) => Promise<void>;
+  removeItem: (product: ProductDoc) => Promise<void>;
+  clearCart: () => Promise<void>;
+};
+
+const CartContext = createContext<CartContextValue | null>(null);
+
 const toNumber = (value: unknown) =>
   typeof value === "number" && Number.isFinite(value) ? value : 0;
 
@@ -80,7 +95,7 @@ const refsEqual = (
   return first.path === second.path;
 };
 
-export function useCart() {
+function useCartState(): CartContextValue {
   const { user } = useAuth();
   const [cartId, setCartId] = useState<string | null>(null);
   const [cart, setCart] = useState<CartDoc | null>(null);
@@ -114,11 +129,6 @@ export function useCart() {
 
     const ensureCart = async () => {
       const uid = user.uid;
-      const cartRef = doc(db, "carts", uid);
-      const cartSnap = await getDoc(cartRef);
-      if (cartSnap.exists()) {
-        return uid;
-      }
       const userRef = doc(db, "users", uid);
       const cartQuery = query(
         collection(db, "carts"),
@@ -129,6 +139,7 @@ export function useCart() {
       if (!cartQuerySnap.empty) {
         return cartQuerySnap.docs[0].id;
       }
+      const cartRef = doc(collection(db, "carts"));
       await setDoc(cartRef, {
         userId: userRef,
         total: 0,
@@ -136,7 +147,7 @@ export function useCart() {
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
-      return uid;
+      return cartRef.id;
     };
 
     ensureCart()
@@ -431,17 +442,16 @@ export function useCart() {
         const newTotal =
           toNumber(cartData.total) + newQty * unitPrice - existingQty * existingUnitPrice;
 
-        transaction.set(
-          cartRef,
-          {
-            userId: doc(db, "users", user.uid),
-            itemCount: newItemCount,
-            total: Math.max(newTotal, 0),
-            updatedAt: serverTimestamp(),
-            createdAt: cartData.createdAt ?? serverTimestamp(),
-          },
-          { merge: true }
-        );
+        const cartUpdate: Record<string, unknown> = {
+          itemCount: newItemCount,
+          total: Math.max(newTotal, 0),
+          updatedAt: serverTimestamp(),
+        };
+        if (!cartSnap.exists()) {
+          cartUpdate.userId = doc(db, "users", user.uid);
+          cartUpdate.createdAt = serverTimestamp();
+        }
+        transaction.set(cartRef, cartUpdate, { merge: true });
         transaction.set(
           itemRef,
           {
@@ -497,17 +507,16 @@ export function useCart() {
           targetQty * unitPrice -
           existingQty * existingUnitPrice;
 
-        transaction.set(
-          cartRef,
-          {
-            userId: doc(db, "users", user.uid),
-            itemCount: newItemCount,
-            total: Math.max(newTotal, 0),
-            updatedAt: serverTimestamp(),
-            createdAt: cartData.createdAt ?? serverTimestamp(),
-          },
-          { merge: true }
-        );
+        const cartUpdate: Record<string, unknown> = {
+          itemCount: newItemCount,
+          total: Math.max(newTotal, 0),
+          updatedAt: serverTimestamp(),
+        };
+        if (!cartSnap.exists()) {
+          cartUpdate.userId = doc(db, "users", user.uid);
+          cartUpdate.createdAt = serverTimestamp();
+        }
+        transaction.set(cartRef, cartUpdate, { merge: true });
 
         if (targetQty === 0) {
           transaction.delete(itemRef);
@@ -546,17 +555,16 @@ export function useCart() {
       items.forEach((item) => {
         transaction.delete(doc(cartRef, "cartItems", item.id));
       });
-      transaction.set(
-        cartRef,
-        {
-          userId: doc(db, "users", user.uid),
-          itemCount: 0,
-          total: 0,
-          updatedAt: serverTimestamp(),
-          createdAt: cartData?.createdAt ?? serverTimestamp(),
-        },
-        { merge: true }
-      );
+      const cartUpdate: Record<string, unknown> = {
+        itemCount: 0,
+        total: 0,
+        updatedAt: serverTimestamp(),
+      };
+      if (!cartSnap.exists()) {
+        cartUpdate.userId = doc(db, "users", user.uid);
+        cartUpdate.createdAt = serverTimestamp();
+      }
+      transaction.set(cartRef, cartUpdate, { merge: true });
     });
   }, [user, cartId, items]);
 
@@ -572,6 +580,19 @@ export function useCart() {
     removeItem,
     clearCart,
   };
+}
+
+export function CartProvider({ children }: { children: React.ReactNode }) {
+  const value = useCartState();
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+}
+
+export function useCart() {
+  const context = useContext(CartContext);
+  if (!context) {
+    throw new Error("useCart must be used within CartProvider");
+  }
+  return context;
 }
 
 export type { CartDoc, CartItemDoc, CartItemWithProduct, SupplierMismatchError };

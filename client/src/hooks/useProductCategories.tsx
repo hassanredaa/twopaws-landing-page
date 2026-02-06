@@ -10,6 +10,9 @@ import { db } from "@/lib/firebase";
 export type ProductCategoryDoc = {
   id: string;
   name?: string;
+  pic?: string;
+  icon?: string;
+  image?: string;
   [key: string]: unknown;
 };
 

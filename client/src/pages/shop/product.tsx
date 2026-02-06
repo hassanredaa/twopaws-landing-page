@@ -9,6 +9,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import ShopShell from "@/components/shop/ShopShell";
+import ProductCard from "@/components/shop/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +25,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useSuppliers } from "@/hooks/useSuppliers";
 import { useCart, type SupplierMismatchError } from "@/hooks/useCart";
-import type { ProductDoc } from "@/hooks/useProducts";
+import { useProducts, type ProductDoc } from "@/hooks/useProducts";
 import { formatCurrency } from "@/lib/format";
 import { useToast } from "@/hooks/use-toast";
 import { META_PIXEL_CURRENCY, trackMetaEvent } from "@/lib/metaPixel";
@@ -35,6 +36,27 @@ const getPhoto = (photoUrl?: string[] | string) => {
   if (Array.isArray(photoUrl)) return photoUrl;
   return photoUrl ? [photoUrl] : [];
 };
+
+const getCategoryIds = (categories?: unknown[]) => {
+  if (!categories) return [] as string[];
+  return categories
+    .map((cat) => {
+      if (!cat) return null;
+      if (typeof cat === "string") return cat;
+      if (typeof cat === "object" && "id" in (cat as { id: string })) {
+        return (cat as { id: string }).id;
+      }
+      return null;
+    })
+    .filter(Boolean) as string[];
+};
+
+const getUnitPrice = (price?: number, salePrice?: number, onSale?: boolean) => {
+  if (onSale && typeof salePrice === "number" && salePrice > 0) return salePrice;
+  return typeof price === "number" ? price : 0;
+};
+const IMAGE_LENS_SIZE = 180;
+const IMAGE_ZOOM_SCALE = 2.2;
 
 const toAbsoluteUrl = (value?: string | null) => {
   if (!value) return null;
@@ -64,12 +86,15 @@ export default function ProductDetailPage() {
   const { productId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { products } = useProducts();
   const { supplierMap } = useSuppliers();
-  const { addItem, clearCart, activeSupplierRef } = useCart();
+  const { addItem, clearCart, activeSupplierRef, cartItems } = useCart();
   const [product, setProduct] = useState<ProductDoc | null>(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [zoomActive, setZoomActive] = useState(false);
+  const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 });
   const [shippingZones, setShippingZones] = useState<ShippingZoneDoc[]>([]);
   const [showSupplierModal, setShowSupplierModal] = useState(false);
   const [pendingAdd, setPendingAdd] = useState(false);
@@ -112,6 +137,14 @@ export default function ProductDetailPage() {
   const imageUrls = images
     .map((image) => toAbsoluteUrl(image))
     .filter(Boolean) as string[];
+  useEffect(() => {
+    if (selectedImage < imageUrls.length) return;
+    setSelectedImage(0);
+  }, [selectedImage, imageUrls.length]);
+  useEffect(() => {
+    if (imageUrls.length > 0) return;
+    setZoomActive(false);
+  }, [imageUrls.length]);
   const supplier = product?.supplierRef ? supplierMap[product.supplierRef.id] : undefined;
   const currentSupplierName = activeSupplierRef
     ? supplierMap[activeSupplierRef.id]?.name
@@ -156,6 +189,38 @@ export default function ProductDetailPage() {
         },
       }
     : undefined;
+  const cartQuantityByProductId = useMemo(() => {
+    return cartItems.reduce<Record<string, number>>((acc, item) => {
+      const id = item.productIdValue ?? item.productRef?.id ?? null;
+      if (!id) return acc;
+      const qty = typeof item.quantity === "number" ? item.quantity : 0;
+      if (qty <= 0) return acc;
+      acc[id] = (acc[id] ?? 0) + qty;
+      return acc;
+    }, {});
+  }, [cartItems]);
+  const recommendedProducts = useMemo(() => {
+    if (!product?.id) return [] as ProductDoc[];
+    const supplierId = product.supplierRef?.id;
+    if (!supplierId) return [] as ProductDoc[];
+    const currentCategoryIds = new Set(getCategoryIds(product.categories as unknown[]));
+    if (currentCategoryIds.size === 0) return [] as ProductDoc[];
+
+    return products
+      .filter((candidate) => {
+        if (!candidate.id || candidate.id === product.id) return false;
+        if (candidate.supplierRef?.id !== supplierId) return false;
+        const candidateCategories = getCategoryIds(candidate.categories as unknown[]);
+        const sameCategory = candidateCategories.some((id) => currentCategoryIds.has(id));
+        if (!sameCategory) return false;
+        const unitPrice = getUnitPrice(candidate.price, candidate.sale_price, candidate.on_sale);
+        if (unitPrice <= 0) return false;
+        const quantity = typeof candidate.quantity === "number" ? candidate.quantity : 1;
+        return quantity > 0;
+      })
+      .slice(0, 8);
+  }, [products, product]);
+  const selectedImageUrl = imageUrls[selectedImage] ?? null;
 
   useEffect(() => {
     setQuantity((prev) => Math.max(1, Math.min(prev, maxQty)));
@@ -238,6 +303,16 @@ export default function ProductDetailPage() {
       setShowSupplierModal(false);
     }
   };
+  const handleImageMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const x = ((event.clientX - rect.left) / rect.width) * 100;
+    const y = ((event.clientY - rect.top) / rect.height) * 100;
+    setZoomPosition({
+      x: Math.max(0, Math.min(100, x)),
+      y: Math.max(0, Math.min(100, y)),
+    });
+  };
 
   return (
     <ShopShell>
@@ -254,112 +329,163 @@ export default function ProductDetailPage() {
         <p className="text-sm text-slate-500">Product not found.</p>
       )}
       {product && (
-        <div className="grid gap-8 lg:grid-cols-2">
-          <div className="space-y-4">
-            <div className="overflow-hidden rounded-2xl border border-slate-100">
-              {images.length ? (
-                <img
-                  src={images[selectedImage]}
-                  alt={product.name ?? "Product"}
-                  className="h-[420px] w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-[420px] w-full items-center justify-center bg-slate-100 text-slate-400">
-                  No images
+        <>
+          <div className="grid gap-8 lg:grid-cols-2">
+            <div className="space-y-4">
+              <div
+                className="relative overflow-hidden rounded-2xl border border-slate-100 bg-slate-50"
+                onMouseEnter={() => setZoomActive(Boolean(selectedImageUrl))}
+                onMouseLeave={() => setZoomActive(false)}
+                onMouseMove={handleImageMouseMove}
+              >
+                {imageUrls.length ? (
+                  <img
+                    src={imageUrls[selectedImage]}
+                    alt={product.name ?? "Product"}
+                    className="mx-auto max-h-[420px] w-auto max-w-full cursor-zoom-in object-contain p-4"
+                    loading="eager"
+                    decoding="async"
+                  />
+                ) : (
+                  <div className="flex h-[420px] w-full items-center justify-center bg-slate-100 text-slate-400">
+                    No images
+                  </div>
+                )}
+                {zoomActive && selectedImageUrl ? (
+                  <div
+                    className="pointer-events-none absolute hidden rounded-full border border-white/90 shadow-xl md:block"
+                    style={{
+                      width: IMAGE_LENS_SIZE,
+                      height: IMAGE_LENS_SIZE,
+                      left: `calc(${zoomPosition.x}% - ${IMAGE_LENS_SIZE / 2}px)`,
+                      top: `calc(${zoomPosition.y}% - ${IMAGE_LENS_SIZE / 2}px)`,
+                      backgroundImage: `url(${selectedImageUrl})`,
+                      backgroundRepeat: "no-repeat",
+                      backgroundSize: `${IMAGE_ZOOM_SCALE * 100}%`,
+                      backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
+                    }}
+                  />
+                ) : null}
+              </div>
+              {imageUrls.length > 1 && (
+                <div className="grid grid-cols-4 gap-3">
+                  {imageUrls.map((image, index) => (
+                    <button
+                      key={image}
+                      type="button"
+                      onClick={() => setSelectedImage(index)}
+                      className={`overflow-hidden rounded-xl border ${
+                        index === selectedImage
+                          ? "border-brand-green-dark"
+                          : "border-slate-100"
+                      }`}
+                    >
+                      <img
+                        src={image}
+                        alt="Thumbnail"
+                        className="h-20 w-full object-contain bg-white p-1"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
-            {images.length > 1 && (
-              <div className="grid grid-cols-4 gap-3">
-                {images.map((image, index) => (
-                  <button
-                    key={image}
-                    type="button"
-                    onClick={() => setSelectedImage(index)}
-                    className={`overflow-hidden rounded-xl border ${
-                      index === selectedImage
-                        ? "border-brand-green-dark"
-                        : "border-slate-100"
-                    }`}
-                  >
-                    <img src={image} alt="Thumbnail" className="h-20 w-full object-cover" />
-                  </button>
+  
+            <div className="space-y-6">
+              <div className="space-y-2">
+                {showSale && (
+                  <Badge className="bg-brand-olive text-brand-dark">On sale</Badge>
+                )}
+                <h1 className="text-3xl font-semibold text-slate-900">
+                  {product.name}
+                </h1>
+                <p className="text-slate-600">{product.description}</p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                {showSale ? (
+                  <>
+                    <span className="text-3xl font-semibold text-brand-green-dark">
+                      {formatCurrency(salePrice)}
+                    </span>
+                    <span className="text-lg text-slate-400 line-through">
+                      {formatCurrency(price)}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-3xl font-semibold text-brand-green-dark">
+                    {formatCurrency(price)}
+                  </span>
+                )}
+              </div>
+
+              <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+                <p className="text-sm font-medium text-slate-700">Sold by</p>
+                <p className="text-lg font-semibold text-brand-green-dark">
+                  {supplier?.name ?? "Supplier"}
+                </p>
+                {cheapestZone ? (
+                  <p className="text-sm text-slate-500">
+                    Shipping from {formatCurrency(cheapestZone.rateEGP ?? 0)} · {cheapestZone.shippingEtaLabel ?? "Select at checkout"}
+                  </p>
+                ) : (
+                  <p className="text-sm text-slate-500">Select shipping at checkout.</p>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-4 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <label className="text-sm font-medium text-slate-700">Quantity</label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={maxQty}
+                    value={quantity}
+                    onChange={(event) => {
+                      const next = Number(event.target.value);
+                      if (Number.isNaN(next)) return;
+                      setQuantity(Math.max(1, Math.min(next, maxQty)));
+                    }}
+                    className="w-24"
+                  />
+                </div>
+                <Button
+                  className="bg-brand-green-dark text-white"
+                  disabled={stock <= 0}
+                  onClick={handleAddToCart}
+                >
+                  Add to cart
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <section className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-semibold text-slate-900">
+                Recommended
+              </h2>
+            </div>
+            {recommendedProducts.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-600">
+                No similar products available right now.
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4">
+                {recommendedProducts.map((recommended) => (
+                  <ProductCard
+                    key={recommended.id}
+                    product={recommended}
+                    supplierName={recommended.supplierRef?.id ? supplierMap[recommended.supplierRef.id]?.name : undefined}
+                    cartQuantity={cartQuantityByProductId[recommended.id] ?? 0}
+                  />
                 ))}
               </div>
             )}
-          </div>
-
-          <div className="space-y-6">
-            <div className="space-y-2">
-              {showSale && (
-                <Badge className="bg-brand-olive text-brand-dark">On sale</Badge>
-              )}
-              <h1 className="text-3xl font-semibold text-slate-900">
-                {product.name}
-              </h1>
-              <p className="text-slate-600">{product.description}</p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              {showSale ? (
-                <>
-                  <span className="text-3xl font-semibold text-brand-green-dark">
-                    {formatCurrency(salePrice)}
-                  </span>
-                  <span className="text-lg text-slate-400 line-through">
-                    {formatCurrency(price)}
-                  </span>
-                </>
-              ) : (
-                <span className="text-3xl font-semibold text-brand-green-dark">
-                  {formatCurrency(price)}
-                </span>
-              )}
-              <span className="text-sm text-slate-500">
-                {stock > 0 ? `${stock} in stock` : "Out of stock"}
-              </span>
-            </div>
-
-            <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-              <p className="text-sm font-medium text-slate-700">Sold by</p>
-              <p className="text-lg font-semibold text-brand-green-dark">
-                {supplier?.name ?? "Supplier"}
-              </p>
-              {cheapestZone ? (
-                <p className="text-sm text-slate-500">
-                  Shipping from {formatCurrency(cheapestZone.rateEGP ?? 0)} · {cheapestZone.shippingEtaLabel ?? "Select at checkout"}
-                </p>
-              ) : (
-                <p className="text-sm text-slate-500">Select shipping at checkout.</p>
-              )}
-            </div>
-
-            <div className="flex flex-col gap-4 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
-              <div className="flex items-center gap-3">
-                <label className="text-sm font-medium text-slate-700">Quantity</label>
-                <Input
-                  type="number"
-                  min={1}
-                  max={maxQty}
-                  value={quantity}
-                  onChange={(event) => {
-                    const next = Number(event.target.value);
-                    if (Number.isNaN(next)) return;
-                    setQuantity(Math.max(1, Math.min(next, maxQty)));
-                  }}
-                  className="w-24"
-                />
-              </div>
-              <Button
-                className="bg-brand-green-dark text-white"
-                disabled={stock <= 0}
-                onClick={handleAddToCart}
-              >
-                Add to cart
-              </Button>
-            </div>
-          </div>
-        </div>
+          </section>
+        </>
       )}
 
       <AlertDialog open={showSupplierModal} onOpenChange={setShowSupplierModal}>

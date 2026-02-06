@@ -1,4 +1,5 @@
-﻿import { Card, CardContent } from "@/components/ui/card";
+import { memo } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import type { SupplierDoc } from "@/hooks/useSuppliers";
 import { Link } from "react-router-dom";
 
@@ -9,14 +10,20 @@ type SupplierCardProps = {
   supplier: SupplierDoc;
 };
 
-export default function SupplierCard({ supplier }: SupplierCardProps) {
+function SupplierCard({ supplier }: SupplierCardProps) {
   const logo = getLogo(supplier);
 
   return (
     <Link to={`/shop/supplier/${supplier.id}`}>
-      <Card className="flex h-full items-center gap-4 border-slate-100 p-4 shadow-sm transition hover:shadow-md">
+      <Card className="flex h-full items-center gap-4 rounded-2xl border-slate-100 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
         {logo ? (
-          <img src={logo} alt={supplier.name ?? "Supplier"} className="h-14 w-14 rounded-full object-cover" />
+          <img
+            src={logo}
+            alt={supplier.name ?? "Supplier"}
+            className="h-14 w-14 rounded-full object-cover"
+            loading="lazy"
+            decoding="async"
+          />
         ) : (
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-xs text-slate-400">
             Logo
@@ -32,3 +39,5 @@ export default function SupplierCard({ supplier }: SupplierCardProps) {
     </Link>
   );
 }
+
+export default memo(SupplierCard, (prev, next) => prev.supplier === next.supplier);
