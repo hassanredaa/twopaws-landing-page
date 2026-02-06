@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: "Marvin";
+  src: url("/marvin.otf") format("opentype");
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --background: 0 0% 100%;
   --foreground: 20 14.3% 4.1%;
@@ -23,13 +31,17 @@
   --destructive-foreground: 60 9.1% 97.8%;
   --ring: 20 14.3% 4.1%;
   --radius: 0.5rem;
-  
-  /* Custom brand colors */
+
+  /* Brand colors */
+  --brand-purple: 315 31% 36%; /* #783F6A */
+  --brand-yellow: 43 99% 58%; /* #FEC329 */
+
+  /* Legacy aliases used across the app */
   --brand-cream: 45 100% 94%; /* #FFF7E1 */
-  --brand-green-dark: 315 31% 36%; /* #773f69 */
-  --brand-olive: 43 99% 58%; /* #fec329 */
+  --brand-green-dark: var(--brand-purple);
+  --brand-olive: var(--brand-yellow);
   --brand-light: 45 100% 94%; /* #FFF7E1 */
-  --brand-dark: 315 31% 36%; /* #773f69 */
+  --brand-dark: var(--brand-purple);
 }
 
 .dark {
@@ -80,6 +92,22 @@
 }
 
 @layer utilities {
+  .font-marvin {
+    font-family: "Marvin", "Poppins", system-ui, sans-serif;
+  }
+
+  .font-poppins {
+    font-family: "Poppins", "Inter", system-ui, -apple-system, sans-serif;
+  }
+
+  .text-brand-purple {
+    color: hsl(var(--brand-purple));
+  }
+
+  .text-brand-yellow {
+    color: hsl(var(--brand-yellow));
+  }
+
   .text-brand-cream {
     color: hsl(var(--brand-cream));
   }
@@ -98,6 +126,14 @@
   
   .bg-brand-cream {
     background-color: hsl(var(--brand-cream));
+  }
+
+  .bg-brand-purple {
+    background-color: hsl(var(--brand-purple));
+  }
+
+  .bg-brand-yellow {
+    background-color: hsl(var(--brand-yellow));
   }
   
   .bg-brand-green-dark {

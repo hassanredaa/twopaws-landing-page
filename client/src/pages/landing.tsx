@@ -1,43 +1,35 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { motion } from "framer-motion";
 import {
-  Heart,
+  Linkedin,
+  Map as FoldedMap,
   MapPin,
-  ShoppingCart,
-  Stethoscope,
-  Activity,
   Menu,
+  Search,
   X,
-  Linkedin
 } from "lucide-react";
-import insta from "../../../attached_assets/instagram.svg"
-import facebook from "../../../attached_assets/facebook.svg"
-import tiktok from "../../../attached_assets/tiktok.svg"
-import ss from "../../../attached_assets/ss.webp"
+import insta from "../../../attached_assets/instagram.svg";
+import facebook from "../../../attached_assets/facebook.svg";
+import tiktok from "../../../attached_assets/tiktok.svg";
 import twoPawsLogo from "../../../attached_assets/logotrans.webp";
-import loopDropIcon from "@assets/loopdrop[1]_1748299425142.webp";
+import aiVetIcon from "@assets/aivet.png";
+import vetsIcon from "@assets/vets.png";
+import healthIcon from "@assets/healthtracker.png";
+import hotelsIcon from "@assets/hotels.png";
+import shopIcon from "@assets/shop.png";
+import adoptionIcon from "@assets/adoption.png";
+import marriageIcon from "@assets/marriage.png";
+import periodTrackerIcon from "@assets/periodtracker.png";
+import freshFoodIcon from "@assets/loopdrop[1]_1748299425142.png";
+import phoneMockup from "@assets/phone_14_01.jpg";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage
-} from "@/components/ui/form";
+import { Card } from "@/components/ui/card";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
-  AccordionTrigger
+  AccordionTrigger,
 } from "@/components/ui/accordion";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
 import Seo from "@/lib/seo/Seo";
 import {
   ANDROID_STORE_URL,
@@ -46,127 +38,73 @@ import {
   IOS_STORE_URL,
 } from "@/lib/seo/constants";
 
-const emailSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-});
+type OfferItem = {
+  iconSrc?: string;
+  label?: string;
+  fallback?: "search" | "map";
+};
 
-type EmailForm = z.infer<typeof emailSchema>;
+const offerRowOne: OfferItem[] = [
+  { iconSrc: aiVetIcon, label: "AI VET" },
+  { iconSrc: vetsIcon, label: "VET BOOKING" },
+  { iconSrc: healthIcon, label: "HEALTH CARE" },
+  { iconSrc: hotelsIcon, label: "HOTEL BOOKING" },
+  { iconSrc: shopIcon, label: "SHOP" },
+  { fallback: "search" },
+];
+
+const offerRowTwo: OfferItem[] = [
+  { iconSrc: adoptionIcon, label: "ADOPTION OFFERS" },
+  { iconSrc: marriageIcon, label: "MARRIAGE OFFERS" },
+  { iconSrc: freshFoodIcon, label: "FRESHFOOD" },
+  { iconSrc: periodTrackerIcon, label: "PERIOD TRACKER" },
+  { fallback: "map" },
+];
+
+function OfferCell({ item }: { item: OfferItem }) {
+  return (
+    <div className="flex flex-col items-center justify-start gap-3 text-center">
+      {item.iconSrc ? (
+        <img
+          src={item.iconSrc}
+          alt={item.label ?? "TwoPaws feature"}
+          className="h-24 w-24 object-contain sm:h-28 sm:w-28 lg:h-32 lg:w-32"
+        />
+      ) : (
+        <div className="flex h-24 w-24 items-center justify-center text-brand-purple sm:h-28 sm:w-28 lg:h-32 lg:w-32">
+          {item.fallback === "search" ? (
+            <div className="flex h-full w-full items-center justify-center rounded-full border-4 border-gray-200">
+              <Search className="h-10 w-10 sm:h-11 sm:w-11" strokeWidth={2.2} />
+            </div>
+          ) : (
+            <div className="relative flex h-full w-full items-center justify-center">
+              <FoldedMap
+                className="h-16 w-16 sm:h-20 sm:w-20"
+                strokeWidth={2.2}
+              />
+              <MapPin
+                className="absolute -top-1 right-2 h-7 w-7 sm:top-0 sm:right-3 sm:h-8 sm:w-8"
+                strokeWidth={2.2}
+              />
+            </div>
+          )}
+          {item.fallback !== "search" && item.fallback !== "map" ? (
+            <Search className="h-10 w-10" strokeWidth={2.2} />
+          ) : null}
+        </div>
+      )}
+
+      {item.label ? (
+        <p className="font-marvin text-2xl uppercase leading-6 text-brand-purple sm:text-3xl sm:leading-7 lg:text-[2.05rem] lg:leading-8">
+          {item.label}
+        </p>
+      ) : null}
+    </div>
+  );
+}
 
 export default function Landing() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { toast } = useToast();
-
-  const newsletterForm = useForm<EmailForm>({
-    resolver: zodResolver(emailSchema),
-    defaultValues: { email: "" },
-  });
-
-  const newsletterMutation = useMutation({
-    mutationFn: async (data: EmailForm) => {
-      const response = await apiRequest("POST", "/api/newsletter", data);
-      return response.json();
-    },
-    onSuccess: (data) => {
-      toast({
-        title: "Thanks for subscribing!",
-        description: data.message,
-      });
-      newsletterForm.reset();
-    },
-    onError: (error: any) => {
-      const message = error.message.includes("409")
-        ? "You're already subscribed!"
-        : "Please enter a valid email address";
-      toast({
-        title: "Oops!",
-        description: message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const features = [
-    {
-      icon: "custom",
-      iconSrc: loopDropIcon,
-      title: "LoopDrop Auto-Delivery",
-      description: "Never run out of pet essentials! Set up automatic delivery schedules for food, treats, and supplies. Smart recommendations based on your pet's needs.",
-      color: "bg-brand-olive",
-      bgColor: "from-yellow-50 to-brand-cream",
-      featured: true,
-    },
-    {
-      icon: Heart,
-      title: "Pet Match Swiper",
-      description: "Find the perfect playmate or breeding partner for your pet! Swipe through profiles just like dating apps, but for your furry friends to find their soulmates.",
-      color: "bg-red-500",
-      bgColor: "from-red-50 to-pink-50",
-      featured: true,
-    },
-    {
-      icon: Stethoscope,
-      title: "Find Trusted Vets",
-      description: "Find veterinarians near you. Read reviews, and ensure your pet gets the best care in Egypt.",
-      color: "bg-brand-green-dark",
-      bgColor: "from-brand-cream to-green-50",
-    },
-    {
-      icon: Activity,
-      title: "Health & Vaccination Tracker",
-      description: "Never miss a vaccination again! Keep digital records of your pet's health history and get timely reminders for checkups.",
-      color: "bg-brand-olive",
-      bgColor: "from-brand-cream to-yellow-50",
-    },
-    {
-      icon: MapPin,
-      title: "Pet-Friendly Places",
-      description: "Discover parks, cafes, hotels, and restaurants that welcome your furry friends. Explore Egypt with your pet by your side!",
-      color: "bg-brand-green-dark",
-      bgColor: "from-brand-cream to-green-50",
-    },
-    // {
-    //   icon: Users,
-    //   title: "Pet Owner Community",
-    //   description: "Connect with fellow pet lovers, share tips, arrange playdates, and get advice from experienced pet owners in your area.",
-    //   color: "bg-brand-olive",
-    //   bgColor: "from-brand-cream to-yellow-50",
-    // },
-    {
-      icon: ShoppingCart,
-      title: "Pet Supplies Marketplace",
-      description: "Shop for premium pet food, toys, accessories, and more. Fast delivery across Egypt with exclusive deals for TwoPaws users.",
-      color: "bg-brand-green-dark",
-      bgColor: "from-brand-cream to-green-50",
-    },
-    // {
-    //   icon: Ambulance,
-    //   title: "Emergency Care",
-    //   description: "Quick access to emergency vet services and 24/7 pet helpline. Get immediate help when your pet needs it most.",
-    //   color: "bg-brand-olive",
-    //   bgColor: "from-brand-cream to-yellow-50",
-    // },
-  ];
-
-  const testimonials = [
-    {
-      name: "Sarah Ahmed",
-      location: "Cat Mom - Cairo",
-      content: "TwoPaws helped me find the perfect vet for Whiskers when we moved to New Cairo. The booking system is so easy, and I love the vaccination reminders!",
-      avatar: "https://images.unsplash.com/photo-1494790108755-2616b612c25b?ixlib=rb-4.0.3&auto=format&fit=crop&w=80&h=80",
-    },
-    {
-      name: "Ahmed Hassan",
-      location: "Dog Dad - Alexandria",
-      content: "The pet-friendly places feature is amazing! Max and I discovered so many new cafes and parks in Alex. The community is super friendly too.",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=80&h=80",
-    },
-    {
-      name: "Fatma El-Sayed",
-      location: "Multi-Pet Mom - Giza",
-      content: "With 3 cats and a dog, keeping track of everything was chaos. TwoPaws organized my life! The marketplace saves me so much time too.",
-      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=80&h=80",
-    },
-  ];
 
   const faqs = [
     {
@@ -175,11 +113,13 @@ export default function Landing() {
     },
     {
       question: "Which cities in Egypt do you cover?",
-      answer: "We currently cover Cairo with plans to expand to more governorates soon.",
+      answer:
+        "We currently cover Cairo with plans to expand to more governorates soon.",
     },
     {
       question: "Can I track multiple pets?",
-      answer: "Absolutely! You can add unlimited pets to your account. Each pet gets their own profile with separate health records, vaccination schedules, and vet history. Perfect for multi-pet families!",
+      answer:
+        "Absolutely! You can add unlimited pets to your account. Each pet gets their own profile with separate health records, vaccination schedules, and vet history. Perfect for multi-pet families!",
     },
   ];
 
@@ -215,469 +155,311 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white font-poppins">
       <Seo
         title="TwoPaws | Pet care app in Egypt"
         description="TwoPaws connects pet families in Egypt with vets, clinics, a supplies marketplace, community features, and delivery."
         canonicalUrl="/"
         structuredData={[organizationSchema, mobileApplicationSchema]}
       />
-      {/* Navigation */}
-      <nav className="fixed top-0 w-full bg-white/90 backdrop-blur-md z-50 border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-2">
-              <img src={twoPawsLogo} alt="TwoPaws" className="h-16" />
-            </div>
 
-            <div className="hidden md:flex items-center space-x-8">
+      <div className="w-full bg-white">
+        <nav className="border-b border-gray-100 bg-white">
+          <div className="mx-auto flex min-h-[64px] w-full max-w-[1500px] items-center justify-between px-4 sm:px-8 lg:px-10">
+            <a href="/" className="flex shrink-0 items-center">
+              <img
+                src={twoPawsLogo}
+                alt="TwoPaws"
+                className="h-10 w-auto sm:h-12"
+              />
+            </a>
+
+            {/* Desktop */}
+            <div className="hidden items-center gap-7 text-sm font-medium text-gray-600 md:flex">
               <button
                 onClick={() => scrollToSection("features")}
-                className="text-gray-600 hover:text-brand-green-dark transition-colors"
+                className="transition-colors hover:text-brand-purple"
               >
                 Features
               </button>
               <button
                 onClick={() => scrollToSection("about")}
-                className="text-gray-600 hover:text-brand-green-dark transition-colors"
+                className="transition-colors hover:text-brand-purple"
               >
                 About
               </button>
               <button
                 onClick={() => scrollToSection("faq")}
-                className="text-gray-600 hover:text-brand-green-dark transition-colors"
+                className="transition-colors hover:text-brand-purple"
               >
                 FAQ
               </button>
-              <a href="/shop" className="text-gray-600 hover:text-brand-green-dark transition-colors">
+              <a
+                href="/shop"
+                className="transition-colors hover:text-brand-purple"
+              >
                 Shop
               </a>
-              {/* <button
-                onClick={() => scrollToSection("testimonials")}
-                className="text-gray-600 hover:text-brand-green-dark transition-colors"
+              <a
+                href="/terms"
+                className="transition-colors hover:text-brand-purple"
               >
-                Reviews
-              </button> */}
-              <a href="/terms" className="text-gray-600 hover:text-brand-green-dark transition-colors">
-                Terms & Conditions
+                Terms &amp; Conditions
               </a>
-              <a href="/privacy" className="text-gray-600 hover:text-brand-green-dark transition-colors">
+              <a
+                href="/privacy"
+                className="transition-colors hover:text-brand-purple"
+              >
                 Privacy Policy
               </a>
+            </div>
+
+            <div className="hidden md:block">
               <Button
                 asChild
-                className="bg-brand-green-dark text-white hover:bg-brand-olive"
+                className="h-9 rounded-md bg-brand-purple px-5 text-white hover:opacity-90"
               >
                 <a href="/download">Download</a>
               </Button>
             </div>
 
-            <div className="md:hidden">
-              <Button
-                variant="ghost"
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              >
-                {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {isMobileMenuOpen && (
-          <div className="md:hidden bg-white border-t border-gray-100">
-            <div className="px-4 py-4 space-y-3">
-              <button
-                onClick={() => scrollToSection("features")}
-                className="block w-full text-left text-gray-600"
-              >
-                Features
-              </button>
-              <button
-                onClick={() => scrollToSection("about")}
-                className="block w-full text-left text-gray-600"
-              >
-                About
-              </button>
-              {/* <button
-                onClick={() => scrollToSection("testimonials")}
-                className="block w-full text-left text-gray-600"
-              >
-                Reviews
-              </button> */}
-              <button
-                onClick={() => scrollToSection("faq")}
-                className="block w-full text-left text-gray-600"
-              >
-                FAQ
-              </button>
-              <a href="/shop" className="block w-full text-left text-gray-600">
-                Shop
-              </a>
-              <a href="/terms" className="text-gray-600 hover:text-brand-green-dark transition-colors">
-                Terms
-              </a>
-              <a href="/privacy" className="text-gray-600 hover:text-brand-green-dark transition-colors">
-                Privacy Policy
-              </a>
-
-              <Button asChild className="w-full bg-brand-blue text-white">
-                <a href="/download">Download</a>
-              </Button>
-            </div>
-          </div>
-        )}
-      </nav>
-
-      {/* Hero Section */}
-      <section className="relative isolate overflow-hidden pt-20 pb-16 bg-gradient-to-br from-brand-cream to-green-50">
-        {/* Decorative radial gradients for upscale feel */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-          <div className="absolute -left-16 -top-20 h-72 w-72 rounded-full bg-[radial-gradient(ellipse_at_center,_rgba(254,195,41,0.35),_transparent_60%)] blur-2xl" />
-          <div className="absolute -right-24 -bottom-24 h-96 w-96 rounded-full bg-[radial-gradient(ellipse_at_center,_rgba(119,63,105,0.25),_transparent_60%)] blur-3xl" />
-        </div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="text-center lg:text-left"
+            {/* Mobile toggle */}
+            <button
+              className="inline-flex h-10 w-10 items-center justify-center text-brand-purple md:hidden"
+              onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+              aria-label="Toggle menu"
             >
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-brand-dark leading-[1.1] tracking-tight mb-6">
-                Your Pet's <span className="text-brand-green-dark">Best Friend</span> in Egypt
-              </h1>
-              <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-                All-in-one app for pet owners: health tracking, community, and marketplace.
-              </p>
+              {isMobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </button>
+          </div>
 
-              <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start mb-10">
-                <Button asChild className="bg-brand-green-dark text-white hover:bg-brand-olive">
-                  <a href={IOS_STORE_URL} target="_blank" rel="noreferrer">
-                    Download on App Store
-                  </a>
-                </Button>
-                <Button asChild variant="outline" className="border-brand-green-dark text-brand-green-dark hover:bg-green-50">
-                  <a href={ANDROID_STORE_URL} target="_blank" rel="noreferrer">
-                    Get it on Google Play
-                  </a>
+          {isMobileMenuOpen ? (
+            <div className="border-t border-gray-100 px-4 py-4 md:hidden">
+              <div className="flex flex-col gap-3 text-sm font-medium text-gray-700">
+                <button
+                  onClick={() => scrollToSection("features")}
+                  className="text-left"
+                >
+                  Features
+                </button>
+                <button
+                  onClick={() => scrollToSection("about")}
+                  className="text-left"
+                >
+                  About
+                </button>
+                <button
+                  onClick={() => scrollToSection("faq")}
+                  className="text-left"
+                >
+                  FAQ
+                </button>
+                <a href="/shop">Shop</a>
+                <a href="/terms">Terms &amp; Conditions</a>
+                <a href="/privacy">Privacy Policy</a>
+                <Button
+                  asChild
+                  className="mt-2 w-full rounded-md bg-brand-purple text-white hover:opacity-90"
+                >
+                  <a href="/download">Download</a>
                 </Button>
               </div>
+            </div>
+          ) : null}
+        </nav>
 
-              {/* Featured Highlights */}
-              {/* <div className="space-y-3 mb-8">
-                <div className="bg-gradient-to-r from-brand-olive/10 to-yellow-100/50 border border-brand-olive/20 rounded-2xl p-4">
-                  <div className="flex items-center space-x-3">
-                    <img src={loopDropIcon} alt="LoopDrop" className="h-8 w-8" />
-                    <div>
-                      <h3 className="font-semibold text-brand-dark">Introducing LoopDrop!</h3>
-                      <p className="text-sm text-gray-600">Never run out of pet supplies with smart auto-delivery</p>
-                    </div>
-                    <span className="bg-brand-olive text-white text-xs px-2 py-1 rounded-full font-semibold ml-auto">
-                      NEW
-                    </span>
-                  </div>
-                </div>
-
-                <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-2xl p-4">
-                  <div className="flex items-center space-x-3">
-                    <Heart className="h-8 w-8 text-red-500" />
-                    <div>
-                      <h3 className="font-semibold text-brand-dark">Pet Match Swiper</h3>
-                      <p className="text-sm text-gray-600">Find your pet's perfect playmate with swipe-to-match</p>
-                    </div>
-                    <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-semibold ml-auto">
-                      HOT
-                    </span>
-                  </div>
-                </div>
-              </div> */}
-
-              {/* <div className="flex justify-center lg:justify-start mb-8">
-                <Button className="bg-brand-olive text-brand-dark hover:bg-yellow-400 font-semibold">
-                  Coming Soon
-                </Button>
-              </div> */}
-
-              {/* <div className="flex items-center justify-center lg:justify-start space-x-6 text-sm text-gray-500">
-                <div className="flex items-center space-x-2">
-                  <Star className="h-4 w-4 text-brand-olive fill-current" />
-                  <span>4.8/5 Rating</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Download className="h-4 w-4 text-brand-green-dark" />
-                  <span>10k+ Downloads</span>
-                </div>
-              </div> */}
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="relative"
-            >
-              <div className="relative mx-auto max-w-sm">
-                <div className="bg-white/40 backdrop-blur-xl rounded-3xl p-2 shadow-2xl ring-1 ring-black/5">
-                  <img
-                    src={ss}
-                    alt="TwoPaws App Interface"
-                    className="w-full rounded-2xl"
-                  />
-                </div>
-
-                {/* Floating feature icons */}
-                <motion.div
-                  animate={{ y: [0, -10, 0] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  className="absolute -top-4 -left-4 bg-white rounded-xl p-3 shadow-lg"
-                >
-                  <Stethoscope className="h-6 w-6 text-brand-green-dark" />
-                </motion.div>
-                <motion.div
-                  animate={{ y: [0, -10, 0] }}
-                  transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
-                  className="absolute -top-4 -right-4 bg-white rounded-xl p-3 shadow-lg"
-                >
-                  <Heart className="h-6 w-6 text-red-500" />
-                </motion.div>
-                <motion.div
-                  animate={{ y: [0, -10, 0] }}
-                  transition={{ duration: 2, repeat: Infinity, delay: 1 }}
-                  className="absolute -bottom-4 -left-4 bg-white rounded-xl p-3 shadow-lg"
-                >
-                  <MapPin className="h-6 w-6 text-brand-olive" />
-                </motion.div>
-                <motion.div
-                  animate={{ y: [0, -10, 0] }}
-                  transition={{ duration: 2, repeat: Infinity, delay: 1.5 }}
-                  className="absolute -bottom-4 -right-4 bg-white rounded-xl p-3 shadow-lg"
-                >
-                  <ShoppingCart className="h-6 w-6 text-brand-green-dark" />
-                </motion.div>
+        {/* HERO (matches reference) */}
+        <section className="bg-brand-yellow">
+          <div className="relative mx-auto w-full max-w-[1500px] overflow-visible">
+            <div className="relative h-[320px] sm:h-[410px] lg:h-[470px]">
+              {/* Headline */}
+              <div className="absolute bottom-[92px] left-[18px] z-30 sm:bottom-[108px] sm:left-[42px] lg:bottom-[128px] lg:left-[70px]">
+                <h1 className="font-marvin text-[2.6rem] uppercase leading-[0.9] tracking-tight text-white sm:text-[3.7rem] lg:text-[5.1rem]">
+                  YOUR PET,
+                  <br />
+                  OUR PRIORITY
+                </h1>
               </div>
-            </motion.div>
+
+              {/* Dog */}
+              <img
+                src="/iStock-157527277.webp"
+                alt="Dog"
+                className="absolute bottom-[-8px] right-[0px] z-10 h-[86%] w-auto max-w-none object-contain sm:h-[90%] lg:h-[470px]"
+              />
+
+              {/* Cat */}
+              <img
+                src="/iStock-1143440918.webp"
+                alt="Cat"
+                className="absolute bottom-[-8px] left-[62%] z-20 h-[30%] w-auto -translate-x-1/2 object-contain sm:h-[31%] lg:left-[930px] lg:h-[156px]"
+              />
+
+              {/* Illustration (left) */}
+              <img
+                src="/illustration-2.svg"
+                alt=""
+                aria-hidden
+                className="absolute bottom-[4px] left-[49%] z-20 h-[33%] w-auto -translate-x-1/2 object-contain sm:h-[34%] lg:left-[770px] lg:h-[188px]"
+              />
+
+              {/* Illustration (right) - no more legs leaking into About */}
+              <img
+                src="/illustration-1.svg"
+                alt=""
+                aria-hidden
+                className="absolute bottom-[-12px] left-[70.5%] z-20 h-[33%] w-auto -translate-x-1/2 object-contain sm:bottom-[-14px] sm:h-[34%] lg:left-[1005px] lg:h-[198px]"
+              />
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
+        {/* ABOUT (spacing + typography like reference) */}
+        <section
+          id="about"
+          className="relative overflow-hidden bg-white px-4 pb-10 pt-24 sm:px-8 sm:pb-12 sm:pt-28 lg:px-10 lg:pb-14 lg:pt-32"
+        >
+          <div className="mx-auto grid w-full max-w-[1366px] items-start gap-6 lg:grid-cols-[250px_minmax(0,1fr)] lg:gap-10">
+            <div className="flex justify-center pt-1 lg:justify-start lg:pt-0">
+              <img
+                src={phoneMockup}
+                alt="TwoPaws app preview"
+                className="w-[190px] max-w-full object-contain sm:w-[205px] lg:w-[220px]"
+              />
+            </div>
 
-      {/* TwoPaws About */}
-      <section id="about" className="py-16 ">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-3xl text-brand-dark font-semibold mb-4">About TwoPaws</h2>
+            <div className="text-center">
+              <h2 className="font-marvin text-5xl uppercase text-brand-purple sm:text-6xl lg:text-[4.4rem]">
+                ABOUT TWOPAWS
+              </h2>
 
-          <p className="text-lg text-gray-700">
-            TwoPaws began as a passion project between two best friends who wanted a
-            <strong> single, joyful space to track their pets' health, meet other owners, book vets, and
-              grab supplies</strong> - something that simply didn't exist in our part of the world.
-          </p>
+              <div className="mx-auto mt-5 max-w-[980px] space-y-5 text-lg leading-[1.35] sm:text-xl lg:text-[1.65rem]">
+                <p className="text-brand-purple">
+                  TwoPaws began as a passion project between two best friends
+                  who wanted a{" "}
+                  <span className="font-semibold">
+                    single, joyful space to track their pet&rsquo;s health, meet
+                    other owners, book vets, and grab supplies
+                  </span>{" "}
+                  - something that simply didn&rsquo;t exist in our part of the
+                  world.
+                </p>
 
-          <p className="mt-4 text-gray-700">
-            Instead of juggling spreadsheets for vaccines, scrolling through scattered social
-            groups, and hopping between apps to order food, we decided to build one intuitive
-            experience that puts <em>everything</em> a pet parent needs in the palm of their hand.
-          </p>
+                <p className="text-[#f195cb]">
+                  Instead of juggling spreadsheets for vaccines, scrolling
+                  through scattered social groups, and hopping between apps to
+                  order food, we decided to build{" "}
+                  <span className="font-semibold">
+                    one intuitive experience
+                  </span>{" "}
+                  that puts everything a pet parent needs in the palm of their
+                  hand.
+                </p>
 
-          <p className="mt-4 text-gray-700">
-            We're not a corporation - just two lifelong friends (and their furry co-founders) on a mission
-            to make pet care simpler, more connected, and a lot more fun. Thanks for joining us on the
-            journey!
-          </p>
-        </div>
-      </section>
-      {/* TwoPaws About */}
+                <p className="mx-auto max-w-[980px] font-medium text-brand-yellow text-right">
+                  We&rsquo;re not a corporation - just two lifelong friends (and
+                  their furry co-founders) on a mission to make pet care
+                  simpler, more connected, and a lot more fun. Thanks for
+                  joining us on the journey!
+                </p>
+              </div>
+            </div>
+          </div>
 
-      {/* TwoPaws Problem - Solution */}
-      <section id="problem-solution" className="py-16">
-        <div className="max-w-6xl mx-auto px-4 grid gap-8 md:grid-cols-2">
-          {/* Problem Card */}
-          <article className="bg-white border border-brand-dark rounded-2xl shadow-md p-8 hover:shadow-lg transition-shadow">
-            <h3 className="text-2xl font-semibold mb-4 text-brand-dark flex items-center gap-2">
+          {/* Paw/diagonal shape: positioned like reference and clipped to About */}
+          <img
+            src="/shape-5.svg"
+            alt=""
+            aria-hidden
+            className="pointer-events-none absolute -bottom-40 -right-48 hidden w-[360px] opacity-95 sm:block lg:w-[420px]"
+          />
+        </section>
 
-              The Problem
-            </h3>
-            <p className="text-gray-700 leading-relaxed">
-              Caring for a pet today means juggling vaccine cards, scrolling countless groups for advice,
-              calling around to book vets, and hopping between stores for food and supplies. Everything is
-              fragmented, time-consuming, and often unreliable, especially in our region where resources
-              are scarce and scattered.
+        {/* FEATURES */}
+        <section
+          id="features"
+          className="bg-white px-4 pb-14 sm:px-8 sm:pb-20 lg:px-12"
+        >
+          <div className="mx-auto w-full max-w-[1650px]">
+            <h2 className="font-marvin text-5xl uppercase text-brand-purple sm:text-6xl lg:text-7xl">
+              WHAT WE OFFER
+            </h2>
+
+            <div className="mt-10 space-y-10">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 lg:grid-cols-6 lg:gap-x-8">
+                {offerRowOne.map((item, index) => (
+                  <OfferCell key={`row-one-${index}`} item={item} />
+                ))}
+              </div>
+
+              <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 lg:grid-cols-5 lg:gap-x-8">
+                {offerRowTwo.map((item, index) => (
+                  <OfferCell key={`row-two-${index}`} item={item} />
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ABOUT COMPANY (wing behind + bottom-right like reference) */}
+        <section
+          id="company"
+          className="relative overflow-hidden bg-brand-yellow px-3 py-10 sm:px-6 sm:py-12 lg:px-8 lg:py-14"
+        >
+          <img
+            src="/shape-6.png"
+            alt=""
+            aria-hidden
+            className="pointer-events-none absolute -right-8 -top-10 hidden w-[180px] opacity-95 sm:block lg:-right-10 lg:-top-14 lg:w-[250px]"
+          />
+
+          <div className="relative z-10 mx-auto w-full max-w-[1366px]">
+            <h2 className="text-center font-marvin text-4xl uppercase text-white sm:text-5xl lg:text-[3.35rem]">
+              ABOUT THE COMPANY
+            </h2>
+            <p className="mx-auto mt-3 max-w-[940px] text-center text-lg leading-tight text-brand-purple sm:text-xl lg:text-[1.45rem]">
+              TwoPaws is an Egyptian start-up on a mission to build the
+              country&rsquo;s first all-in-one pet community platform, uniting
+              health tracking, adoption, shopping, and social features so every
+              pet family can thrive.
             </p>
-          </article>
 
-          {/* Solution Card */}
-          <article className="bg-white border border-green-200 rounded-2xl shadow-md p-8 hover:shadow-lg transition-shadow">
-            <h3 className="text-2xl font-semibold mb-4 text-brand-dark flex items-center gap-2">
-
-              Our Solution
-            </h3>
-            <p className="text-gray-700 leading-relaxed">
-              <strong>TwoPaws</strong> unifies <em>health tracking, nearby-vet discovery, and a same-day
-                pet-supply marketplace</em> into one intuitive app. Set vaccine reminders, track heat cycles,
-              chat with local owners, and have food delivered to your door without leaving the app.
-            </p>
-          </article>
-        </div>
-      </section>
-      {/* TwoPaws Problem - Solution */}
-
-      {/* Company & Founders (updated order & copy) */}
-      <section id="company" className="py-16 bg-white">
-        <div className="max-w-5xl mx-auto px-4">
-          {/* Company blurb */}
-          <h2 className="text-3xl text-brand-dark font-semibold text-center mb-6">
-            About the Company
-          </h2>
-          <p className="text-gray-700 text-lg leading-relaxed text-center mb-12">
-            <strong>TwoPaws</strong> is an Egyptian start-up on a mission to build the
-            country's first all-in-one pet community platform, uniting health
-            tracking, adoption, shopping, and social features so every pet family can
-            thrive.
-          </p>
-
-          {/* Founders */}
-          <div className="space-y-14">
-            {/* Amira (left-aligned, first) */}
-            <div className="flex">
-              <div className="md:w-1/2">
-                <h3 className="text-2xl font-semibold text-brand-dark mb-1">
-                  Amira Sameh
+            <div className="mt-10 grid gap-8 md:grid-cols-2 md:items-start lg:mt-12 lg:gap-14">
+              <div>
+                <h3 className="font-marvin text-4xl uppercase text-brand-purple sm:text-5xl lg:text-[2.65rem]">
+                  AMIRA SAMEH
                 </h3>
-                <p className="text-sm text-brand-dark mb-2">Co-Founder</p>
-                <p className="text-gray-700 text-lg leading-relaxed">
-                  Vision-driven community champion and self-taught developer who loves
-                  turning everyday pet parent struggles into intuitive,
+                <p className="mt-1 font-marvin text-3xl uppercase text-white sm:text-4xl lg:text-[2.1rem]">
+                  CO-FOUNDER
+                </p>
+                <p className="mt-3 max-w-[620px] text-lg leading-tight text-brand-purple sm:text-xl lg:text-[1.22rem]">
+                  Vision-driven community champion and self-taught developer who
+                  loves turning everyday pet parent struggles into intuitive,
                   tech-powered solutions for the whole community.
                 </p>
               </div>
-            </div>
 
-            {/* Hassan (right-aligned, second) */}
-            <div className="flex justify-end">
-              <div className="md:w-1/2 text-left md:text-right">
-                <h3 className="text-2xl font-semibold text-brand-dark mb-1">
-                  Hassan Reda
+              <div className="md:text-right">
+                <h3 className="font-marvin text-4xl uppercase text-brand-purple sm:text-5xl lg:text-[2.65rem]">
+                  HASSAN REDA
                 </h3>
-                <p className="text-sm text-brand-dark mb-2">Co-Founder</p>
-                <p className="text-gray-700 text-lg leading-relaxed">
-                  Product strategist and full-stack engineer who prototypes ideas at
-                  lightning speed, obsessed with details that make Egypt's pet
-                  community smarter, safer, and more fun.
+                <p className="mt-1 font-marvin text-3xl uppercase text-white sm:text-4xl lg:text-[2.1rem]">
+                  CO-FOUNDER
+                </p>
+                <p className="mt-3 ml-auto max-w-[640px] text-lg leading-tight text-brand-purple sm:text-xl lg:text-[1.22rem]">
+                  Product strategist and full-stack engineer who prototypes
+                  ideas at lightning speed, obsessed with details that make
+                  Egypt&rsquo;s pet community smarter, safer, and more fun.
                 </p>
               </div>
             </div>
           </div>
-        </div>
-      </section>
-      {/*  Company & Founders */}
-
-
-
-      {/* Features Section */}
-      <section id="features" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-3xl sm:text-4xl font-bold text-brand-dark mb-4">
-              Everything Your Pet Needs in One App
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              From finding the best vets in Cairo to discovering pet-friendly cafes in Alexandria, TwoPaws has got you covered.
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                viewport={{ once: true }}
-                className={`bg-gradient-to-br ${feature.bgColor} rounded-2xl p-8 hover:shadow-lg transition-shadow ${feature.featured ? 'border-2 border-brand-olive ring-2 ring-brand-olive/20' : ''}`}
-              >
-                <div className={`${feature.color} rounded-xl p-4 w-16 h-16 flex items-center justify-center mb-6 relative`}>
-                  {feature.icon === "custom" ? (
-                    <img src={feature.iconSrc} alt={feature.title} className="h-10 w-10" />
-                  ) : (
-                    <feature.icon className="h-8 w-8 text-white" />
-                  )}
-                  {feature.featured && (
-                    <div className="absolute -top-2 -right-2 bg-brand-olive text-white text-xs px-2 py-1 rounded-full font-semibold">
-                      NEW
-                    </div>
-                  )}
-                </div>
-                <h3 className="text-xl font-semibold text-brand-dark mb-4">{feature.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{feature.description}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* About Section */}
-
-
-      {/* Testimonials Section */}
-      {/* <section id="testimonials" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-3xl sm:text-4xl font-bold text-brand-dark mb-4">
-              What Egyptian Pet Parents Say
-            </h2>
-            <p className="text-xl text-gray-600">
-              Real stories from real pet families across Egypt
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <motion.div
-                key={testimonial.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                viewport={{ once: true }}
-              >
-                <Card className="h-full shadow-lg border border-gray-100">
-                  <CardContent className="p-8">
-                    <div className="flex items-center mb-6">
-                      <img
-                        src={testimonial.avatar}
-                        alt={testimonial.name}
-                        className="w-12 h-12 rounded-full object-cover"
-                      />
-                      <div className="ml-4">
-                        <div className="font-semibold text-brand-dark">{testimonial.name}</div>
-                        <div className="text-sm text-gray-600">{testimonial.location}</div>
-                      </div>
-                    </div>
-                    <p className="text-gray-600 leading-relaxed mb-4">
-                      "{testimonial.content}"
-                    </p>
-                    <div className="flex text-brand-yellow">
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} className="h-4 w-4 fill-current" />
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section> */}
+        </section>
+      </div>
 
       {/* FAQ Section */}
       <section id="faq" className="py-20 bg-white">
@@ -708,7 +490,9 @@ export default function Landing() {
                 <Card key={index} className="shadow-sm">
                   <AccordionItem value={`item-${index}`} className="border-0">
                     <AccordionTrigger className="px-6 py-4 hover:no-underline">
-                      <span className="font-semibold text-brand-dark text-left">{faq.question}</span>
+                      <span className="font-semibold text-brand-dark text-left">
+                        {faq.question}
+                      </span>
                     </AccordionTrigger>
                     <AccordionContent className="px-6 pb-4">
                       <p className="text-gray-600">{faq.answer}</p>
@@ -722,7 +506,10 @@ export default function Landing() {
       </section>
 
       {/* Call to Action Section */}
-      <section id="cta" className="py-20 bg-gradient-to-br from-brand-dark to-brand-olive">
+      <section
+        id="cta"
+        className="py-20 bg-gradient-to-br from-brand-dark to-brand-olive"
+      >
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -734,7 +521,8 @@ export default function Landing() {
               Ready to Give Your Pet the Best Life?
             </h2>
             <p className="text-xl text-gray-800 mb-8">
-              Join thousands of pet families who trust TwoPaws for their pet care needs.
+              Join thousands of pet families who trust TwoPaws for their pet
+              care needs.
             </p>
 
             <p className="text-lg text-gray-900 font-semibold mb-8">
@@ -742,12 +530,19 @@ export default function Landing() {
             </p>
 
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Button asChild className="bg-white text-gray-900 border border-gray-900/10 hover:bg-gray-100 font-semibold shadow-lg shadow-yellow-200/30">
+              <Button
+                asChild
+                className="bg-white text-gray-900 border border-gray-900/10 hover:bg-gray-100 font-semibold shadow-lg shadow-yellow-200/30"
+              >
                 <a href={IOS_STORE_URL} target="_blank" rel="noreferrer">
                   Download on App Store
                 </a>
               </Button>
-              <Button asChild variant="outline" className="border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white">
+              <Button
+                asChild
+                variant="outline"
+                className="border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white"
+              >
                 <a href={ANDROID_STORE_URL} target="_blank" rel="noreferrer">
                   Get it on Google Play
                 </a>
@@ -768,8 +563,8 @@ export default function Landing() {
                 <img src={twoPawsLogo} alt="TwoPaws" className="h-20" />
               </div>
               <p className="text-gray-400 mb-4">
-                Your pet's best friend in Egypt. Connecting pet families with the
-                care and community they deserve.
+                Your pet's best friend in Egypt. Connecting pet families with
+                the care and community they deserve.
               </p>
               <div className="flex space-x-4">
                 <a
@@ -882,12 +677,12 @@ export default function Landing() {
           {/* --- Bottom Bar ---------------------------------------------- */}
           <div className="border-t border-gray-200 pt-8 flex flex-col sm:flex-row justify-between items-center">
             <p className="text-gray-400 text-sm">
-              (c) {new Date().getFullYear()} TwoPaws Digital Solutions. All rights reserved.
+              (c) {new Date().getFullYear()} TwoPaws Digital Solutions. All
+              rights reserved.
             </p>
           </div>
         </div>
       </footer>
-
     </div>
   );
 }
