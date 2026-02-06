@@ -4,6 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { SupplierDoc } from "@/hooks/useSuppliers";
 import { Store } from "lucide-react";
+import { toPrerenderSafeImageSrc } from "@/lib/prerenderImage";
 
 type SupplierPickerProps = {
   suppliers: SupplierDoc[];
@@ -47,17 +48,21 @@ const isSupplierAvailable = (supplier: SupplierDoc) => {
 
 function SupplierLogo({ name, logoUrl }: { name?: string; logoUrl?: string }) {
   const [failed, setFailed] = useState(false);
-  const showImage = logoUrl && !failed;
+  const safeLogoUrl = toPrerenderSafeImageSrc(logoUrl);
+  const showImage = safeLogoUrl && !failed;
   const fallbackInitial = (name ?? "S").slice(0, 1).toUpperCase();
 
   return (
     <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white">
       {showImage ? (
         <img
-          src={logoUrl}
+          src={safeLogoUrl}
           alt={name ?? "Supplier"}
+          width={112}
+          height={112}
           className="h-full w-full object-contain p-3"
           loading="lazy"
+          decoding="async"
           onError={() => setFailed(true)}
         />
       ) : (

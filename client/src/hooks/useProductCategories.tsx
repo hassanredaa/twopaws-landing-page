@@ -1,11 +1,13 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import {
   collection,
+  getDocs,
   onSnapshot,
   type DocumentData,
   type QuerySnapshot,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { isReactSnapPrerender } from "@/lib/isPrerender";
 
 export type ProductCategoryDoc = {
   id: string;
@@ -24,6 +26,13 @@ export function useProductCategories() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (isReactSnapPrerender()) {
+      getDocs(collection(db, "productCategories"))
+        .then((snap) => setCategories(mapSnapshot(snap)))
+        .finally(() => setLoading(false));
+      return;
+    }
+
     const unsubscribe = onSnapshot(
       collection(db, "productCategories"),
       (snap) => {

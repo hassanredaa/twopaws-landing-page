@@ -3,6 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   collection,
   doc,
+  getDoc,
+  getDocs,
   onSnapshot,
   type DocumentData,
   type Timestamp,
@@ -31,6 +33,8 @@ import { useToast } from "@/hooks/use-toast";
 import { META_PIXEL_CURRENCY, trackMetaEvent } from "@/lib/metaPixel";
 import Seo from "@/lib/seo/Seo";
 import { BASE_URL } from "@/lib/seo/constants";
+import { isReactSnapPrerender } from "@/lib/isPrerender";
+import { toPrerenderSafeImageSrc } from "@/lib/prerenderImage";
 
 const getPhoto = (photoUrl?: string[] | string) => {
   if (Array.isArray(photoUrl)) return photoUrl;
@@ -103,6 +107,20 @@ export default function ProductDetailPage() {
   useEffect(() => {
     if (!productId) return;
     const productRef = doc(db, "products", productId);
+
+    if (isReactSnapPrerender()) {
+      getDoc(productRef)
+        .then((snap) => {
+          if (!snap.exists()) {
+            setProduct(null);
+            return;
+          }
+          setProduct({ id: snap.id, ...snap.data() } as ProductDoc);
+        })
+        .finally(() => setLoading(false));
+      return;
+    }
+
     const unsubscribe = onSnapshot(productRef, (snap) => {
       if (!snap.exists()) {
         setProduct(null);
@@ -122,6 +140,19 @@ export default function ProductDetailPage() {
     }
     const supplierId = product.supplierRef.id;
     const zonesRef = collection(db, "suppliers", supplierId, "shippingZones");
+
+    if (isReactSnapPrerender()) {
+      getDocs(zonesRef).then((snap) => {
+        setShippingZones(
+          snap.docs.map((docSnap) => ({
+            id: docSnap.id,
+            ...docSnap.data(),
+          })) as ShippingZoneDoc[]
+        );
+      });
+      return;
+    }
+
     const unsubscribe = onSnapshot(zonesRef, (snap) => {
       setShippingZones(
         snap.docs.map((docSnap) => ({
@@ -137,6 +168,7 @@ export default function ProductDetailPage() {
   const imageUrls = images
     .map((image) => toAbsoluteUrl(image))
     .filter(Boolean) as string[];
+  const safeImageUrls = imageUrls.map((image) => toPrerenderSafeImageSrc(image) ?? image);
   useEffect(() => {
     if (selectedImage < imageUrls.length) return;
     setSelectedImage(0);
@@ -220,7 +252,7 @@ export default function ProductDetailPage() {
       })
       .slice(0, 8);
   }, [products, product]);
-  const selectedImageUrl = imageUrls[selectedImage] ?? null;
+  const selectedImageUrl = safeImageUrls[selectedImage] ?? null;
 
   useEffect(() => {
     setQuantity((prev) => Math.max(1, Math.min(prev, maxQty)));
@@ -340,7 +372,7 @@ export default function ProductDetailPage() {
               >
                 {imageUrls.length ? (
                   <img
-                    src={imageUrls[selectedImage]}
+                    src={safeImageUrls[selectedImage]}
                     alt={product.name ?? "Product"}
                     className="mx-auto max-h-[420px] w-auto max-w-full cursor-zoom-in object-contain p-4"
                     loading="eager"
@@ -369,9 +401,9 @@ export default function ProductDetailPage() {
               </div>
               {imageUrls.length > 1 && (
                 <div className="grid grid-cols-4 gap-3">
-                  {imageUrls.map((image, index) => (
+                  {safeImageUrls.map((image, index) => (
                     <button
-                      key={image}
+                      key={`${image}-${index}`}
                       type="button"
                       onClick={() => setSelectedImage(index)}
                       className={`overflow-hidden rounded-xl border ${
@@ -383,6 +415,8 @@ export default function ProductDetailPage() {
                       <img
                         src={image}
                         alt="Thumbnail"
+                        width={320}
+                        height={80}
                         className="h-20 w-full object-contain bg-white p-1"
                         loading="lazy"
                         decoding="async"

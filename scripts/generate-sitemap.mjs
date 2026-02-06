@@ -58,7 +58,7 @@ const fetchProductDocs = async (projectId, apiKey) => {
     const res = await fetch(url);
     if (!res.ok) {
       console.warn(`Sitemap: Firestore fetch failed (${res.status}).`);
-      return Array.from(ids);
+      return Array.from(docs.values());
     }
     const data = await res.json();
     const items = Array.isArray(data.documents) ? data.documents : [];

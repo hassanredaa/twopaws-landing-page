@@ -1,5 +1,5 @@
 import { Linkedin } from "lucide-react";
-import twoPawsLogo from "../../../../attached_assets/logotrans-320.webp";
+import twoPawsLogo from "../../../../attached_assets/logotrans-brand-800.webp";
 import insta from "../../../../attached_assets/instagram.svg";
 import facebook from "../../../../attached_assets/facebook.svg";
 import tiktok from "../../../../attached_assets/tiktok.svg";
@@ -17,7 +17,7 @@ export default function SiteFooter() {
         <div className="mb-8 grid gap-8 md:grid-cols-3">
           <div>
             <div className="mb-4 flex items-center space-x-2">
-              <img src={twoPawsLogo} alt="TwoPaws" className="h-20" />
+              <img src={twoPawsLogo} alt="TwoPaws" className="h-20 w-auto" />
             </div>
             <p className="mb-4 text-gray-400">
               Your pet's best friend in Egypt. Connecting pet families with the

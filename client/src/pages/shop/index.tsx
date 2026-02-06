@@ -28,6 +28,7 @@ import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/use-toast";
 import { META_PIXEL_CURRENCY, trackMetaEvent } from "@/lib/metaPixel";
 import Seo from "@/lib/seo/Seo";
+import { toPrerenderSafeImageSrc } from "@/lib/prerenderImage";
 
 const getUnitPrice = (price?: number, salePrice?: number, onSale?: boolean) => {
   if (onSale && typeof salePrice === "number" && salePrice > 0) return salePrice;
@@ -416,8 +417,10 @@ export default function ShopPage() {
                       >
                         {(category.pic as string | undefined) && (
                           <img
-                            src={category.pic as string}
+                            src={toPrerenderSafeImageSrc(category.pic as string)}
                             alt={category.name ?? "Category"}
+                            width={20}
+                            height={20}
                             className="h-5 w-5 rounded-sm object-cover"
                             loading="lazy"
                             decoding="async"

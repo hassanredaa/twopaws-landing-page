@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import twoPawsLogo from "../../../attached_assets/logotrans-320.webp";
+import twoPawsLogo from "../../../attached_assets/logotrans-brand-800.webp";
 import insta from "../../../attached_assets/instagram.svg";
 import facebook from "../../../attached_assets/facebook.svg";
 import tiktok from "../../../attached_assets/tiktok.svg";
@@ -25,7 +25,7 @@ export default function Privacy() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
               <a href="/">
-                <img src={twoPawsLogo} alt="TwoPaws Digital Solutions" className="h-16" />
+                <img src={twoPawsLogo} alt="TwoPaws Digital Solutions" className="h-16 w-auto" />
               </a>
             </div>
             <div className="hidden md:flex items-center space-x-8">
@@ -149,7 +149,7 @@ export default function Privacy() {
           <div className="grid md:grid-cols-3 gap-8 mb-8">
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <img src={twoPawsLogo} alt="TwoPaws Digital Solutions" className="h-20" />
+                <img src={twoPawsLogo} alt="TwoPaws Digital Solutions" className="h-20 w-auto" />
               </div>
               <p className="text-gray-400 mb-4">
                 Your pet's best friend in Egypt. Connecting pet families with the

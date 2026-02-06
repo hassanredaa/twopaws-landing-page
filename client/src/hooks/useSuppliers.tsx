@@ -1,11 +1,13 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import {
   collection,
+  getDocs,
   onSnapshot,
   type DocumentData,
   type QuerySnapshot,
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { isReactSnapPrerender } from "@/lib/isPrerender";
 
 export type SupplierDoc = {
   id: string;
@@ -25,6 +27,13 @@ export function useSuppliers() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (isReactSnapPrerender()) {
+      getDocs(collection(db, "suppliers"))
+        .then((snap) => setSuppliers(mapSnapshot(snap)))
+        .finally(() => setLoading(false));
+      return;
+    }
+
     const unsubscribe = onSnapshot(collection(db, "suppliers"), (snap) => {
       setSuppliers(mapSnapshot(snap));
       setLoading(false);

@@ -19,6 +19,7 @@ import {
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/hooks/useAuth";
 import type { ProductDoc } from "@/hooks/useProducts";
+import { isReactSnapPrerender } from "@/lib/isPrerender";
 
 type CartDoc = {
   id: string;
@@ -96,6 +97,7 @@ const refsEqual = (
 };
 
 function useCartState(): CartContextValue {
+  const prerender = isReactSnapPrerender();
   const { user } = useAuth();
   const [cartId, setCartId] = useState<string | null>(null);
   const [cart, setCart] = useState<CartDoc | null>(null);
@@ -103,7 +105,7 @@ function useCartState(): CartContextValue {
   const [productsById, setProductsById] = useState<Record<string, ProductDoc>>(
     {}
   );
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!prerender);
   const [error, setError] = useState<string | null>(null);
   const syncInFlight = useRef(false);
   const productUnsubs = useRef<Record<string, () => void>>({});
@@ -115,6 +117,16 @@ function useCartState(): CartContextValue {
   );
 
   useEffect(() => {
+    if (prerender) {
+      setCartId(null);
+      setCart(null);
+      setItems([]);
+      setProductsById({});
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
     setCartId(null);
     setCart(null);
     setItems([]);
@@ -167,9 +179,10 @@ function useCartState(): CartContextValue {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, prerender]);
 
   useEffect(() => {
+    if (prerender) return;
     if (!cartId) return;
     const cartRef = doc(db, "carts", cartId);
     const unsubscribe = onSnapshot(cartRef, (snap) => {
@@ -181,9 +194,10 @@ function useCartState(): CartContextValue {
       setLoading(false);
     });
     return () => unsubscribe();
-  }, [cartId]);
+  }, [cartId, prerender]);
 
   useEffect(() => {
+    if (prerender) return;
     if (!cartId) return;
     const itemsRef = collection(db, "carts", cartId, "cartItems");
     const unsubscribe = onSnapshot(itemsRef, (snap) => {
@@ -195,9 +209,10 @@ function useCartState(): CartContextValue {
       );
     });
     return () => unsubscribe();
-  }, [cartId]);
+  }, [cartId, prerender]);
 
   useEffect(() => {
+    if (prerender) return;
     const currentUnsubs = productUnsubs.current;
     const activeIds = new Set<string>();
 
@@ -228,14 +243,15 @@ function useCartState(): CartContextValue {
         });
       }
     });
-  }, [items]);
+  }, [items, prerender]);
 
   useEffect(() => {
+    if (prerender) return;
     return () => {
       Object.values(productUnsubs.current).forEach((unsubscribe) => unsubscribe());
       productUnsubs.current = {};
     };
-  }, []);
+  }, [prerender]);
 
   const cartItems = useMemo<CartItemWithProduct[]>(() => {
     return items.map((item) => {
@@ -251,6 +267,7 @@ function useCartState(): CartContextValue {
   }, [items, productsById]);
 
   useEffect(() => {
+    if (prerender) return;
     if (!user || !cartId) return;
 
     const updates: {
@@ -368,7 +385,7 @@ function useCartState(): CartContextValue {
       .finally(() => {
         syncInFlight.current = false;
       });
-  }, [user, cartId, cartItems, cart]);
+  }, [user, cartId, cartItems, cart, prerender]);
 
   const activeSupplierRef = useMemo(() => {
     for (const item of cartItems) {

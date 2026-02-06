@@ -11,7 +11,7 @@ import {
 import insta from "../../../attached_assets/instagram.svg";
 import facebook from "../../../attached_assets/facebook.svg";
 import tiktok from "../../../attached_assets/tiktok.svg";
-import twoPawsLogo from "../../../attached_assets/logotrans-320.webp";
+import twoPawsLogo from "../../../attached_assets/logotrans-brand-800.webp";
 import aiVetIcon from "@assets/aivet-320.webp";
 import vetsIcon from "@assets/vets-320.webp";
 import healthIcon from "@assets/healthtracker-320.webp";
@@ -433,6 +433,8 @@ export default function Landing() {
             src="/shape-5.svg"
             alt=""
             aria-hidden
+            width={430}
+            height={430}
             loading="lazy"
             decoding="async"
             className="pointer-events-none absolute -bottom-56 -right-36 z-10 hidden w-[360px] opacity-95 sm:block lg:-bottom-34 lg:-right-44 lg:w-[430px]"
@@ -474,6 +476,8 @@ export default function Landing() {
             src="/shape-6.png"
             alt=""
             aria-hidden
+            width={250}
+            height={250}
             loading="lazy"
             decoding="async"
             className="pointer-events-none absolute -right-8 -top-10 hidden w-[180px] opacity-95 sm:block lg:-right-10 lg:-top-14 lg:w-[250px]"
@@ -625,9 +629,11 @@ export default function Landing() {
                 <img
                   src={twoPawsLogo}
                   alt="TwoPaws"
+                  width={800}
+                  height={556}
                   loading="lazy"
                   decoding="async"
-                  className="h-20"
+                  className="h-20 w-auto"
                 />
               </div>
               <p className="text-gray-400 mb-4">
@@ -644,6 +650,8 @@ export default function Landing() {
                   <img
                     src={insta}
                     alt="Instagram"
+                    width={24}
+                    height={24}
                     loading="lazy"
                     decoding="async"
                     className="h-6 w-6"
@@ -658,6 +666,8 @@ export default function Landing() {
                   <img
                     src={facebook}
                     alt="Facebook"
+                    width={24}
+                    height={24}
                     loading="lazy"
                     decoding="async"
                     className="h-6 w-6"
@@ -672,6 +682,8 @@ export default function Landing() {
                   <img
                     src={tiktok}
                     alt="TikTok"
+                    width={24}
+                    height={24}
                     loading="lazy"
                     decoding="async"
                     className="h-6 w-6"

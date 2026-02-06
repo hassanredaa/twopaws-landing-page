@@ -4,6 +4,7 @@ import type { ProductDoc } from "@/hooks/useProducts";
 import { formatCurrency } from "@/lib/format";
 import { Info } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { toPrerenderSafeImageSrc } from "@/lib/prerenderImage";
 
 const getPhoto = (photoUrl?: string[] | string) => {
   if (Array.isArray(photoUrl)) return photoUrl[0];
@@ -39,6 +40,7 @@ function ProductCard({
 }: ProductCardProps) {
   const navigate = useNavigate();
   const photo = getPhoto(product.photo_url);
+  const photoSrc = toPrerenderSafeImageSrc(photo);
   const price = typeof product.price === "number" ? product.price : 0;
   const salePrice = typeof product.sale_price === "number" ? product.sale_price : 0;
   const showSale = product.on_sale && salePrice > 0;
@@ -49,10 +51,12 @@ function ProductCard({
     <Link to={`/shop/product/${product.id}`} className="block h-full">
       <Card className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md">
         <div className="relative flex h-56 w-full items-center justify-center overflow-hidden bg-white">
-          {photo ? (
+          {photoSrc ? (
             <img
-              src={photo}
+              src={photoSrc}
               alt={product.name ?? "Product"}
+              width={512}
+              height={512}
               className="h-full w-full object-contain p-4 transition"
               loading="lazy"
               decoding="async"

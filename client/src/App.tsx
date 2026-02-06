@@ -8,6 +8,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
 import { CartProvider } from "@/hooks/useCart";
 import { initMetaPixel, trackPageView } from "@/lib/metaPixel";
+import { isReactSnapPrerender } from "@/lib/isPrerender";
 import Landing from "@/pages/landing";
 import AboutPage from "@/pages/marketing/about";
 import ContactPage from "@/pages/marketing/contact";
@@ -32,7 +33,7 @@ import PaymentReturnPage from "@/pages/payment/return";
 
 function MetaPixelTracker() {
   const location = useLocation();
-  const enablePixel = import.meta.env.PROD;
+  const enablePixel = import.meta.env.PROD && !isReactSnapPrerender();
 
   useEffect(() => {
     if (!enablePixel) return;

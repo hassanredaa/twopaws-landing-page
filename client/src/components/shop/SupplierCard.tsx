@@ -2,6 +2,7 @@ import { memo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import type { SupplierDoc } from "@/hooks/useSuppliers";
 import { Link } from "react-router-dom";
+import { toPrerenderSafeImageSrc } from "@/lib/prerenderImage";
 
 const getLogo = (supplier: SupplierDoc) =>
   (supplier.logo_url as string) || (supplier.logoUrl as string) || (supplier.logo as string);
@@ -11,7 +12,7 @@ type SupplierCardProps = {
 };
 
 function SupplierCard({ supplier }: SupplierCardProps) {
-  const logo = getLogo(supplier);
+  const logo = toPrerenderSafeImageSrc(getLogo(supplier));
 
   return (
     <Link to={`/shop/supplier/${supplier.id}`}>
@@ -20,6 +21,8 @@ function SupplierCard({ supplier }: SupplierCardProps) {
           <img
             src={logo}
             alt={supplier.name ?? "Supplier"}
+            width={56}
+            height={56}
             className="h-14 w-14 rounded-full object-cover"
             loading="lazy"
             decoding="async"
