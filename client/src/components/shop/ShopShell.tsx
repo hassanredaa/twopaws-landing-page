@@ -1,7 +1,7 @@
 ﻿import type { ReactNode } from "react";
 import { Menu, ShoppingCart } from "lucide-react";
 import { Link } from "react-router-dom";
-import twoPawsLogo from "../../../../attached_assets/logotrans.webp";
+import twoPawsLogo from "../../../../attached_assets/logotrans-320.webp";
 import SiteFooter from "@/components/layout/SiteFooter";
 import { Button } from "@/components/ui/button";
 import {

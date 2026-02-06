@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import twoPawsLogo from "../../../attached_assets/logotrans.webp";
+import twoPawsLogo from "../../../attached_assets/logotrans-320.webp";
 import insta from "../../../attached_assets/instagram.svg";
 import facebook from "../../../attached_assets/facebook.svg";
 import tiktok from "../../../attached_assets/tiktok.svg";

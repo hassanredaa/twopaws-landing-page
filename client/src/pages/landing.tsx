@@ -11,17 +11,17 @@ import {
 import insta from "../../../attached_assets/instagram.svg";
 import facebook from "../../../attached_assets/facebook.svg";
 import tiktok from "../../../attached_assets/tiktok.svg";
-import twoPawsLogo from "../../../attached_assets/logotrans.webp";
-import aiVetIcon from "@assets/aivet.png";
-import vetsIcon from "@assets/vets.png";
-import healthIcon from "@assets/healthtracker.png";
-import hotelsIcon from "@assets/hotels.png";
-import shopIcon from "@assets/shop.png";
-import adoptionIcon from "@assets/adoption.png";
-import marriageIcon from "@assets/marriage.png";
-import periodTrackerIcon from "@assets/periodtracker.png";
-import freshFoodIcon from "@assets/fresh.png";
-import phoneMockup from "@assets/home.png";
+import twoPawsLogo from "../../../attached_assets/logotrans-320.webp";
+import aiVetIcon from "@assets/aivet-320.webp";
+import vetsIcon from "@assets/vets-320.webp";
+import healthIcon from "@assets/healthtracker-320.webp";
+import hotelsIcon from "@assets/hotels-320.webp";
+import shopIcon from "@assets/shop-320.webp";
+import adoptionIcon from "@assets/adoption-320.webp";
+import marriageIcon from "@assets/marriage-320.webp";
+import periodTrackerIcon from "@assets/periodtracker-320.webp";
+import freshFoodIcon from "@assets/fresh-320.webp";
+import phoneMockup from "@assets/phone-mockup-900.webp";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -50,7 +50,6 @@ const offerRowOne: OfferItem[] = [
   { iconSrc: healthIcon, label: "HEALTH CARE" },
   { iconSrc: hotelsIcon, label: "HOTEL BOOKING" },
   { iconSrc: shopIcon, label: "SHOP" },
-  { fallback: "search" },
 ];
 
 const offerRowTwo: OfferItem[] = [
@@ -58,7 +57,6 @@ const offerRowTwo: OfferItem[] = [
   { iconSrc: marriageIcon, label: "MARRIAGE OFFERS" },
   { iconSrc: freshFoodIcon, label: "FRESHFOOD" },
   { iconSrc: periodTrackerIcon, label: "PERIOD TRACKER" },
-  { fallback: "map" },
 ];
 
 function OfferCell({ item }: { item: OfferItem }) {
@@ -68,6 +66,10 @@ function OfferCell({ item }: { item: OfferItem }) {
         <img
           src={item.iconSrc}
           alt={item.label ?? "TwoPaws feature"}
+          width={320}
+          height={320}
+          loading="lazy"
+          decoding="async"
           className="h-24 w-24 object-contain sm:h-28 sm:w-28 lg:h-32 lg:w-32"
         />
       ) : (
@@ -309,6 +311,8 @@ export default function Landing() {
               <img
                 src="/iStock-157527277.webp"
                 alt="Dog"
+                decoding="async"
+                fetchPriority="high"
                 className="pointer-events-none absolute w-auto max-w-none object-contain"
                 style={{
                   right: "var(--dog-right)",
@@ -322,6 +326,8 @@ export default function Landing() {
               <img
                 src="/iStock-1143440918.webp"
                 alt="Cat"
+                decoding="async"
+                fetchPriority="low"
                 className="pointer-events-none absolute w-auto -translate-x-1/2 object-contain"
                 style={{
                   left: "var(--cat-x)",
@@ -336,6 +342,8 @@ export default function Landing() {
                 src="/illustration-2.svg"
                 alt=""
                 aria-hidden
+                decoding="async"
+                fetchPriority="low"
                 className="pointer-events-none absolute w-auto -translate-x-1/2 object-contain"
                 style={{
                   left: "var(--illus-left-x)",
@@ -350,6 +358,8 @@ export default function Landing() {
                 src="/illustration-1.svg"
                 alt=""
                 aria-hidden
+                decoding="async"
+                fetchPriority="low"
                 className="pointer-events-none absolute w-auto -translate-x-1/2 object-contain"
                 style={{
                   left: "var(--illus-right-x)",
@@ -372,6 +382,10 @@ export default function Landing() {
               <img
                 src={phoneMockup}
                 alt="TwoPaws app preview"
+                width={900}
+                height={1661}
+                loading="lazy"
+                decoding="async"
                 className="w-[190px] max-w-full object-contain sm:w-[205px] lg:w-[220px]"
               />
             </div>
@@ -419,6 +433,8 @@ export default function Landing() {
             src="/shape-5.svg"
             alt=""
             aria-hidden
+            loading="lazy"
+            decoding="async"
             className="pointer-events-none absolute -bottom-56 -right-36 z-10 hidden w-[360px] opacity-95 sm:block lg:-bottom-34 lg:-right-44 lg:w-[430px]"
           />
         </section>
@@ -434,13 +450,13 @@ export default function Landing() {
             </h2>
 
             <div className="mt-10 space-y-10">
-              <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 lg:grid-cols-6 lg:gap-x-8">
+              <div className="grid grid-cols-2 justify-items-center gap-x-4 gap-y-10 sm:grid-cols-3 lg:grid-cols-5 lg:gap-x-8">
                 {offerRowOne.map((item, index) => (
                   <OfferCell key={`row-one-${index}`} item={item} />
                 ))}
               </div>
 
-              <div className="grid grid-cols-2 gap-x-4 gap-y-10 sm:grid-cols-3 lg:grid-cols-5 lg:gap-x-8">
+              <div className="grid grid-cols-2 justify-items-center gap-x-4 gap-y-10 sm:grid-cols-3 lg:grid-cols-4 lg:gap-x-8">
                 {offerRowTwo.map((item, index) => (
                   <OfferCell key={`row-two-${index}`} item={item} />
                 ))}
@@ -458,6 +474,8 @@ export default function Landing() {
             src="/shape-6.png"
             alt=""
             aria-hidden
+            loading="lazy"
+            decoding="async"
             className="pointer-events-none absolute -right-8 -top-10 hidden w-[180px] opacity-95 sm:block lg:-right-10 lg:-top-14 lg:w-[250px]"
           />
 
@@ -604,7 +622,13 @@ export default function Landing() {
             {/* Brand + Socials */}
             <div>
               <div className="flex items-center space-x-2 mb-4">
-                <img src={twoPawsLogo} alt="TwoPaws" className="h-20" />
+                <img
+                  src={twoPawsLogo}
+                  alt="TwoPaws"
+                  loading="lazy"
+                  decoding="async"
+                  className="h-20"
+                />
               </div>
               <p className="text-gray-400 mb-4">
                 Your pet's best friend in Egypt. Connecting pet families with
@@ -617,7 +641,13 @@ export default function Landing() {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <img src={insta} alt="Instagram" className="h-6 w-6" />
+                  <img
+                    src={insta}
+                    alt="Instagram"
+                    loading="lazy"
+                    decoding="async"
+                    className="h-6 w-6"
+                  />
                 </a>
                 <a
                   href="https://www.facebook.com/twopawsapp/"
@@ -625,7 +655,13 @@ export default function Landing() {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <img src={facebook} alt="Facebook" className="h-6 w-6" />
+                  <img
+                    src={facebook}
+                    alt="Facebook"
+                    loading="lazy"
+                    decoding="async"
+                    className="h-6 w-6"
+                  />
                 </a>
                 <a
                   href="https://www.tiktok.com/@twopaws.app"
@@ -633,7 +669,13 @@ export default function Landing() {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <img src={tiktok} alt="TikTok" className="h-6 w-6" />
+                  <img
+                    src={tiktok}
+                    alt="TikTok"
+                    loading="lazy"
+                    decoding="async"
+                    className="h-6 w-6"
+                  />
                 </a>
                 <a
                   href="https://www.linkedin.com/company/twopaws/"
