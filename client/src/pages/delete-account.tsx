@@ -222,7 +222,7 @@ export default function DeleteAccount() {
                   <Button
                     type="submit"
                     disabled={newsletterMutation.isPending}
-                    className="w-full bg-brand-blue hover:bg-blue-600"
+                    className="w-full bg-brand-blue hover:bg-brand-blue/90"
                   >
                     {newsletterMutation.isPending ? "Subscribing..." : "Subscribe"}
                   </Button>

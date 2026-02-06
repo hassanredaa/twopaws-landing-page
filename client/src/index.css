@@ -21,8 +21,8 @@
   --card-foreground: 20 14.3% 4.1%;
   --border: 20 5.9% 90%;
   --input: 20 5.9% 90%;
-  --primary: 207 90% 54%;
-  --primary-foreground: 211 100% 99%;
+  --primary: 324 54% 73%; /* #df93c0 */
+  --primary-foreground: 321 37% 20%;
   --secondary: 60 4.8% 95.9%;
   --secondary-foreground: 24 9.8% 10%;
   --accent: 60 4.8% 95.9%;
@@ -35,6 +35,7 @@
   /* Brand colors */
   --brand-purple: 315 31% 36%; /* #783F6A */
   --brand-yellow: 43 99% 58%; /* #FEC329 */
+  --brand-blue: 324 54% 73%; /* #df93c0 */
 
   /* Legacy aliases used across the app */
   --brand-cream: 45 100% 94%; /* #FFF7E1 */
@@ -55,8 +56,8 @@
   --card-foreground: 0 0% 98%;
   --border: 240 3.7% 15.9%;
   --input: 240 3.7% 15.9%;
-  --primary: 207 90% 54%;
-  --primary-foreground: 211 100% 99%;
+  --primary: 324 54% 73%; /* #df93c0 */
+  --primary-foreground: 321 37% 20%;
   --secondary: 240 3.7% 15.9%;
   --secondary-foreground: 0 0% 98%;
   --accent: 240 3.7% 15.9%;

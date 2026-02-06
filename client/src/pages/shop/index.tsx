@@ -124,9 +124,7 @@ export default function ShopPage() {
   const [sort, setSort] = useState("default");
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [categoryOpen, setCategoryOpen] = useState(true);
-  const [brandOpen, setBrandOpen] = useState(true);
   const [priceOpen, setPriceOpen] = useState(true);
-  const [brandSelections, setBrandSelections] = useState<string[]>([]);
   const [minPrice, setMinPrice] = useState<string>("");
   const [maxPrice, setMaxPrice] = useState<string>("");
   const [perPage, setPerPage] = useState<number>(12);
@@ -178,13 +176,6 @@ export default function ShopPage() {
         );
       }
 
-      if (brandSelections.length > 0) {
-        data = data.filter((product) => {
-          const supplierId = product.supplierRef?.id;
-          return supplierId ? brandSelections.includes(supplierId) : false;
-        });
-      }
-
       const min = Number.parseFloat(minPrice);
       const max = Number.parseFloat(maxPrice);
       const hasMin = Number.isFinite(min);
@@ -231,7 +222,6 @@ export default function ShopPage() {
     deferredSearch,
     selectedCategory,
     selectedSupplier,
-    brandSelections,
     minPrice,
     maxPrice,
     sort,
@@ -252,7 +242,6 @@ export default function ShopPage() {
   );
   const hiddenCategoryCount = Math.max(categories.length - visibleCategories.length, 0);
 
-  const brandOptions = useMemo(() => suppliers.slice(0, 8), [suppliers]);
   const cartQuantityByProductId = useMemo(() => {
     return cartItems.reduce<Record<string, number>>((acc, item) => {
       const productId = item.productIdValue ?? item.productRef?.id ?? null;
@@ -269,24 +258,14 @@ export default function ShopPage() {
     let count = 0;
     if (selectedCategory !== "all") count += 1;
     if (supplierMode === "single" && selectedSupplier !== "all") count += 1;
-    if (brandSelections.length > 0) count += 1;
     if (hasPriceFilter) count += 1;
     return count;
   }, [
     selectedCategory,
     supplierMode,
     selectedSupplier,
-    brandSelections.length,
     hasPriceFilter,
   ]);
-
-  const toggleBrand = useCallback((supplierId: string) => {
-    setBrandSelections((prev) =>
-      prev.includes(supplierId)
-        ? prev.filter((id) => id !== supplierId)
-        : [...prev, supplierId]
-    );
-  }, []);
 
   const handleAdd = useCallback(async (productId: string) => {
     const product = productMap[productId];
@@ -314,7 +293,6 @@ export default function ShopPage() {
     setSelectedCategory("all");
     setSelectedSupplier("all");
     setSupplierMode("all");
-    setBrandSelections([]);
     setMinPrice("");
     setMaxPrice("");
     setPage(1);
@@ -466,49 +444,6 @@ export default function ShopPage() {
               <button
                 type="button"
                 className="flex w-full items-center justify-between text-sm font-semibold text-slate-800"
-                onClick={() => setBrandOpen((v) => !v)}
-              >
-                Top Brand
-                {brandOpen ? (
-                  <ChevronUp className="h-4 w-4" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
-              </button>
-              {brandOpen && (
-                <div className="mt-3 space-y-3">
-                  <div className="flex items-center gap-3">
-                    <Checkbox
-                      id="brand-all"
-                      checked={brandSelections.length === 0}
-                      onCheckedChange={() => setBrandSelections([])}
-                      className="h-5 w-5 rounded-sm"
-                    />
-                    <label htmlFor="brand-all" className="text-sm text-slate-800">
-                      All brands
-                    </label>
-                  </div>
-                  {brandOptions.map((brand) => (
-                    <div key={brand.id} className="flex items-center gap-3">
-                      <Checkbox
-                        id={`brand-${brand.id}`}
-                        checked={brandSelections.includes(brand.id)}
-                        onCheckedChange={() => toggleBrand(brand.id)}
-                        className="h-5 w-5 rounded-sm"
-                      />
-                      <label htmlFor={`brand-${brand.id}`} className="text-sm text-slate-800">
-                        {brand.name ?? "Brand"}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div>
-              <button
-                type="button"
-                className="flex w-full items-center justify-between text-sm font-semibold text-slate-800"
                 onClick={() => setPriceOpen((v) => !v)}
               >
                 Filter by Price
@@ -608,9 +543,9 @@ export default function ShopPage() {
           <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-semibold text-slate-800">Supplier mode</p>
+                <p className="text-sm font-semibold text-slate-800">Available Shops</p>
                 <p className="text-xs text-slate-500">
-                  Shop across all suppliers or lock to one store.
+                  Shop across all shops or lock to one shop.
                 </p>
               </div>
             </div>

@@ -15,8 +15,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
 
 const navLinks = [
+  { href: "/", label: "Home" },
   { href: "/shop", label: "Shop" },
-  { href: "/shop/suppliers", label: "Suppliers" },
   { href: "/orders", label: "Orders" },
   { href: "/account", label: "Account" },
 ];
@@ -33,7 +33,7 @@ export default function ShopShell({ children, headerContent }: ShopShellProps) {
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
-      <header className="sticky top-0 z-50 border-b border-slate-100 bg-white/90 backdrop-blur">
+      <header className="border-b border-slate-100 bg-white">
         <div className="flex h-16 w-full items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4">
             <Sheet>
@@ -59,7 +59,7 @@ export default function ShopShell({ children, headerContent }: ShopShellProps) {
                 </nav>
               </SheetContent>
             </Sheet>
-            <Link to="/" className="flex items-center gap-2">
+            <Link to="/shop" className="flex items-center gap-2">
               <img src={twoPawsLogo} alt="TwoPaws" className="h-10" />
             </Link>
             <nav className="hidden items-center gap-6 text-sm text-slate-600 md:flex">

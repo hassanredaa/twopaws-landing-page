@@ -1,5 +1,5 @@
 ﻿import { useEffect } from "react";
-import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { HelmetProvider } from "react-helmet-async";
@@ -19,7 +19,6 @@ import Privacy from "@/pages/privacy";
 import DeleteAccount from "@/pages/delete-account";
 import DownloadRedirect from "@/pages/download";
 import ShopPage from "@/pages/shop";
-import SuppliersPage from "@/pages/shop/suppliers";
 import SupplierShopPage from "@/pages/shop/supplier";
 import ProductDetailPage from "@/pages/shop/product";
 import CartPage from "@/pages/cart";
@@ -70,7 +69,7 @@ function App() {
                   <Route path="/delete-account" element={<DeleteAccount />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/shop" element={<ShopPage />} />
-                  <Route path="/shop/suppliers" element={<SuppliersPage />} />
+                  <Route path="/shop/suppliers" element={<Navigate to="/shop" replace />} />
                   <Route path="/shop/supplier/:supplierId" element={<SupplierShopPage />} />
                   <Route path="/shop/product/:productId" element={<ProductDetailPage />} />
                   <Route path="/cart" element={<CartPage />} />

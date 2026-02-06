@@ -21,7 +21,7 @@ import adoptionIcon from "@assets/adoption.png";
 import marriageIcon from "@assets/marriage.png";
 import periodTrackerIcon from "@assets/periodtracker.png";
 import freshFoodIcon from "@assets/loopdrop[1]_1748299425142.png";
-import phoneMockup from "@assets/phone_14_01.jpg";
+import phoneMockup from "@assets/home.png";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -164,7 +164,7 @@ export default function Landing() {
       />
 
       <div className="w-full bg-white">
-        <nav className="border-b border-gray-100 bg-white">
+        <nav className="relative z-50 border-b border-gray-100 bg-white">
           <div className="mx-auto flex min-h-[64px] w-full max-w-[1500px] items-center justify-between px-4 sm:px-8 lg:px-10">
             <a href="/" className="flex shrink-0 items-center">
               <img
@@ -273,11 +273,31 @@ export default function Landing() {
         </nav>
 
         {/* HERO (matches reference) */}
-        <section className="bg-brand-yellow">
+        <section className="relative z-20 bg-brand-yellow">
           <div className="relative mx-auto w-full max-w-[1500px] overflow-visible">
-            <div className="relative h-[320px] sm:h-[410px] lg:h-[470px]">
+            {/* Adjust collage overlap via the CSS variables on this container */}
+            <div
+              className="relative h-[380px] sm:h-[480px] lg:h-[560px]
+                [--headline-x:18px] [--headline-y:10px]
+                [--dog-right:0px] [--dog-bottom:-1px] [--dog-h:86%] [--dog-z:10]
+                [--cat-x:100%] [--cat-bottom:-30px] [--cat-h:30%] [--cat-z:30]
+                [--illus-left-x:52%] [--illus-left-bottom:-100px] [--illus-left-h:33%] [--illus-left-z:70]
+                [--illus-right-x:74%] [--illus-right-bottom:-4px] [--illus-right-h:33%] [--illus-right-z:35]
+                sm:[--headline-x:42px] sm:[--headline-y:108px]
+                sm:[--dog-h:90%] sm:[--cat-h:31%] sm:[--illus-left-h:34%] sm:[--illus-right-bottom:-1px] sm:[--illus-right-h:34%]
+                lg:[--headline-x:70px] lg:[--headline-y:50px]
+                lg:[--dog-h:470px] lg:[--cat-x:1100px] lg:[--cat-h:200px]
+                lg:[--illus-left-x:1260px] lg:[--illus-left-h:250px]
+                lg:[--illus-right-x:970px] lg:[--illus-right-h:250px]"
+            >
               {/* Headline */}
-              <div className="absolute bottom-[92px] left-[18px] z-30 sm:bottom-[108px] sm:left-[42px] lg:bottom-[128px] lg:left-[70px]">
+              <div
+                className="absolute z-30"
+                style={{
+                  left: "var(--headline-x)",
+                  bottom: "var(--headline-y)",
+                }}
+              >
                 <h1 className="font-marvin text-[2.6rem] uppercase leading-[0.9] tracking-tight text-white sm:text-[3.7rem] lg:text-[5.1rem]">
                   YOUR PET,
                   <br />
@@ -289,14 +309,26 @@ export default function Landing() {
               <img
                 src="/iStock-157527277.webp"
                 alt="Dog"
-                className="absolute bottom-[-8px] right-[0px] z-10 h-[86%] w-auto max-w-none object-contain sm:h-[90%] lg:h-[470px]"
+                className="pointer-events-none absolute w-auto max-w-none object-contain"
+                style={{
+                  right: "var(--dog-right)",
+                  bottom: "var(--dog-bottom)",
+                  height: "var(--dog-h)",
+                  zIndex: "var(--dog-z)",
+                }}
               />
 
               {/* Cat */}
               <img
                 src="/iStock-1143440918.webp"
                 alt="Cat"
-                className="absolute bottom-[-8px] left-[62%] z-20 h-[30%] w-auto -translate-x-1/2 object-contain sm:h-[31%] lg:left-[930px] lg:h-[156px]"
+                className="pointer-events-none absolute w-auto -translate-x-1/2 object-contain"
+                style={{
+                  left: "var(--cat-x)",
+                  bottom: "var(--cat-bottom)",
+                  height: "var(--cat-h)",
+                  zIndex: "var(--cat-z)",
+                }}
               />
 
               {/* Illustration (left) */}
@@ -304,7 +336,13 @@ export default function Landing() {
                 src="/illustration-2.svg"
                 alt=""
                 aria-hidden
-                className="absolute bottom-[4px] left-[49%] z-20 h-[33%] w-auto -translate-x-1/2 object-contain sm:h-[34%] lg:left-[770px] lg:h-[188px]"
+                className="pointer-events-none absolute w-auto -translate-x-1/2 object-contain"
+                style={{
+                  left: "var(--illus-left-x)",
+                  bottom: "var(--illus-left-bottom)",
+                  height: "var(--illus-left-h)",
+                  zIndex: "var(--illus-left-z)",
+                }}
               />
 
               {/* Illustration (right) - no more legs leaking into About */}
@@ -312,7 +350,13 @@ export default function Landing() {
                 src="/illustration-1.svg"
                 alt=""
                 aria-hidden
-                className="absolute bottom-[-12px] left-[70.5%] z-20 h-[33%] w-auto -translate-x-1/2 object-contain sm:bottom-[-14px] sm:h-[34%] lg:left-[1005px] lg:h-[198px]"
+                className="pointer-events-none absolute w-auto -translate-x-1/2 object-contain"
+                style={{
+                  left: "var(--illus-right-x)",
+                  bottom: "var(--illus-right-bottom)",
+                  height: "var(--illus-right-h)",
+                  zIndex: "var(--illus-right-z)",
+                }}
               />
             </div>
           </div>
@@ -321,7 +365,7 @@ export default function Landing() {
         {/* ABOUT (spacing + typography like reference) */}
         <section
           id="about"
-          className="relative overflow-hidden bg-white px-4 pb-10 pt-24 sm:px-8 sm:pb-12 sm:pt-28 lg:px-10 lg:pb-14 lg:pt-32"
+          className="relative z-0 overflow-hidden bg-white px-4 pb-10 pt-24 sm:px-8 sm:pb-12 sm:pt-28 lg:px-10 lg:pb-14 lg:pt-32"
         >
           <div className="mx-auto grid w-full max-w-[1366px] items-start gap-6 lg:grid-cols-[250px_minmax(0,1fr)] lg:gap-10">
             <div className="flex justify-center pt-1 lg:justify-start lg:pt-0">
