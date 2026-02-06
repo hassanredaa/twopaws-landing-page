@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import {
   ChevronDown,
   ChevronLeft,
@@ -12,6 +12,7 @@ import ProductCard from "@/components/shop/ProductCard";
 import { SupplierPicker } from "@/components/shop/SupplierPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -50,6 +51,7 @@ const getCategoryIds = (categories?: unknown[]) => {
 const PER_PAGE_OPTIONS = [12, 24, 48];
 const ELLIPSIS = "ellipsis" as const;
 type PageItem = number | typeof ELLIPSIS;
+const PRODUCT_SKELETON_COUNT = 12;
 
 const getPageItems = (totalPages: number, currentPage: number): PageItem[] => {
   if (totalPages <= 7) {
@@ -90,22 +92,39 @@ const getPageItems = (totalPages: number, currentPage: number): PageItem[] => {
   return items;
 };
 
+function ProductCardSkeleton() {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <Skeleton className="h-44 w-full rounded-xl" />
+      <div className="mt-4 space-y-2">
+        <Skeleton className="h-3 w-20 rounded-full" />
+        <Skeleton className="h-4 w-full rounded-full" />
+        <Skeleton className="h-4 w-3/4 rounded-full" />
+      </div>
+      <div className="mt-5 flex items-center justify-between">
+        <Skeleton className="h-4 w-24 rounded-full" />
+        <Skeleton className="h-4 w-12 rounded-full" />
+      </div>
+    </div>
+  );
+}
+
 export default function ShopPage() {
-  const { products, loading } = useProducts();
+  const { products, productMap, loading } = useProducts();
   const { categories } = useProductCategories();
-  const { supplierMap, suppliers } = useSuppliers();
-  const { addItem } = useCart();
+  const { suppliers, supplierMap, loading: suppliersLoading } = useSuppliers();
+  const { addItem, cartItems } = useCart();
   const { toast } = useToast();
 
   const [search, setSearch] = useState("");
+  const deferredSearch = useDeferredValue(search);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedSupplier, setSelectedSupplier] = useState<string>("all");
   const [supplierMode, setSupplierMode] = useState<"all" | "single">("all");
-  const [sort, setSort] = useState("price-asc");
+  const [sort, setSort] = useState("default");
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [categoryOpen, setCategoryOpen] = useState(true);
   const [brandOpen, setBrandOpen] = useState(true);
-  const [storeOpen, setStoreOpen] = useState(true);
   const [priceOpen, setPriceOpen] = useState(true);
   const [brandSelections, setBrandSelections] = useState<string[]>([]);
   const [minPrice, setMinPrice] = useState<string>("");
@@ -113,6 +132,8 @@ export default function ShopPage() {
   const [perPage, setPerPage] = useState<number>(12);
   const [page, setPage] = useState<number>(1);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const trimmedSearch = search.trim();
+  const isSearching = trimmedSearch.length > 0;
 
   const sortOptions = useMemo(() => {
     const hasNewest = products.some((product) => product.created_at || product.createdAt);
@@ -120,6 +141,7 @@ export default function ShopPage() {
       (product) => typeof product.popularity === "number"
     );
     const base = [
+      { value: "default", label: "Default" },
       { value: "price-asc", label: "Price: Low to High" },
       { value: "price-desc", label: "Price: High to Low" },
     ];
@@ -127,13 +149,6 @@ export default function ShopPage() {
     if (hasPopularity) base.push({ value: "popularity", label: "Popularity" });
     return base;
   }, [products]);
-
-  const categoryNameMap = useMemo(() => {
-    return categories.reduce<Record<string, string>>((acc, cat) => {
-      acc[cat.id] = cat.name ?? "Category";
-      return acc;
-    }, {});
-  }, [categories]);
 
   const filteredProducts = useMemo(() => {
     let data = [...products];
@@ -145,71 +160,75 @@ export default function ShopPage() {
       return quantity > 0 && price > 0;
     });
 
-    if (search.trim()) {
-      const needle = search.trim().toLowerCase();
+    const needle = deferredSearch.trim().toLowerCase();
+    if (needle) {
       data = data.filter((product) =>
         (product.name ?? "").toLowerCase().includes(needle)
       );
-    }
-
-    if (selectedCategory !== "all") {
-      data = data.filter((product) =>
-        getCategoryIds(product.categories as unknown[]).includes(selectedCategory)
-      );
-    }
-
-    if (supplierMode === "single" && selectedSupplier !== "all") {
-      data = data.filter(
-        (product) => product.supplierRef && product.supplierRef.id === selectedSupplier
-      );
-    }
-
-    if (brandSelections.length > 0) {
-      data = data.filter((product) => {
-        const supplierId = product.supplierRef?.id;
-        return supplierId ? brandSelections.includes(supplierId) : false;
-      });
-    }
-
-    const min = Number.parseFloat(minPrice);
-    const max = Number.parseFloat(maxPrice);
-    const hasMin = Number.isFinite(min);
-    const hasMax = Number.isFinite(max);
-    if (hasMin || hasMax) {
-      data = data.filter((product) => {
-        const price = getUnitPrice(product.price, product.sale_price, product.on_sale);
-        if (hasMin && price < min) return false;
-        if (hasMax && price > max) return false;
-        return true;
-      });
-    }
-
-    data.sort((a, b) => {
-      switch (sort) {
-        case "price-desc":
-          return (
-            getUnitPrice(b.price, b.sale_price, b.on_sale) -
-            getUnitPrice(a.price, a.sale_price, a.on_sale)
-          );
-        case "newest": {
-          const aTime = a.created_at?.toMillis?.() ?? a.createdAt?.toMillis?.() ?? 0;
-          const bTime = b.created_at?.toMillis?.() ?? b.createdAt?.toMillis?.() ?? 0;
-          return bTime - aTime;
-        }
-        case "popularity":
-          return (b.popularity ?? 0) - (a.popularity ?? 0);
-        default:
-          return (
-            getUnitPrice(a.price, a.sale_price, a.on_sale) -
-            getUnitPrice(b.price, b.sale_price, b.on_sale)
-          );
+    } else {
+      if (selectedCategory !== "all") {
+        data = data.filter((product) =>
+          getCategoryIds(product.categories as unknown[]).includes(selectedCategory)
+        );
       }
-    });
+
+      if (supplierMode === "single" && selectedSupplier !== "all") {
+        data = data.filter(
+          (product) => product.supplierRef && product.supplierRef.id === selectedSupplier
+        );
+      }
+
+      if (brandSelections.length > 0) {
+        data = data.filter((product) => {
+          const supplierId = product.supplierRef?.id;
+          return supplierId ? brandSelections.includes(supplierId) : false;
+        });
+      }
+
+      const min = Number.parseFloat(minPrice);
+      const max = Number.parseFloat(maxPrice);
+      const hasMin = Number.isFinite(min);
+      const hasMax = Number.isFinite(max);
+      if (hasMin || hasMax) {
+        data = data.filter((product) => {
+          const price = getUnitPrice(product.price, product.sale_price, product.on_sale);
+          if (hasMin && price < min) return false;
+          if (hasMax && price > max) return false;
+          return true;
+        });
+      }
+    }
+
+    if (sort !== "default") {
+      data.sort((a, b) => {
+        switch (sort) {
+          case "price-asc":
+            return (
+              getUnitPrice(a.price, a.sale_price, a.on_sale) -
+              getUnitPrice(b.price, b.sale_price, b.on_sale)
+            );
+          case "price-desc":
+            return (
+              getUnitPrice(b.price, b.sale_price, b.on_sale) -
+              getUnitPrice(a.price, a.sale_price, a.on_sale)
+            );
+          case "newest": {
+            const aTime = a.created_at?.toMillis?.() ?? a.createdAt?.toMillis?.() ?? 0;
+            const bTime = b.created_at?.toMillis?.() ?? b.createdAt?.toMillis?.() ?? 0;
+            return bTime - aTime;
+          }
+          case "popularity":
+            return (b.popularity ?? 0) - (a.popularity ?? 0);
+          default:
+            return 0;
+        }
+      });
+    }
 
     return data;
   }, [
     products,
-    search,
+    deferredSearch,
     selectedCategory,
     selectedSupplier,
     brandSelections,
@@ -224,6 +243,8 @@ export default function ShopPage() {
   const pageStart = (currentPage - 1) * perPage;
   const pageEnd = pageStart + perPage;
   const visibleProducts = filteredProducts.slice(pageStart, pageEnd);
+  const showingFrom = totalItems === 0 ? 0 : pageStart + 1;
+  const showingTo = Math.min(pageEnd, totalItems);
 
   const visibleCategories = useMemo(
     () => (showAllCategories ? categories : categories.slice(0, 8)),
@@ -232,17 +253,43 @@ export default function ShopPage() {
   const hiddenCategoryCount = Math.max(categories.length - visibleCategories.length, 0);
 
   const brandOptions = useMemo(() => suppliers.slice(0, 8), [suppliers]);
+  const cartQuantityByProductId = useMemo(() => {
+    return cartItems.reduce<Record<string, number>>((acc, item) => {
+      const productId = item.productIdValue ?? item.productRef?.id ?? null;
+      if (!productId) return acc;
+      const qty = typeof item.quantity === "number" ? item.quantity : 0;
+      if (qty <= 0) return acc;
+      acc[productId] = (acc[productId] ?? 0) + qty;
+      return acc;
+    }, {});
+  }, [cartItems]);
 
-  const toggleBrand = (supplierId: string) => {
+  const hasPriceFilter = minPrice.trim() !== "" || maxPrice.trim() !== "";
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (selectedCategory !== "all") count += 1;
+    if (supplierMode === "single" && selectedSupplier !== "all") count += 1;
+    if (brandSelections.length > 0) count += 1;
+    if (hasPriceFilter) count += 1;
+    return count;
+  }, [
+    selectedCategory,
+    supplierMode,
+    selectedSupplier,
+    brandSelections.length,
+    hasPriceFilter,
+  ]);
+
+  const toggleBrand = useCallback((supplierId: string) => {
     setBrandSelections((prev) =>
       prev.includes(supplierId)
         ? prev.filter((id) => id !== supplierId)
         : [...prev, supplierId]
     );
-  };
+  }, []);
 
-  const handleAdd = async (productId: string) => {
-    const product = products.find((p) => p.id === productId);
+  const handleAdd = useCallback(async (productId: string) => {
+    const product = productMap[productId];
     if (!product) return;
     try {
       await addItem(product, 1);
@@ -261,10 +308,54 @@ export default function ShopPage() {
         err instanceof Error ? err.message : "Unable to add this item right now.";
       toast({ title: "Add to cart failed", description: message, variant: "destructive" });
     }
-  };
+  }, [addItem, productMap, toast]);
+
+  const clearFilters = useCallback(() => {
+    setSelectedCategory("all");
+    setSelectedSupplier("all");
+    setSupplierMode("all");
+    setBrandSelections([]);
+    setMinPrice("");
+    setMaxPrice("");
+    setPage(1);
+  }, []);
+
+  const headerSearch = (
+    <div className="mx-auto flex w-full max-w-[980px] items-center gap-2">
+      <div className="relative flex-1">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+        <Input
+          value={search}
+          onChange={(event) => {
+            setSearch(event.target.value);
+            setPage(1);
+          }}
+          placeholder="Search products, brands, and essentials..."
+          className="h-11 rounded-full border-slate-300 bg-white pl-10 pr-4 text-sm shadow-sm"
+        />
+      </div>
+      <Button
+        variant="outline"
+        className="border-slate-200 lg:hidden"
+        onClick={() => setFiltersOpen((prev) => !prev)}
+        aria-label="Toggle filters"
+      >
+        <SlidersHorizontal className="h-4 w-4" />
+      </Button>
+      {isSearching && (
+        <Button
+          variant="outline"
+          className="hidden border-slate-200 sm:inline-flex"
+          onClick={() => setSearch("")}
+        >
+          Clear
+        </Button>
+      )}
+    </div>
+  );
 
   return (
-    <ShopShell>
+    <ShopShell headerContent={headerSearch}>
       <Seo
         title="Shop | TwoPaws"
         description="Browse pet food, supplies, and accessories from trusted suppliers."
@@ -272,7 +363,7 @@ export default function ShopPage() {
         ogType="website"
       />
       <div className="grid min-w-0 gap-6 lg:grid-cols-[280px_1fr]">
-        <aside className="min-w-0 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+        <aside className="min-w-0 rounded-lg border border-slate-200 bg-white p-4 shadow-sm lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
           <div className="flex items-center justify-between lg:hidden">
             <p className="text-sm font-semibold text-slate-800">Filters</p>
             <Button
@@ -285,17 +376,19 @@ export default function ShopPage() {
           </div>
 
           <div className={`${filtersOpen ? "block" : "hidden"} lg:block`}>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <Input
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
-                placeholder="Search..."
-                className="h-10 pl-9 text-sm"
-              />
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-slate-500">
+                {activeFilterCount > 0 ? `${activeFilterCount} active filters` : "No active filters"}
+              </span>
+              {activeFilterCount > 0 && (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="font-semibold text-brand-green-dark hover:underline"
+                >
+                  Clear all
+                </button>
+              )}
             </div>
 
             <div className="mt-5 space-y-5">
@@ -339,7 +432,19 @@ export default function ShopPage() {
                         }}
                         className="h-5 w-5 rounded-sm"
                       />
-                      <label htmlFor={`cat-${category.id}`} className="text-sm text-slate-800">
+                      <label
+                        htmlFor={`cat-${category.id}`}
+                        className="flex items-center gap-2 text-sm text-slate-800"
+                      >
+                        {(category.pic as string | undefined) && (
+                          <img
+                            src={category.pic as string}
+                            alt={category.name ?? "Category"}
+                            className="h-5 w-5 rounded-sm object-cover"
+                            loading="lazy"
+                            decoding="async"
+                          />
+                        )}
                         {category.name ?? "Category"}
                       </label>
                     </div>
@@ -353,62 +458,6 @@ export default function ShopPage() {
                       + {hiddenCategoryCount} more
                     </button>
                   )}
-                </div>
-              )}
-            </div>
-
-            <div>
-              <button
-                type="button"
-                className="flex w-full items-center justify-between text-sm font-semibold text-slate-800"
-                onClick={() => setStoreOpen((v) => !v)}
-              >
-                Stores
-                {storeOpen ? (
-                  <ChevronUp className="h-4 w-4" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
-              </button>
-              {storeOpen && (
-                <div className="mt-3 space-y-3">
-                  <div className="flex items-center gap-3">
-                    <Checkbox
-                      id="store-all"
-                      checked={selectedSupplier === "all"}
-                      onCheckedChange={() => {
-                        setSelectedSupplier("all");
-                        setSupplierMode("all");
-                        setPage(1);
-                      }}
-                      className="h-5 w-5 rounded-sm"
-                    />
-                    <label htmlFor="store-all" className="text-sm text-slate-800">
-                      All suppliers
-                    </label>
-                  </div>
-                  {suppliers.map((supplier) => (
-                    <div key={supplier.id} className="flex items-center gap-3">
-                      <Checkbox
-                        id={`store-${supplier.id}`}
-                        checked={selectedSupplier === supplier.id}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setSelectedSupplier(supplier.id);
-                            setSupplierMode("single");
-                          } else {
-                            setSelectedSupplier("all");
-                            setSupplierMode("all");
-                          }
-                          setPage(1);
-                        }}
-                        className="h-5 w-5 rounded-sm"
-                      />
-                      <label htmlFor={`store-${supplier.id}`} className="text-sm text-slate-800">
-                        {supplier.name ?? "Supplier"}
-                      </label>
-                    </div>
-                  ))}
                 </div>
               )}
             </div>
@@ -507,31 +556,16 @@ export default function ShopPage() {
         </aside>
 
         <div className="flex min-w-0 flex-col gap-4">
-          <div className="flex items-center gap-2 lg:hidden">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <Input
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
-                placeholder="Search..."
-                className="h-10 pl-9 text-sm"
-              />
-            </div>
-            <Button
-              variant="outline"
-              className="border-slate-200"
-              onClick={() => setFiltersOpen((prev) => !prev)}
-              aria-label="Toggle filters"
-            >
-              <SlidersHorizontal className="h-4 w-4" />
-            </Button>
-          </div>
           <header className="flex flex-col gap-2 rounded-lg border border-slate-200 bg-white p-3 text-slate-800">
             <div className="flex flex-wrap items-center gap-2 text-sm">
-              <span className="font-semibold">Total items: {totalItems}</span>
+              <span className="font-semibold">
+                {isSearching
+                  ? `Results for "${trimmedSearch}" (${totalItems})`
+                  : `Total items: ${totalItems}`}
+              </span>
+              {search !== deferredSearch && (
+                <span className="text-xs text-slate-500">Updating results...</span>
+              )}
               <div className="flex items-center gap-2">
                 <span>Show</span>
                 <Select
@@ -585,7 +619,7 @@ export default function ShopPage() {
                 suppliers={suppliers}
                 selectedSupplierId={selectedSupplier}
                 supplierMode={supplierMode}
-                loading={false}
+                loading={suppliersLoading}
                 onSelectAll={() => {
                   setSelectedSupplier("all");
                   setSupplierMode("all");
@@ -600,35 +634,53 @@ export default function ShopPage() {
             </div>
           </section>
 
-          <section className="grid grid-cols-2 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-            {loading && (
-              <p className="text-sm text-slate-500">Loading products...</p>
-            )}
+          <section className="grid grid-cols-2 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+            {loading &&
+              Array.from({ length: PRODUCT_SKELETON_COUNT }).map((_, index) => (
+                <ProductCardSkeleton key={`product-skeleton-${index}`} />
+              ))}
             {!loading && visibleProducts.length === 0 && (
-              <p className="text-sm text-slate-500">No products found.</p>
+              <div className="col-span-full rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
+                <p className="text-sm font-semibold text-slate-700">
+                  {isSearching ? "No products match your search." : "No products found."}
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  {isSearching
+                    ? "Try a different product name."
+                    : "Try a different search term or reset your filters."}
+                </p>
+                {isSearching && (
+                  <Button
+                    variant="outline"
+                    className="mt-4 border-slate-200"
+                    onClick={() => setSearch("")}
+                  >
+                    Clear search
+                  </Button>
+                )}
+                {activeFilterCount > 0 && (
+                  <Button
+                    variant="outline"
+                    className="mt-4 border-slate-200"
+                    onClick={clearFilters}
+                  >
+                    Clear filters
+                  </Button>
+                )}
+              </div>
             )}
-            {visibleProducts.map((product) => {
-              const supplierId = product.supplierRef?.id;
-              const supplier = supplierId ? supplierMap[supplierId] : undefined;
-              const supplierName = supplier?.name;
-              const supplierLogo =
-                (supplier?.logo_url as string) ||
-                (supplier?.logoUrl as string) ||
-                (supplier?.logo as string);
-              const categoryId = getCategoryIds(product.categories as unknown[])[0];
-              const categoryName = categoryId ? categoryNameMap[categoryId] : undefined;
-              return (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  supplierId={supplierId}
-                  supplierName={supplierName}
-                  supplierLogo={supplierLogo}
-                  categoryName={categoryName}
-                  onAdd={() => handleAdd(product.id)}
-                />
-              );
-            })}
+            {!loading &&
+              visibleProducts.map((product) => {
+                return (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    supplierName={product.supplierRef?.id ? supplierMap[product.supplierRef.id]?.name : undefined}
+                    cartQuantity={cartQuantityByProductId[product.id] ?? 0}
+                    onAdd={handleAdd}
+                  />
+                );
+              })}
           </section>
 
           <footer className="flex flex-wrap items-center justify-center gap-4 rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-700">
@@ -636,7 +688,7 @@ export default function ShopPage() {
               <button
                 type="button"
                 className="rounded-md border border-slate-200 px-3 py-1 disabled:opacity-50"
-                disabled={currentPage === 1}
+                disabled={loading || currentPage === 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -673,14 +725,14 @@ export default function ShopPage() {
               <button
                 type="button"
                 className="rounded-md border border-slate-200 px-3 py-1 disabled:opacity-50"
-                disabled={currentPage >= totalPages}
+                disabled={loading || currentPage >= totalPages}
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>
             <div className="text-xs text-slate-500">
-              Showing {pageStart + 1}-{Math.min(pageEnd, totalItems)} of {totalItems}
+              Showing {showingFrom}-{showingTo} of {totalItems}
             </div>
           </footer>
         </div>

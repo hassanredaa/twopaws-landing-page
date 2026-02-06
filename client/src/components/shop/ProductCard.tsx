@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import type { ProductDoc } from "@/hooks/useProducts";
 import { formatCurrency } from "@/lib/format";
@@ -26,13 +27,14 @@ type ProductCardProps = {
   supplierName?: string;
   supplierId?: string;
   supplierLogo?: string;
-  categoryName?: string;
-  onAdd?: () => void;
+  cartQuantity?: number;
+  onAdd?: (productId: string) => void;
 };
 
-export default function ProductCard({
+function ProductCard({
   product,
-  categoryName,
+  supplierName,
+  cartQuantity = 0,
   onAdd,
 }: ProductCardProps) {
   const navigate = useNavigate();
@@ -43,6 +45,7 @@ export default function ProductCard({
   const stock = typeof product.quantity === "number" ? product.quantity : 0;
   const unitLabel = getUnitLabel(product);
   const isOutOfStock = stock <= 0;
+  const isInCart = cartQuantity > 0;
 
   return (
     <Link to={`/shop/product/${product.id}`} className="block h-full">
@@ -54,6 +57,7 @@ export default function ProductCard({
               alt={product.name ?? "Product"}
               className={`h-full w-full object-contain p-4 transition ${isOutOfStock ? "opacity-60" : ""}`}
               loading="lazy"
+              decoding="async"
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-slate-50 text-sm text-slate-400">
@@ -72,17 +76,20 @@ export default function ProductCard({
           >
             <Info className="h-4 w-4" />
           </button>
+          {isInCart && (
+            <span className="absolute left-2 top-2 rounded-full bg-brand-olive px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-brand-dark">
+              In cart: {cartQuantity}
+            </span>
+          )}
         </div>
 
         <CardContent className="flex flex-1 flex-col gap-1 p-4">
-          {categoryName ? (
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-              {categoryName}
-            </p>
-          ) : null}
           <h3 className="text-base font-semibold leading-snug text-slate-900 line-clamp-2">
             {product.name ?? "Untitled product"}
           </h3>
+          {supplierName ? (
+            <p className="text-xs text-slate-500 line-clamp-1">By {supplierName}</p>
+          ) : null}
           {unitLabel ? (
             <p className="text-xs text-muted-foreground">{unitLabel}</p>
           ) : null}
@@ -107,19 +114,32 @@ export default function ProductCard({
                 </span>
               )}
             </div>
-            <button
-              type="button"
-              onClick={(event) => {
-                event.preventDefault();
-                onAdd?.();
-              }}
-              className="text-xs font-semibold uppercase text-red-500 hover:text-red-600"
-            >
-              Add +
-            </button>
+            {onAdd ? (
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.preventDefault();
+                  onAdd(product.id);
+                }}
+                className="text-xs font-semibold uppercase text-red-500 hover:text-red-600"
+              >
+                Add +
+              </button>
+            ) : (
+              <span className="text-xs font-semibold uppercase text-slate-400">View</span>
+            )}
           </div>
         </CardContent>
       </Card>
     </Link>
   );
 }
+
+export default memo(ProductCard, (prev, next) => {
+  return (
+    prev.product === next.product &&
+    prev.supplierName === next.supplierName &&
+    prev.cartQuantity === next.cartQuantity &&
+    prev.onAdd === next.onAdd
+  );
+});

@@ -51,6 +51,14 @@ import { META_PIXEL_CURRENCY, trackMetaEvent } from "@/lib/metaPixel";
 
 const PROMO_STORAGE_KEY = "twopawsPromo";
 
+const buildPaymobCheckoutUrl = (publicKey: string, clientSecret: string) => {
+  const params = new URLSearchParams({
+    publicKey,
+    clientSecret,
+  });
+  return `https://accept.paymob.com/unifiedcheckout/?${params.toString()}`;
+};
+
 type PromoState = {
   code: string;
   discount: number;
@@ -435,9 +443,8 @@ export default function CheckoutPage() {
           if (!data?.clientSecret || !data?.publicKey) {
             throw new Error("Unable to start Paymob payment.");
           }
-          navigate(`/payment/paymob?orderId=${orderRef.id}`, {
-            state: { clientSecret: data.clientSecret, publicKey: data.publicKey },
-          });
+          const checkoutUrl = buildPaymobCheckoutUrl(data.publicKey, data.clientSecret);
+          window.location.assign(checkoutUrl);
           return;
         } catch (paymobErr) {
           // Roll back the draft order if we fail to initialize the payment session.
