@@ -247,6 +247,105 @@ const toUserRef = (value: any): admin.firestore.DocumentReference | null => {
   return null;
 };
 
+const normalizeUserIdentifier = (value: unknown) => {
+  if (typeof value !== 'string') return '';
+  return value.trim().replace(/^\/+|\/+$/g, '');
+};
+
+const matchesBuyer = (value: unknown, buyerRef: admin.firestore.DocumentReference) => {
+  const normalized = normalizeUserIdentifier(value);
+  if (!normalized) return false;
+  if (normalized === buyerRef.id) return true;
+  if (normalized === buyerRef.path) return true;
+  if (normalized === `users/${buyerRef.id}`) return true;
+  return false;
+};
+
+const clearBuyerCarts = async (buyerRef: admin.firestore.DocumentReference) => {
+  const cartRefsByPath = new Map<string, admin.firestore.DocumentReference>();
+  const [cartsByRef, cartsByUidString, cartsByPathString, cartsByBuyerIdRef] = await Promise.all([
+    db.collection('carts').where('userId', '==', buyerRef).get(),
+    db.collection('carts').where('userId', '==', buyerRef.id).get(),
+    db.collection('carts').where('userId', '==', buyerRef.path).get(),
+    db.collection('carts').where('buyerId', '==', buyerRef).get(),
+  ]);
+  [cartsByRef, cartsByUidString, cartsByPathString, cartsByBuyerIdRef].forEach((snap) => {
+    snap.docs.forEach((docSnap) => {
+      cartRefsByPath.set(docSnap.ref.path, docSnap.ref);
+    });
+  });
+
+  // Legacy fallback: some codepaths may have used carts/{uid}.
+  const legacyCartRef = db.collection('carts').doc(buyerRef.id);
+  const legacySnap = await legacyCartRef.get();
+  if (legacySnap.exists) {
+    cartRefsByPath.set(legacyCartRef.path, legacyCartRef);
+  }
+
+  // Fallback for mixed legacy schemas where user id was stored in non-reference fields.
+  if (cartRefsByPath.size === 0) {
+    const probeSnap = await db.collection('carts').limit(500).get();
+    probeSnap.docs.forEach((docSnap) => {
+      const cartData = (docSnap.data() || {}) as Record<string, unknown>;
+      if (
+        matchesBuyer(cartData?.userId, buyerRef) ||
+        matchesBuyer(cartData?.buyerId, buyerRef) ||
+        matchesBuyer(cartData?.userRef, buyerRef)
+      ) {
+        cartRefsByPath.set(docSnap.ref.path, docSnap.ref);
+      }
+    });
+  }
+
+  let clearedCarts = 0;
+  for (const cartRef of cartRefsByPath.values()) {
+    const cartItemsSnap = await cartRef.collection('cartItems').get();
+
+    // Commit in chunks to avoid batch operation limits on large carts.
+    let batch = db.batch();
+    let opCount = 0;
+    for (const itemDoc of cartItemsSnap.docs) {
+      batch.delete(itemDoc.ref);
+      opCount += 1;
+
+      if (opCount >= 450) {
+        batch.set(
+          cartRef,
+          {
+            total: 0,
+            itemCount: 0,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+        await batch.commit();
+        batch = db.batch();
+        opCount = 0;
+      }
+    }
+
+    batch.set(
+      cartRef,
+      {
+        total: 0,
+        itemCount: 0,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+    await batch.commit();
+    clearedCarts += 1;
+  }
+
+  console.log('clearBuyerCarts completed', {
+    buyerPath: buyerRef.path,
+    matchedCarts: cartRefsByPath.size,
+    clearedCarts,
+  });
+
+  return { clearedCarts };
+};
+
 const restoreOrderItemsToBuyerCart = async (
   orderRef: admin.firestore.DocumentReference,
   buyerRef: admin.firestore.DocumentReference
@@ -689,9 +788,8 @@ export const paymobWebhook = functions.https.onRequest(async (req, res) => {
     }
 
     const orderSnap = await orderRef.get();
-    const orderData = orderSnap.data() as {
-      buyerId?: admin.firestore.DocumentReference;
-    };
+    const orderData = orderSnap.data() as { buyerId?: unknown };
+    const buyerRef = toUserRef(orderData?.buyerId);
 
     const nextPaymentStatus = success ? 'PAID' : 'PAYMENT_FAILED';
     const nextOrderStatus = success ? 'Pending' : 'PAYMENT_FAILED';
@@ -711,40 +809,17 @@ export const paymobWebhook = functions.https.onRequest(async (req, res) => {
       { merge: true }
     );
 
-    if (success && orderData?.buyerId?.id) {
-      let cartRef = db.collection('carts').doc(orderData.buyerId.id);
-      let cartSnap = await cartRef.get();
-      if (!cartSnap.exists) {
-        const cartQuery = await db
-          .collection('carts')
-          .where('userId', '==', orderData.buyerId)
-          .limit(1)
-          .get();
-        if (!cartQuery.empty) {
-          cartRef = cartQuery.docs[0].ref;
-          cartSnap = cartQuery.docs[0];
-        }
-      }
-
-      if (cartSnap.exists) {
-        const cartItemsSnap = await cartRef.collection('cartItems').get();
-        const batch = db.batch();
-        cartItemsSnap.docs.forEach((docSnap) => batch.delete(docSnap.ref));
-        batch.set(
-          cartRef,
-          {
-            total: 0,
-            itemCount: 0,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          },
-          { merge: true }
-        );
-        await batch.commit();
-      }
+    if (success && buyerRef) {
+      const { clearedCarts } = await clearBuyerCarts(buyerRef);
+      console.log('paymobWebhook success cart clear', {
+        orderId: orderRef.id,
+        buyerPath: buyerRef.path,
+        clearedCarts,
+      });
     }
 
-    if (!success && orderData?.buyerId) {
-      await restoreOrderItemsToBuyerCart(orderRef, orderData.buyerId);
+    if (!success && buyerRef) {
+      await restoreOrderItemsToBuyerCart(orderRef, buyerRef);
     }
 
     res.status(200).send('ok');
