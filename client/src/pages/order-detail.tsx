@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useOrder } from "@/hooks/useOrders";
 import { formatAddress } from "@/hooks/useAddresses";
 import type { ProductDoc } from "@/hooks/useProducts";
+import Seo from "@/lib/seo/Seo";
 
 const formatDate = (timestamp?: { toMillis?: () => number }) => {
   const millis = timestamp?.toMillis?.();
@@ -136,6 +137,12 @@ export default function OrderDetailPage() {
   if (!user) {
     return (
       <ShopShell>
+        <Seo
+          title="Order Details | TwoPaws Shop"
+          description="Review your TwoPaws order details."
+          canonicalUrl={orderId ? `/orders/${orderId}` : "/orders"}
+          noIndex
+        />
         <Card className="border-slate-100">
           <CardContent className="p-6">Sign in to view orders.</CardContent>
         </Card>
@@ -145,6 +152,12 @@ export default function OrderDetailPage() {
 
   return (
     <ShopShell>
+      <Seo
+        title="Order Details | TwoPaws Shop"
+        description="Review your TwoPaws order details."
+        canonicalUrl={orderId ? `/orders/${orderId}` : "/orders"}
+        noIndex
+      />
       {loading && <p className="text-sm text-slate-500">Loading order...</p>}
       {!loading && !order && (
         <p className="text-sm text-slate-500">Order not found.</p>

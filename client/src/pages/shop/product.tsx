@@ -400,7 +400,7 @@ export default function ProductDetailPage() {
                 ) : null}
               </div>
               {imageUrls.length > 1 && (
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
                   {safeImageUrls.map((image, index) => (
                     <button
                       key={`${image}-${index}`}
@@ -432,7 +432,7 @@ export default function ProductDetailPage() {
                 {showSale && (
                   <Badge className="bg-brand-olive text-brand-dark">On sale</Badge>
                 )}
-                <h1 className="text-3xl font-semibold text-slate-900">
+                <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">
                   {product.name}
                 </h1>
                 <p className="text-slate-600">{product.description}</p>
@@ -507,7 +507,7 @@ export default function ProductDetailPage() {
                 No similar products available right now.
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4">
                 {recommendedProducts.map((recommended) => (
                   <ProductCard
                     key={recommended.id}

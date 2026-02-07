@@ -1,6 +1,11 @@
 User-agent: *
 Allow: /
+Disallow: /login
+Disallow: /account
+Disallow: /cart
+Disallow: /checkout
+Disallow: /orders
+Disallow: /payment
 
 # Update this if your production domain changes
 Sitemap: https://twopaws.pet/sitemap.xml
-

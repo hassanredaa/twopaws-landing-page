@@ -1,4 +1,5 @@
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   ChevronDown,
   ChevronLeft,
@@ -28,6 +29,7 @@ import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/use-toast";
 import { META_PIXEL_CURRENCY, trackMetaEvent } from "@/lib/metaPixel";
 import Seo from "@/lib/seo/Seo";
+import { BASE_URL } from "@/lib/seo/constants";
 import { toPrerenderSafeImageSrc } from "@/lib/prerenderImage";
 
 const getUnitPrice = (price?: number, salePrice?: number, onSale?: boolean) => {
@@ -255,6 +257,42 @@ export default function ShopPage() {
   }, [cartItems]);
 
   const hasPriceFilter = minPrice.trim() !== "" || maxPrice.trim() !== "";
+  const activeSuppliers = useMemo(
+    () => suppliers.filter((supplier) => supplier.isActive !== false),
+    [suppliers]
+  );
+  const shopDescription =
+    "Shop pet food, accessories, litter, toys, and wellness essentials from trusted TwoPaws suppliers in Egypt.";
+  const shopStructuredData = useMemo(() => {
+    const listItems = filteredProducts.slice(0, 24).map((product, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: product.name ?? `Product ${index + 1}`,
+      url: `${BASE_URL}/shop/product/${product.id}`,
+    }));
+
+    return [
+      {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        name: "TwoPaws Shop",
+        description: shopDescription,
+        url: `${BASE_URL}/shop`,
+        isPartOf: {
+          "@type": "WebSite",
+          name: "TwoPaws",
+          url: BASE_URL,
+        },
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        name: "TwoPaws Shop products",
+        numberOfItems: totalItems,
+        itemListElement: listItems,
+      },
+    ];
+  }, [filteredProducts, totalItems]);
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (selectedCategory !== "all") count += 1;
@@ -336,10 +374,11 @@ export default function ShopPage() {
   return (
     <ShopShell headerContent={headerSearch}>
       <Seo
-        title="Shop | TwoPaws"
-        description="Browse pet food, supplies, and accessories from trusted suppliers."
+        title="TwoPaws Shop | Pet Food, Supplies & Accessories in Egypt"
+        description={shopDescription}
         canonicalUrl="/shop"
         ogType="website"
+        structuredData={shopStructuredData}
       />
       <div className="grid min-w-0 gap-6 lg:grid-cols-[280px_1fr]">
         <aside className="min-w-0 rounded-lg border border-slate-200 bg-white p-4 shadow-sm lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto">
@@ -569,10 +608,20 @@ export default function ShopPage() {
                   setPage(1);
                 }}
               />
+              <p className="mt-3 text-xs text-slate-500">
+                Looking for a specific store?{" "}
+                <Link
+                  to="/shop/suppliers"
+                  className="font-semibold text-brand-green-dark hover:underline"
+                >
+                  Browse all supplier pages
+                </Link>
+                {" "}({activeSuppliers.length} suppliers).
+              </p>
             </div>
           </section>
 
-          <section className="grid grid-cols-2 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+          <section className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
             {loading &&
               Array.from({ length: PRODUCT_SKELETON_COUNT }).map((_, index) => (
                 <ProductCardSkeleton key={`product-skeleton-${index}`} />

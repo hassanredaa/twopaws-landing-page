@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { functions, db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
+import Seo from "@/lib/seo/Seo";
 
 const buildCheckoutUrl = (publicKey: string, clientSecret: string) => {
   const params = new URLSearchParams({
@@ -81,6 +82,12 @@ export default function PaymobPaymentPage() {
 
   return (
     <ShopShell>
+      <Seo
+        title="Paymob Checkout | TwoPaws Shop"
+        description="Complete your TwoPaws payment."
+        canonicalUrl="/payment/paymob"
+        noIndex
+      />
       <header className="space-y-2">
         <p className="text-sm font-semibold text-brand-olive">Paymob</p>
         <h1 className="text-3xl font-semibold text-slate-900">Complete payment</h1>

@@ -3,8 +3,10 @@ import path from "path";
 import { spawnSync } from "child_process";
 
 const DEFAULT_MAX_PRODUCT_ROUTES = 0;
+const DEFAULT_MAX_SUPPLIER_ROUTES = 0;
 const DEFAULT_CONCURRENCY = 2;
 const DEFAULT_MAX_PRODUCT_FAILURES = 3;
+const DEFAULT_MAX_SUPPLIER_FAILURES = 3;
 const STATIC_ROUTES = [
   "/",
   "/about",
@@ -49,6 +51,13 @@ const resolveMaxProductRoutes = (env) => {
   return resolveNumberOption(raw, DEFAULT_MAX_PRODUCT_ROUTES);
 };
 
+const resolveMaxSupplierRoutes = (env) => {
+  const raw = env.REACT_SNAP_MAX_SUPPLIERS ?? env.VITE_REACT_SNAP_MAX_SUPPLIERS;
+  if (!raw && raw !== 0) return DEFAULT_MAX_SUPPLIER_ROUTES;
+  if (String(raw).toLowerCase() === "all") return Number.POSITIVE_INFINITY;
+  return resolveNumberOption(raw, DEFAULT_MAX_SUPPLIER_ROUTES);
+};
+
 const resolveConcurrency = (env) => {
   return Math.max(
     1,
@@ -78,14 +87,25 @@ const resolveMaxProductFailures = (env) => {
   );
 };
 
-const fetchProductDocs = async (projectId, apiKey) => {
+const resolveMaxSupplierFailures = (env) => {
+  return Math.max(
+    1,
+    resolveNumberOption(
+      env.REACT_SNAP_MAX_SUPPLIER_FAILURES ??
+        env.VITE_REACT_SNAP_MAX_SUPPLIER_FAILURES,
+      DEFAULT_MAX_SUPPLIER_FAILURES
+    )
+  );
+};
+
+const fetchCollectionDocs = async (projectId, apiKey, collectionName) => {
   if (!projectId || !apiKey) return [];
   const docs = new Map();
   let pageToken = "";
 
   while (true) {
     const url = new URL(
-      `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/products`
+      `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${collectionName}`
     );
     url.searchParams.set("pageSize", "500");
     url.searchParams.set("key", apiKey);
@@ -118,16 +138,46 @@ const fetchProductDocs = async (projectId, apiKey) => {
 
 const buildRoutePlan = async (env) => {
   const maxProductRoutes = resolveMaxProductRoutes(env);
+  const maxSupplierRoutes = resolveMaxSupplierRoutes(env);
   const concurrency = resolveConcurrency(env);
   const failOnRouteError = resolveFailOnRouteError(env);
   const maxProductFailures = resolveMaxProductFailures(env);
+  const maxSupplierFailures = resolveMaxSupplierFailures(env);
   let productRoutes = [];
+  let supplierRoutes = [];
+
+  if (maxSupplierRoutes > 0 || maxSupplierRoutes === Number.POSITIVE_INFINITY) {
+    try {
+      const supplierDocs = await fetchCollectionDocs(
+        env.VITE_FIREBASE_PROJECT_ID,
+        env.VITE_FIREBASE_API_KEY,
+        "suppliers"
+      );
+      const sortedDocs = [...supplierDocs].sort((a, b) =>
+        String(b.updatedAt).localeCompare(String(a.updatedAt))
+      );
+      const selectedDocs =
+        maxSupplierRoutes === Number.POSITIVE_INFINITY
+          ? sortedDocs
+          : sortedDocs.slice(0, maxSupplierRoutes);
+
+      supplierRoutes = selectedDocs.map((doc) => `/shop/supplier/${doc.id}`);
+      if (selectedDocs.length < supplierDocs.length) {
+        console.log(
+          `ReactSnap: limiting supplier prerender routes to ${selectedDocs.length}/${supplierDocs.length}.`
+        );
+      }
+    } catch (err) {
+      console.warn("ReactSnap: unable to load supplier routes.", err);
+    }
+  }
 
   if (maxProductRoutes > 0 || maxProductRoutes === Number.POSITIVE_INFINITY) {
     try {
-      const productDocs = await fetchProductDocs(
+      const productDocs = await fetchCollectionDocs(
         env.VITE_FIREBASE_PROJECT_ID,
-        env.VITE_FIREBASE_API_KEY
+        env.VITE_FIREBASE_API_KEY,
+        "products"
       );
       const sortedDocs = [...productDocs].sort((a, b) =>
         String(b.updatedAt).localeCompare(String(a.updatedAt))
@@ -150,9 +200,11 @@ const buildRoutePlan = async (env) => {
 
   return {
     staticRoutes: [...STATIC_ROUTES],
+    supplierRoutes: Array.from(new Set(supplierRoutes)),
     productRoutes: Array.from(new Set(productRoutes)),
     concurrency,
     failOnRouteError,
+    maxSupplierFailures,
     maxProductFailures,
   };
 };
@@ -183,14 +235,16 @@ const runReactSnap = async () => {
   const env = resolveEnv();
   const {
     staticRoutes,
+    supplierRoutes,
     productRoutes,
     concurrency,
     failOnRouteError,
+    maxSupplierFailures,
     maxProductFailures,
   } =
     await buildRoutePlan(env);
 
-  if (!staticRoutes.length && !productRoutes.length) {
+  if (!staticRoutes.length && !supplierRoutes.length && !productRoutes.length) {
     throw new Error("ReactSnap: include list is empty.");
   }
 
@@ -206,6 +260,23 @@ const runReactSnap = async () => {
     }
   }
 
+  let supplierFailures = 0;
+  for (const route of supplierRoutes) {
+    const ok = runRouteGroup({ include: [route], concurrency: 1 });
+    if (!ok) {
+      failedRoutes.push(route);
+      supplierFailures += 1;
+      console.warn(`ReactSnap: failed route ${route}`);
+      if (supplierFailures >= maxSupplierFailures) {
+        const remaining = Math.max(supplierRoutes.length - supplierFailures, 0);
+        console.warn(
+          `ReactSnap: stopping supplier prerender after ${supplierFailures} failures. ${remaining} route(s) skipped.`
+        );
+        break;
+      }
+    }
+  }
+
   let productFailures = 0;
   for (const route of productRoutes) {
     const ok = runRouteGroup({ include: [route], concurrency: 1 });
@@ -214,7 +285,7 @@ const runReactSnap = async () => {
       productFailures += 1;
       console.warn(`ReactSnap: failed route ${route}`);
       if (productFailures >= maxProductFailures) {
-        const remaining = Math.max(productRoutes.length - failedRoutes.length, 0);
+        const remaining = Math.max(productRoutes.length - productFailures, 0);
         console.warn(
           `ReactSnap: stopping product prerender after ${productFailures} failures. ${remaining} route(s) skipped.`
         );

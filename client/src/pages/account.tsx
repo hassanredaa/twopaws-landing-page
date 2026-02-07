@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { GeoPoint } from "firebase/firestore";
 import ShopShell from "@/components/shop/ShopShell";
@@ -33,6 +33,7 @@ import {
 import { useOrders } from "@/hooks/useOrders";
 import { formatCurrency } from "@/lib/format";
 import { useToast } from "@/hooks/use-toast";
+import Seo from "@/lib/seo/Seo";
 
 const formatDate = (timestamp?: { toMillis?: () => number }) => {
   const millis = timestamp?.toMillis?.();
@@ -184,6 +185,12 @@ export default function AccountPage() {
   if (!user) {
     return (
       <ShopShell>
+        <Seo
+          title="Account | TwoPaws Shop"
+          description="Manage your TwoPaws account, addresses, and order history."
+          canonicalUrl="/account"
+          noIndex
+        />
         <Card className="border-slate-100">
           <CardContent className="p-6">
             <p className="text-slate-600">Sign in to view your account.</p>
@@ -198,6 +205,12 @@ export default function AccountPage() {
 
   return (
     <ShopShell>
+      <Seo
+        title="Account | TwoPaws Shop"
+        description="Manage your TwoPaws account, addresses, and order history."
+        canonicalUrl="/account"
+        noIndex
+      />
       <header className="space-y-2">
         <p className="text-sm font-semibold text-brand-olive">Account</p>
         <h1 className="text-3xl font-semibold text-slate-900">Your account</h1>

@@ -12,6 +12,7 @@ import { formatCurrency } from "@/lib/format";
 import { functions } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { META_PIXEL_CURRENCY, trackMetaEvent } from "@/lib/metaPixel";
+import Seo from "@/lib/seo/Seo";
 
 const PROMO_STORAGE_KEY = "twopawsPromo";
 
@@ -234,6 +235,12 @@ export default function CartPage() {
 
   return (
     <ShopShell>
+      <Seo
+        title="Cart | TwoPaws Shop"
+        description="Review and update items in your TwoPaws shopping cart."
+        canonicalUrl="/cart"
+        noIndex
+      />
       <header className="space-y-2">
         <p className="text-sm font-semibold text-brand-olive">Cart</p>
         <h1 className="text-3xl font-semibold text-slate-900">Your cart</h1>

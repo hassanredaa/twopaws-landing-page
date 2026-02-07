@@ -40,14 +40,14 @@ const toLastMod = (value) => {
   return date.toISOString();
 };
 
-const fetchProductDocs = async (projectId, apiKey) => {
+const fetchCollectionDocs = async (projectId, apiKey, collectionName) => {
   if (!projectId || !apiKey) return [];
   const docs = new Map();
   let pageToken = "";
 
   while (true) {
     const url = new URL(
-      `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/products`
+      `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${collectionName}`
     );
     url.searchParams.set("pageSize", "500");
     url.searchParams.set("key", apiKey);
@@ -85,10 +85,12 @@ const buildSitemap = async () => {
   );
 
   let productRoutes = [];
+  let supplierRoutes = [];
   try {
-    const productDocs = await fetchProductDocs(
+    const productDocs = await fetchCollectionDocs(
       env.VITE_FIREBASE_PROJECT_ID,
-      env.VITE_FIREBASE_API_KEY
+      env.VITE_FIREBASE_API_KEY,
+      "products"
     );
     productRoutes = productDocs.map((doc) => ({
       path: `/shop/product/${doc.id}`,
@@ -97,13 +99,26 @@ const buildSitemap = async () => {
   } catch (err) {
     console.warn("Sitemap: unable to load product routes.", err);
   }
+  try {
+    const supplierDocs = await fetchCollectionDocs(
+      env.VITE_FIREBASE_PROJECT_ID,
+      env.VITE_FIREBASE_API_KEY,
+      "suppliers"
+    );
+    supplierRoutes = supplierDocs.map((doc) => ({
+      path: `/shop/supplier/${doc.id}`,
+      lastmod: doc.lastmod,
+    }));
+  } catch (err) {
+    console.warn("Sitemap: unable to load supplier routes.", err);
+  }
 
   const buildLastMod = new Date().toISOString();
   const staticRoutes = STATIC_ROUTES.map((route) => ({
     path: route,
     lastmod: buildLastMod,
   }));
-  const allRoutes = [...staticRoutes, ...productRoutes];
+  const allRoutes = [...staticRoutes, ...supplierRoutes, ...productRoutes];
   const unique = new Map();
   for (const route of allRoutes) {
     if (!route?.path) continue;

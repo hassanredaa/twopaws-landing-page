@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { db } from "@/lib/firebase";
 import { META_PIXEL_CURRENCY, trackMetaEvent } from "@/lib/metaPixel";
+import Seo from "@/lib/seo/Seo";
 
 export default function PaymentReturnPage() {
   const location = useLocation();
@@ -80,6 +81,12 @@ export default function PaymentReturnPage() {
 
   return (
     <ShopShell>
+      <Seo
+        title="Payment Status | TwoPaws Shop"
+        description="View your TwoPaws payment result."
+        canonicalUrl="/payment/return"
+        noIndex
+      />
       <header className="space-y-2">
         <p className="text-sm font-semibold text-brand-olive">Payment</p>
         <h1 className="text-3xl font-semibold text-slate-900">Payment result</h1>

@@ -50,7 +50,7 @@ function ProductCard({
   return (
     <Link to={`/shop/product/${product.id}`} className="block h-full">
       <Card className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md">
-        <div className="relative flex h-56 w-full items-center justify-center overflow-hidden bg-white">
+        <div className="relative flex h-44 w-full items-center justify-center overflow-hidden bg-white sm:h-56">
           {photoSrc ? (
             <img
               src={photoSrc}

@@ -9,6 +9,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useCart } from "@/hooks/useCart";
 import { useProducts } from "@/hooks/useProducts";
 import { useSuppliers } from "@/hooks/useSuppliers";
+import Seo from "@/lib/seo/Seo";
+import { BASE_URL } from "@/lib/seo/constants";
 
 const getUnitPrice = (price?: number, salePrice?: number, onSale?: boolean) => {
   if (onSale && typeof salePrice === "number" && salePrice > 0) return salePrice;
@@ -46,6 +48,11 @@ export default function SupplierShopPage() {
     (supplier?.logo_url as string) ||
     (supplier?.logoUrl as string) ||
     (supplier?.logo as string);
+  const absoluteSupplierLogo = supplierLogo
+    ? supplierLogo.startsWith("http")
+      ? supplierLogo
+      : `${BASE_URL}${supplierLogo.startsWith("/") ? "" : "/"}${supplierLogo}`
+    : undefined;
 
   const supplierProducts = useMemo(() => {
     if (!supplierId) return [];
@@ -73,6 +80,36 @@ export default function SupplierShopPage() {
       return acc;
     }, {});
   }, [cartItems]);
+  const canonicalPath = supplierId ? `/shop/supplier/${supplierId}` : "/shop/suppliers";
+  const supplierName = supplier?.name ?? "Supplier";
+  const seoDescription = supplier
+    ? `Shop ${supplierName} on TwoPaws for pet food, accessories, and essentials with delivery in Egypt.`
+    : "Browse supplier shops on TwoPaws and discover pet products available for delivery in Egypt.";
+  const structuredData = useMemo(() => {
+    if (!supplierId) return undefined;
+
+    return [
+      {
+        "@context": "https://schema.org",
+        "@type": "Store",
+        name: supplierName,
+        url: `${BASE_URL}${canonicalPath}`,
+        image: absoluteSupplierLogo ? [absoluteSupplierLogo] : undefined,
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        name: `${supplierName} products`,
+        numberOfItems: supplierProducts.length,
+        itemListElement: supplierProducts.slice(0, 24).map((product, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          name: product.name ?? `Product ${index + 1}`,
+          url: `${BASE_URL}/shop/product/${product.id}`,
+        })),
+      },
+    ];
+  }, [absoluteSupplierLogo, canonicalPath, supplierId, supplierName, supplierProducts]);
 
   const headerSearch = (
     <div className="mx-auto flex w-full max-w-[980px] items-center gap-2">
@@ -88,7 +125,7 @@ export default function SupplierShopPage() {
       {isSearching && (
         <Button
           variant="outline"
-          className="border-slate-200"
+          className="hidden border-slate-200 sm:inline-flex"
           onClick={() => setSearch("")}
         >
           Clear
@@ -99,10 +136,17 @@ export default function SupplierShopPage() {
 
   return (
     <ShopShell headerContent={headerSearch}>
+      <Seo
+        title={`${supplierName} | TwoPaws Supplier Shop`}
+        description={seoDescription}
+        canonicalUrl={canonicalPath}
+        structuredData={structuredData}
+        noIndex={!loading && !supplier}
+      />
       <header className="space-y-2">
         <p className="text-sm font-semibold text-brand-olive">Supplier shop</p>
-        <h1 className="text-3xl font-semibold text-slate-900">
-          {supplier?.name ?? "Supplier"}
+        <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">
+          {supplierName}
         </h1>
         <p className="text-slate-600">Explore products sold by this supplier.</p>
         <p className="text-sm text-slate-500">
@@ -112,7 +156,7 @@ export default function SupplierShopPage() {
         </p>
       </header>
 
-      <section className="grid grid-cols-2 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4">
+      <section className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4">
         {loading &&
           Array.from({ length: 8 }).map((_, index) => (
             <ProductCardSkeleton key={`supplier-product-skeleton-${index}`} />

@@ -15,8 +15,8 @@ function SupplierCard({ supplier }: SupplierCardProps) {
   const logo = toPrerenderSafeImageSrc(getLogo(supplier));
 
   return (
-    <Link to={`/shop/supplier/${supplier.id}`}>
-      <Card className="flex h-full items-center gap-4 rounded-2xl border-slate-100 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+    <Link to={`/shop/supplier/${supplier.id}`} className="block h-full">
+      <Card className="flex h-full min-w-0 items-center gap-4 rounded-2xl border-slate-100 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
         {logo ? (
           <img
             src={logo}
@@ -32,11 +32,11 @@ function SupplierCard({ supplier }: SupplierCardProps) {
             Logo
           </div>
         )}
-        <CardContent className="p-0">
-          <h3 className="text-lg font-semibold text-slate-900">
+        <CardContent className="min-w-0 p-0">
+          <h3 className="truncate text-lg font-semibold text-slate-900">
             {supplier.name ?? "Supplier"}
           </h3>
-          <p className="text-sm text-slate-500">Browse products</p>
+          <p className="truncate text-sm text-slate-500">Browse products</p>
         </CardContent>
       </Card>
     </Link>

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useOrders } from "@/hooks/useOrders";
 import { formatCurrency } from "@/lib/format";
+import Seo from "@/lib/seo/Seo";
 
 const formatDate = (timestamp?: { toMillis?: () => number }) => {
   const millis = timestamp?.toMillis?.();
@@ -23,6 +24,12 @@ export default function OrdersPage() {
   if (!user) {
     return (
       <ShopShell>
+        <Seo
+          title="Orders | TwoPaws Shop"
+          description="Track your TwoPaws orders."
+          canonicalUrl="/orders"
+          noIndex
+        />
         <Card className="border-slate-100">
           <CardContent className="p-6">
             <p className="text-slate-600">Sign in to see your orders.</p>
@@ -37,6 +44,12 @@ export default function OrdersPage() {
 
   return (
     <ShopShell>
+      <Seo
+        title="Orders | TwoPaws Shop"
+        description="Track your TwoPaws orders."
+        canonicalUrl="/orders"
+        noIndex
+      />
       <header className="space-y-2">
         <p className="text-sm font-semibold text-brand-olive">Orders</p>
         <h1 className="text-3xl font-semibold text-slate-900">Your orders</h1>

@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSuppliers } from "@/hooks/useSuppliers";
+import Seo from "@/lib/seo/Seo";
+import { BASE_URL } from "@/lib/seo/constants";
 
 function SupplierCardSkeleton() {
   return (
@@ -38,6 +40,31 @@ export default function SuppliersPage() {
       (supplier.name ?? "").toLowerCase().includes(needle)
     );
   }, [activeSuppliers, deferredSearch]);
+  const seoDescription =
+    "Browse all verified TwoPaws supplier shops and explore pet products available for delivery in Egypt.";
+  const structuredData = useMemo(() => {
+    return [
+      {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        name: "TwoPaws Suppliers",
+        description: seoDescription,
+        url: `${BASE_URL}/shop/suppliers`,
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        name: "TwoPaws supplier shops",
+        numberOfItems: activeSuppliers.length,
+        itemListElement: activeSuppliers.slice(0, 50).map((supplier, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          name: supplier.name ?? `Supplier ${index + 1}`,
+          url: `${BASE_URL}/shop/supplier/${supplier.id}`,
+        })),
+      },
+    ];
+  }, [activeSuppliers]);
 
   const headerSearch = (
     <div className="mx-auto flex w-full max-w-[980px] items-center gap-2">
@@ -53,7 +80,7 @@ export default function SuppliersPage() {
       {isSearching && (
         <Button
           variant="outline"
-          className="border-slate-200"
+          className="hidden border-slate-200 sm:inline-flex"
           onClick={() => setSearch("")}
         >
           Clear
@@ -64,9 +91,15 @@ export default function SuppliersPage() {
 
   return (
     <ShopShell headerContent={headerSearch}>
+      <Seo
+        title="Supplier Shops | TwoPaws Shop"
+        description={seoDescription}
+        canonicalUrl="/shop/suppliers"
+        structuredData={structuredData}
+      />
       <header className="space-y-2">
         <p className="text-sm font-semibold text-brand-olive">Suppliers</p>
-        <h1 className="text-3xl font-semibold text-slate-900">Shop by supplier</h1>
+        <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">Shop by supplier</h1>
         <p className="text-slate-600">Browse verified suppliers and their catalogs.</p>
         <p className="text-sm text-slate-500">
           {isSearching

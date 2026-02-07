@@ -32,6 +32,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
+import "react-phone-number-input/style.css";
 import GoogleMapPicker, {
   type LatLngLiteral,
 } from "@/components/maps/GoogleMapPicker";
@@ -48,6 +50,7 @@ import { formatCurrency } from "@/lib/format";
 import { db, functions } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { META_PIXEL_CURRENCY, trackMetaEvent } from "@/lib/metaPixel";
+import Seo from "@/lib/seo/Seo";
 
 const PROMO_STORAGE_KEY = "twopawsPromo";
 
@@ -144,7 +147,13 @@ export default function CheckoutPage() {
   }, []);
 
   useEffect(() => {
-    if (!selectedAddressId && addresses.length > 0) {
+    if (addresses.length === 0) {
+      if (selectedAddressId) {
+        setSelectedAddressId("");
+      }
+      return;
+    }
+    if (!selectedAddressId || !addresses.some((address) => address.id === selectedAddressId)) {
       setSelectedAddressId(addresses[0].id);
     }
   }, [addresses, selectedAddressId]);
@@ -264,6 +273,22 @@ export default function CheckoutPage() {
       });
       return;
     }
+    if (!addressForm.phone.trim()) {
+      toast({
+        title: "Phone required",
+        description: "Add a phone number for this address.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!isValidPhoneNumber(addressForm.phone)) {
+      toast({
+        title: "Invalid phone number",
+        description: "Enter a valid phone number with country code.",
+        variant: "destructive",
+      });
+      return;
+    }
     if (!addressForm.location) {
       toast({
         title: "Location required",
@@ -275,6 +300,7 @@ export default function CheckoutPage() {
     try {
       const payload = {
         ...addressForm,
+        phone: addressForm.phone.trim(),
         country: ADDRESS_COUNTRY,
         city,
         location: new GeoPoint(addressForm.location.lat, addressForm.location.lng),
@@ -318,7 +344,15 @@ export default function CheckoutPage() {
       toast({ title: "Cart empty", description: "Add items before checkout." });
       return;
     }
-    if (!selectedAddressId) {
+    if (addresses.length === 0) {
+      toast({
+        title: "No address saved",
+        description: "Add a shipping address before placing your order.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!selectedAddress) {
       toast({
         title: "Select an address",
         description: "Choose a shipping address to continue.",
@@ -389,7 +423,7 @@ export default function CheckoutPage() {
       await setDoc(orderRef, {
         buyerId: userRef,
         supplierRef: activeSupplierRef,
-        shippingAddress: doc(db, "addresses", selectedAddressId),
+        shippingAddress: doc(db, "addresses", selectedAddress.id),
         shippingCost,
         totalPrice,
         orderNumber,
@@ -474,6 +508,12 @@ export default function CheckoutPage() {
   if (authLoading) {
     return (
       <ShopShell>
+        <Seo
+          title="Checkout | TwoPaws Shop"
+          description="Complete your TwoPaws order securely."
+          canonicalUrl="/checkout"
+          noIndex
+        />
         <p className="text-sm text-slate-500">Loading...</p>
       </ShopShell>
     );
@@ -482,6 +522,12 @@ export default function CheckoutPage() {
   if (!user) {
     return (
       <ShopShell>
+        <Seo
+          title="Checkout | TwoPaws Shop"
+          description="Complete your TwoPaws order securely."
+          canonicalUrl="/checkout"
+          noIndex
+        />
         <Card className="border-slate-100">
           <CardContent className="p-6">
             <p className="text-slate-600">Sign in to continue to checkout.</p>
@@ -498,6 +544,12 @@ export default function CheckoutPage() {
 
   return (
     <ShopShell>
+      <Seo
+        title="Checkout | TwoPaws Shop"
+        description="Complete your TwoPaws order securely."
+        canonicalUrl="/checkout"
+        noIndex
+      />
       <header className="space-y-2">
         <p className="text-sm font-semibold text-brand-olive">Checkout</p>
         <h1 className="text-3xl font-semibold text-slate-900">Complete your order</h1>
@@ -599,11 +651,16 @@ export default function CheckoutPage() {
                   </div>
                   <div>
                     <Label>Phone</Label>
-                    <Input
-                      value={addressForm.phone}
-                      onChange={(event) =>
-                        setAddressForm((prev) => ({ ...prev, phone: event.target.value }))
+                    <PhoneInput
+                      className="auth-phone-input"
+                      defaultCountry="EG"
+                      international
+                      countryCallingCodeEditable={false}
+                      value={addressForm.phone || undefined}
+                      onChange={(value) =>
+                        setAddressForm((prev) => ({ ...prev, phone: value ?? "" }))
                       }
+                      placeholder="Enter phone number"
                     />
                   </div>
                   <div>
@@ -804,7 +861,7 @@ export default function CheckoutPage() {
           <Button
             className="w-full bg-brand-olive text-brand-dark"
             onClick={handleCheckout}
-            disabled={submitting || cartEmpty}
+            disabled={submitting || cartEmpty || addresses.length === 0 || !selectedAddress}
           >
             {submitting ? "Placing order..." : "Place order"}
           </Button>
