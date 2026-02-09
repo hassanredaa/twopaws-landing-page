@@ -208,7 +208,7 @@ const buildProductHtml = (template, product, baseUrl) => {
   const description = toSeoDescription(
     product.description || "Shop premium pet supplies and accessories at TwoPaws."
   );
-  const canonicalPath = `/shop/product/${product.id}`;
+  const canonicalPath = `/shop/product/${product.id}/`;
   const canonicalUrl = `${baseUrl}${canonicalPath}`;
   const imageUrl = getPrimaryImage(product, baseUrl);
   const offerPrice = getOfferPrice(product);

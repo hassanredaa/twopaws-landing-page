@@ -15,7 +15,7 @@ function SupplierCard({ supplier }: SupplierCardProps) {
   const logo = toPrerenderSafeImageSrc(getLogo(supplier));
 
   return (
-    <Link to={`/shop/supplier/${supplier.id}`} className="block h-full">
+    <Link to={`/shop/supplier/${supplier.id}/`} className="block h-full">
       <Card className="flex h-full min-w-0 items-center gap-4 rounded-2xl border-slate-100 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
         {logo ? (
           <img

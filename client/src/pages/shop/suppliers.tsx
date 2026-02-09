@@ -49,7 +49,7 @@ export default function SuppliersPage() {
         "@type": "CollectionPage",
         name: "TwoPaws Suppliers",
         description: seoDescription,
-        url: `${BASE_URL}/shop/suppliers`,
+        url: `${BASE_URL}/shop/suppliers/`,
       },
       {
         "@context": "https://schema.org",
@@ -60,7 +60,7 @@ export default function SuppliersPage() {
           "@type": "ListItem",
           position: index + 1,
           name: supplier.name ?? `Supplier ${index + 1}`,
-          url: `${BASE_URL}/shop/supplier/${supplier.id}`,
+          url: `${BASE_URL}/shop/supplier/${supplier.id}/`,
         })),
       },
     ];
@@ -94,7 +94,7 @@ export default function SuppliersPage() {
       <Seo
         title="Supplier Shops | TwoPaws Shop"
         description={seoDescription}
-        canonicalUrl="/shop/suppliers"
+        canonicalUrl="/shop/suppliers/"
         structuredData={structuredData}
       />
       <header className="space-y-2">

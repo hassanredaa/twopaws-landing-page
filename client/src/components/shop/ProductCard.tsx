@@ -48,7 +48,7 @@ function ProductCard({
   const isInCart = cartQuantity > 0;
 
   return (
-    <Link to={`/shop/product/${product.id}`} className="block h-full">
+    <Link to={`/shop/product/${product.id}/`} className="block h-full">
       <Card className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md">
         <div className="relative flex h-44 w-full items-center justify-center overflow-hidden bg-white sm:h-56">
           {photoSrc ? (
@@ -71,7 +71,7 @@ function ProductCard({
             onClick={(event) => {
               event.preventDefault();
               event.stopPropagation();
-              navigate(`/shop/product/${product.id}`);
+              navigate(`/shop/product/${product.id}/`);
             }}
             className="absolute bottom-2 right-2 inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-slate-300 hover:text-slate-700"
             aria-label="View details"

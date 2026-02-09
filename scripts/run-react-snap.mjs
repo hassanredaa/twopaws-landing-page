@@ -9,12 +9,12 @@ const DEFAULT_MAX_PRODUCT_FAILURES = 3;
 const DEFAULT_MAX_SUPPLIER_FAILURES = 3;
 const STATIC_ROUTES = [
   "/",
-  "/about",
-  "/features",
-  "/egypt",
-  "/privacy",
-  "/terms",
-  "/contact",
+  "/about/",
+  "/features/",
+  "/egypt/",
+  "/privacy/",
+  "/terms/",
+  "/contact/",
 ];
 
 const readEnvFile = (filePath) => {
@@ -161,7 +161,7 @@ const buildRoutePlan = async (env) => {
           ? sortedDocs
           : sortedDocs.slice(0, maxSupplierRoutes);
 
-      supplierRoutes = selectedDocs.map((doc) => `/shop/supplier/${doc.id}`);
+      supplierRoutes = selectedDocs.map((doc) => `/shop/supplier/${doc.id}/`);
       if (selectedDocs.length < supplierDocs.length) {
         console.log(
           `ReactSnap: limiting supplier prerender routes to ${selectedDocs.length}/${supplierDocs.length}.`
@@ -187,7 +187,7 @@ const buildRoutePlan = async (env) => {
           ? sortedDocs
           : sortedDocs.slice(0, maxProductRoutes);
 
-      productRoutes = selectedDocs.map((doc) => `/shop/product/${doc.id}`);
+      productRoutes = selectedDocs.map((doc) => `/shop/product/${doc.id}/`);
       if (selectedDocs.length < productDocs.length) {
         console.log(
           `ReactSnap: limiting product prerender routes to ${selectedDocs.length}/${productDocs.length}.`

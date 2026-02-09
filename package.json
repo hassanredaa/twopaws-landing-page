@@ -90,13 +90,13 @@
     "source": "dist",
     "include": [
       "/",
-      "/about",
-      "/features",
-      "/egypt",
-      "/shop",
-      "/privacy",
-      "/terms",
-      "/contact"
+      "/about/",
+      "/features/",
+      "/egypt/",
+      "/shop/",
+      "/privacy/",
+      "/terms/",
+      "/contact/"
     ],
     "crawl": false,
     "puppeteerArgs": [

@@ -17,11 +17,15 @@ const resolveUrl = (urlOrPath: string) => {
     return urlOrPath;
   }
 
-  if (urlOrPath === "/") {
+  const normalizedPath = urlOrPath.startsWith("/") ? urlOrPath : `/${urlOrPath}`;
+  if (normalizedPath === "/") {
     return BASE_URL;
   }
 
-  return `${BASE_URL}${urlOrPath}`;
+  const canonicalPath = normalizedPath.endsWith("/")
+    ? normalizedPath
+    : `${normalizedPath}/`;
+  return `${BASE_URL}${canonicalPath}`;
 };
 
 export default function Seo({

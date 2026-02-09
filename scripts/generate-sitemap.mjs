@@ -4,14 +4,14 @@ import path from "path";
 const DEFAULT_BASE_URL = "https://twopaws.pet";
 const STATIC_ROUTES = [
   "/",
-  "/about",
-  "/features",
-  "/egypt",
-  "/privacy",
-  "/terms",
-  "/contact",
-  "/shop",
-  "/shop/suppliers",
+  "/about/",
+  "/features/",
+  "/egypt/",
+  "/privacy/",
+  "/terms/",
+  "/contact/",
+  "/shop/",
+  "/shop/suppliers/",
 ];
 
 const readEnvFile = (filePath) => {
@@ -93,7 +93,7 @@ const buildSitemap = async () => {
       "products"
     );
     productRoutes = productDocs.map((doc) => ({
-      path: `/shop/product/${doc.id}`,
+      path: `/shop/product/${doc.id}/`,
       lastmod: doc.lastmod,
     }));
   } catch (err) {
@@ -106,7 +106,7 @@ const buildSitemap = async () => {
       "suppliers"
     );
     supplierRoutes = supplierDocs.map((doc) => ({
-      path: `/shop/supplier/${doc.id}`,
+      path: `/shop/supplier/${doc.id}/`,
       lastmod: doc.lastmod,
     }));
   } catch (err) {

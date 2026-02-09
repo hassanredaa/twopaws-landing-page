@@ -268,7 +268,7 @@ export default function ShopPage() {
       "@type": "ListItem",
       position: index + 1,
       name: product.name ?? `Product ${index + 1}`,
-      url: `${BASE_URL}/shop/product/${product.id}`,
+      url: `${BASE_URL}/shop/product/${product.id}/`,
     }));
 
     return [
@@ -277,7 +277,7 @@ export default function ShopPage() {
         "@type": "CollectionPage",
         name: "TwoPaws Shop",
         description: shopDescription,
-        url: `${BASE_URL}/shop`,
+        url: `${BASE_URL}/shop/`,
         isPartOf: {
           "@type": "WebSite",
           name: "TwoPaws",
@@ -376,7 +376,7 @@ export default function ShopPage() {
       <Seo
         title="TwoPaws Shop | Pet Food, Supplies & Accessories in Egypt"
         description={shopDescription}
-        canonicalUrl="/shop"
+        canonicalUrl="/shop/"
         ogType="website"
         structuredData={shopStructuredData}
       />
@@ -611,7 +611,7 @@ export default function ShopPage() {
               <p className="mt-3 text-xs text-slate-500">
                 Looking for a specific store?{" "}
                 <Link
-                  to="/shop/suppliers"
+                  to="/shop/suppliers/"
                   className="font-semibold text-brand-green-dark hover:underline"
                 >
                   Browse all supplier pages

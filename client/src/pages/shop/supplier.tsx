@@ -80,7 +80,7 @@ export default function SupplierShopPage() {
       return acc;
     }, {});
   }, [cartItems]);
-  const canonicalPath = supplierId ? `/shop/supplier/${supplierId}` : "/shop/suppliers";
+  const canonicalPath = supplierId ? `/shop/supplier/${supplierId}/` : "/shop/suppliers/";
   const supplierName = supplier?.name ?? "Supplier";
   const seoDescription = supplier
     ? `Shop ${supplierName} on TwoPaws for pet food, accessories, and essentials with delivery in Egypt.`
@@ -105,7 +105,7 @@ export default function SupplierShopPage() {
           "@type": "ListItem",
           position: index + 1,
           name: product.name ?? `Product ${index + 1}`,
-          url: `${BASE_URL}/shop/product/${product.id}`,
+          url: `${BASE_URL}/shop/product/${product.id}/`,
         })),
       },
     ];

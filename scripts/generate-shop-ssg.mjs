@@ -222,7 +222,7 @@ const buildShopIndexHtml = (template, baseUrl) => {
     "@type": "CollectionPage",
     name: "TwoPaws Shop",
     description,
-    url: `${baseUrl}/shop`,
+    url: `${baseUrl}/shop/`,
   };
 
   let html = applyCoreSeo({
@@ -230,7 +230,7 @@ const buildShopIndexHtml = (template, baseUrl) => {
     baseUrl,
     title,
     description,
-    canonicalPath: "/shop",
+    canonicalPath: "/shop/",
   });
   html = upsertStructuredData(html, "shop-jsonld", structuredData);
   return html;
@@ -248,7 +248,7 @@ const buildSuppliersIndexHtml = (template, baseUrl, suppliers) => {
       "@type": "CollectionPage",
       name: "TwoPaws Suppliers",
       description,
-      url: `${baseUrl}/shop/suppliers`,
+      url: `${baseUrl}/shop/suppliers/`,
     },
     {
       "@context": "https://schema.org",
@@ -259,7 +259,7 @@ const buildSuppliersIndexHtml = (template, baseUrl, suppliers) => {
         "@type": "ListItem",
         position: index + 1,
         name: supplier.name || `Supplier ${index + 1}`,
-        url: `${baseUrl}/shop/supplier/${supplier.id}`,
+        url: `${baseUrl}/shop/supplier/${supplier.id}/`,
       })),
     },
   ];
@@ -269,7 +269,7 @@ const buildSuppliersIndexHtml = (template, baseUrl, suppliers) => {
     baseUrl,
     title,
     description,
-    canonicalPath: "/shop/suppliers",
+    canonicalPath: "/shop/suppliers/",
   });
   html = upsertStructuredData(html, "suppliers-jsonld", structuredData);
   return html;
@@ -281,7 +281,7 @@ const buildSupplierHtml = (template, baseUrl, supplier) => {
   const description = toSeoDescription(
     `Shop ${supplierName} on TwoPaws for pet food, accessories, and essentials with delivery in Egypt.`
   );
-  const canonicalPath = `/shop/supplier/${supplier.id}`;
+  const canonicalPath = `/shop/supplier/${supplier.id}/`;
   const logo =
     supplier.logo_url || supplier.logoUrl || supplier.logo || DEFAULT_OG_IMAGE;
 
