@@ -1,5 +1,5 @@
-import { useCallback, useDeferredValue, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import {
   ChevronDown,
   ChevronLeft,
@@ -55,6 +55,35 @@ const PER_PAGE_OPTIONS = [12, 24, 48];
 const ELLIPSIS = "ellipsis" as const;
 type PageItem = number | typeof ELLIPSIS;
 const PRODUCT_SKELETON_COUNT = 12;
+const SHOP_SCROLL_KEY_PREFIX = "twopaws:shop:scroll:";
+type ShopScrollState = {
+  top: number;
+  anchorProductId?: string;
+  anchorOffset?: number;
+};
+
+const parseShopScrollState = (raw: string | null): ShopScrollState | null => {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as ShopScrollState;
+    if (typeof parsed?.top === "number" && Number.isFinite(parsed.top) && parsed.top >= 0) {
+      return parsed;
+    }
+  } catch {
+    const top = Number(raw);
+    if (Number.isFinite(top) && top >= 0) return { top };
+  }
+  return null;
+};
+
+const getProductCardElement = (productId?: string) => {
+  if (!productId) return null;
+  const nodes = document.querySelectorAll<HTMLElement>("[data-product-card-id]");
+  for (const node of nodes) {
+    if (node.dataset.productCardId === productId) return node;
+  }
+  return null;
+};
 
 const getPageItems = (totalPages: number, currentPage: number): PageItem[] => {
   if (totalPages <= 7) {
@@ -113,26 +142,50 @@ function ProductCardSkeleton() {
 }
 
 export default function ShopPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const { products, productMap, loading } = useProducts();
   const { categories } = useProductCategories();
   const { suppliers, supplierMap, loading: suppliersLoading } = useSuppliers();
   const { addItem, cartItems } = useCart();
   const { toast } = useToast();
+  const hasRestoredScrollRef = useRef(false);
 
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(() => searchParams.get("q") ?? "");
   const deferredSearch = useDeferredValue(search);
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [selectedSupplier, setSelectedSupplier] = useState<string>("all");
-  const [supplierMode, setSupplierMode] = useState<"all" | "single">("all");
-  const [sort, setSort] = useState("default");
-  const [showAllCategories, setShowAllCategories] = useState(false);
-  const [categoryOpen, setCategoryOpen] = useState(true);
-  const [priceOpen, setPriceOpen] = useState(true);
-  const [minPrice, setMinPrice] = useState<string>("");
-  const [maxPrice, setMaxPrice] = useState<string>("");
-  const [perPage, setPerPage] = useState<number>(12);
-  const [page, setPage] = useState<number>(1);
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>(
+    () => searchParams.get("cat") ?? "all"
+  );
+  const [selectedSupplier, setSelectedSupplier] = useState<string>(
+    () => searchParams.get("supplier") ?? "all"
+  );
+  const [supplierMode, setSupplierMode] = useState<"all" | "single">(() => {
+    const supplier = searchParams.get("supplier");
+    return supplier && supplier !== "all" ? "single" : "all";
+  });
+  const [sort, setSort] = useState(() => searchParams.get("sort") ?? "default");
+  const [showAllCategories, setShowAllCategories] = useState(
+    () => searchParams.get("cats") === "all"
+  );
+  const [categoryOpen, setCategoryOpen] = useState(
+    () => searchParams.get("category") !== "closed"
+  );
+  const [priceOpen, setPriceOpen] = useState(
+    () => searchParams.get("price") !== "closed"
+  );
+  const [minPrice, setMinPrice] = useState<string>(() => searchParams.get("min") ?? "");
+  const [maxPrice, setMaxPrice] = useState<string>(() => searchParams.get("max") ?? "");
+  const [perPage, setPerPage] = useState<number>(() => {
+    const parsed = Number.parseInt(searchParams.get("per") ?? "", 10);
+    return PER_PAGE_OPTIONS.includes(parsed) ? parsed : 12;
+  });
+  const [page, setPage] = useState<number>(() => {
+    const parsed = Number.parseInt(searchParams.get("page") ?? "", 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+  });
+  const [filtersOpen, setFiltersOpen] = useState(
+    () => searchParams.get("filters") === "open"
+  );
   const trimmedSearch = search.trim();
   const isSearching = trimmedSearch.length > 0;
 
@@ -225,6 +278,7 @@ export default function ShopPage() {
     deferredSearch,
     selectedCategory,
     selectedSupplier,
+    supplierMode,
     minPrice,
     maxPrice,
     sort,
@@ -232,7 +286,7 @@ export default function ShopPage() {
 
   const totalItems = filteredProducts.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / perPage));
-  const currentPage = Math.min(page, totalPages);
+  const currentPage = loading ? Math.max(1, page) : Math.min(page, totalPages);
   const pageStart = (currentPage - 1) * perPage;
   const pageEnd = pageStart + perPage;
   const visibleProducts = filteredProducts.slice(pageStart, pageEnd);
@@ -370,6 +424,151 @@ export default function ShopPage() {
       )}
     </div>
   );
+
+  useEffect(() => {
+    if (loading) return;
+    if (page === currentPage) return;
+    setPage(currentPage);
+  }, [loading, page, currentPage]);
+
+  useEffect(() => {
+    const hasSortOption = sortOptions.some((option) => option.value === sort);
+    if (hasSortOption) return;
+    setSort("default");
+  }, [sort, sortOptions]);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    const q = search.trim();
+    const min = minPrice.trim();
+    const max = maxPrice.trim();
+    if (q) params.set("q", q);
+    if (selectedCategory !== "all") params.set("cat", selectedCategory);
+    if (supplierMode === "single" && selectedSupplier !== "all") {
+      params.set("supplier", selectedSupplier);
+      params.set("mode", "single");
+    }
+    if (sort !== "default") params.set("sort", sort);
+    if (min) params.set("min", min);
+    if (max) params.set("max", max);
+    if (perPage !== 12) params.set("per", String(perPage));
+    if (currentPage > 1) params.set("page", String(currentPage));
+    if (showAllCategories) params.set("cats", "all");
+    if (!categoryOpen) params.set("category", "closed");
+    if (!priceOpen) params.set("price", "closed");
+    if (filtersOpen) params.set("filters", "open");
+
+    const nextQuery = params.toString();
+    const currentQuery = location.search.startsWith("?")
+      ? location.search.slice(1)
+      : location.search;
+    if (nextQuery === currentQuery) return;
+    setSearchParams(params, { replace: true });
+  }, [
+    search,
+    selectedCategory,
+    selectedSupplier,
+    supplierMode,
+    sort,
+    minPrice,
+    maxPrice,
+    perPage,
+    currentPage,
+    showAllCategories,
+    categoryOpen,
+    priceOpen,
+    filtersOpen,
+    location.search,
+    setSearchParams,
+  ]);
+
+  const scrollStateKey = `${SHOP_SCROLL_KEY_PREFIX}${location.key}`;
+  const saveScrollState = useCallback(
+    (top: number, anchorProductId?: string, anchorOffset?: number) => {
+      const existing = parseShopScrollState(window.sessionStorage.getItem(scrollStateKey));
+      const nextState: ShopScrollState = {
+        top: Number.isFinite(top) && top >= 0 ? top : 0,
+      };
+      if (anchorProductId) nextState.anchorProductId = anchorProductId;
+      else if (existing?.anchorProductId) nextState.anchorProductId = existing.anchorProductId;
+
+      if (typeof anchorOffset === "number" && Number.isFinite(anchorOffset)) {
+        nextState.anchorOffset = anchorOffset;
+      } else if (typeof existing?.anchorOffset === "number") {
+        nextState.anchorOffset = existing.anchorOffset;
+      }
+
+      window.sessionStorage.setItem(scrollStateKey, JSON.stringify(nextState));
+    },
+    [scrollStateKey]
+  );
+
+  const handleProductNavigate = useCallback(
+    (productId: string) => {
+      const anchorElement = getProductCardElement(productId);
+      let anchorOffset: number | undefined;
+      if (anchorElement) {
+        const anchorTop = anchorElement.getBoundingClientRect().top + window.scrollY;
+        anchorOffset = window.scrollY - anchorTop;
+      }
+      saveScrollState(window.scrollY, productId, anchorOffset);
+    },
+    [saveScrollState]
+  );
+
+  useEffect(() => {
+    hasRestoredScrollRef.current = false;
+  }, [scrollStateKey]);
+
+  useEffect(() => {
+    if (hasRestoredScrollRef.current || loading) return;
+    hasRestoredScrollRef.current = true;
+
+    const state = parseShopScrollState(window.sessionStorage.getItem(scrollStateKey));
+    if (!state) return;
+
+    let attempts = 0;
+    const maxAttempts = 24;
+    const restore = () => {
+      let targetTop = state.top;
+      const anchorElement = getProductCardElement(state.anchorProductId);
+      if (anchorElement) {
+        const anchorTop = anchorElement.getBoundingClientRect().top + window.scrollY;
+        targetTop = anchorTop + (state.anchorOffset ?? 0);
+      }
+
+      window.scrollTo({ top: targetTop, behavior: "auto" });
+      attempts += 1;
+      const isCloseEnough = Math.abs(window.scrollY - targetTop) <= 2;
+      if (isCloseEnough || attempts >= maxAttempts) return;
+      window.requestAnimationFrame(restore);
+    };
+
+    window.requestAnimationFrame(restore);
+  }, [loading, scrollStateKey]);
+
+  useEffect(() => {
+    let ticking = false;
+    const persistScroll = () => {
+      saveScrollState(window.scrollY);
+    };
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(() => {
+        persistScroll();
+        ticking = false;
+      });
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("pagehide", persistScroll);
+    return () => {
+      persistScroll();
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("pagehide", persistScroll);
+    };
+  }, [saveScrollState]);
 
   return (
     <ShopShell headerContent={headerSearch}>
@@ -665,6 +864,7 @@ export default function ShopPage() {
                     supplierName={product.supplierRef?.id ? supplierMap[product.supplierRef.id]?.name : undefined}
                     cartQuantity={cartQuantityByProductId[product.id] ?? 0}
                     onAdd={handleAdd}
+                    onNavigate={handleProductNavigate}
                   />
                 );
               })}

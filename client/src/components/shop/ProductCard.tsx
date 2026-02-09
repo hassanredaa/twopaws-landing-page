@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import type { ProductDoc } from "@/hooks/useProducts";
 import { formatCurrency } from "@/lib/format";
 import { Info } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { toPrerenderSafeImageSrc } from "@/lib/prerenderImage";
 
 const getPhoto = (photoUrl?: string[] | string) => {
@@ -30,6 +30,7 @@ type ProductCardProps = {
   supplierLogo?: string;
   cartQuantity?: number;
   onAdd?: (productId: string) => void;
+  onNavigate?: (productId: string) => void;
 };
 
 function ProductCard({
@@ -37,8 +38,10 @@ function ProductCard({
   supplierName,
   cartQuantity = 0,
   onAdd,
+  onNavigate,
 }: ProductCardProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const photo = getPhoto(product.photo_url);
   const photoSrc = toPrerenderSafeImageSrc(photo);
   const price = typeof product.price === "number" ? product.price : 0;
@@ -46,9 +49,27 @@ function ProductCard({
   const showSale = product.on_sale && salePrice > 0;
   const unitLabel = getUnitLabel(product);
   const isInCart = cartQuantity > 0;
+  const productHref = `/shop/product/${product.id}/`;
 
   return (
-    <Link to={`/shop/product/${product.id}/`} className="block h-full">
+    <Link
+      to={productHref}
+      className="block h-full"
+      data-product-card-id={product.id}
+      onClick={(event) => {
+        if (
+          event.defaultPrevented ||
+          event.button !== 0 ||
+          event.metaKey ||
+          event.altKey ||
+          event.ctrlKey ||
+          event.shiftKey
+        ) {
+          return;
+        }
+        onNavigate?.(product.id);
+      }}
+    >
       <Card className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md">
         <div className="relative flex h-44 w-full items-center justify-center overflow-hidden bg-white sm:h-56">
           {photoSrc ? (
@@ -71,7 +92,10 @@ function ProductCard({
             onClick={(event) => {
               event.preventDefault();
               event.stopPropagation();
-              navigate(`/shop/product/${product.id}/`);
+              onNavigate?.(product.id);
+              navigate(productHref, {
+                state: { from: { pathname: location.pathname, search: location.search } },
+              });
             }}
             className="absolute bottom-2 right-2 inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-slate-300 hover:text-slate-700"
             aria-label="View details"
@@ -139,6 +163,7 @@ export default memo(ProductCard, (prev, next) => {
     prev.product === next.product &&
     prev.supplierName === next.supplierName &&
     prev.cartQuantity === next.cartQuantity &&
-    prev.onAdd === next.onAdd
+    prev.onAdd === next.onAdd &&
+    prev.onNavigate === next.onNavigate
   );
 });

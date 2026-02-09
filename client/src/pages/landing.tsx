@@ -225,18 +225,27 @@ export default function Landing() {
               </Button>
             </div>
 
-            {/* Mobile toggle */}
-            <button
-              className="inline-flex h-10 w-10 items-center justify-center text-brand-purple md:hidden"
-              onClick={() => setIsMobileMenuOpen((prev) => !prev)}
-              aria-label="Toggle menu"
-            >
-              {isMobileMenuOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
-            </button>
+            {/* Mobile actions */}
+            <div className="flex items-center gap-2 md:hidden">
+              <a
+                href="/shop"
+                className="inline-flex h-10 items-center rounded-md border border-brand-purple/25 px-3 text-sm font-semibold text-brand-purple"
+              >
+                Shop
+              </a>
+              <button
+                className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-brand-purple/25 bg-white text-brand-purple"
+                onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+                aria-label="Toggle menu"
+                aria-expanded={isMobileMenuOpen}
+              >
+                {isMobileMenuOpen ? (
+                  <X className="h-6 w-6" />
+                ) : (
+                  <Menu className="h-6 w-6" />
+                )}
+              </button>
+            </div>
           </div>
 
           {isMobileMenuOpen ? (
