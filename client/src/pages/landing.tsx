@@ -61,7 +61,7 @@ const offerRowTwo: OfferItem[] = [
 
 function OfferCell({ item }: { item: OfferItem }) {
   return (
-    <div className="flex flex-col items-center justify-start gap-3 text-center">
+    <div className="flex flex-col items-center justify-start gap-2 text-center">
       {item.iconSrc ? (
         <img
           src={item.iconSrc}
@@ -70,22 +70,22 @@ function OfferCell({ item }: { item: OfferItem }) {
           height={320}
           loading="lazy"
           decoding="async"
-          className="h-24 w-24 object-contain sm:h-28 sm:w-28 lg:h-32 lg:w-32"
+          className="h-20 w-20 object-contain sm:h-28 sm:w-28 lg:h-32 lg:w-32"
         />
       ) : (
-        <div className="flex h-24 w-24 items-center justify-center text-brand-purple sm:h-28 sm:w-28 lg:h-32 lg:w-32">
+        <div className="flex h-20 w-20 items-center justify-center text-brand-purple sm:h-28 sm:w-28 lg:h-32 lg:w-32">
           {item.fallback === "search" ? (
             <div className="flex h-full w-full items-center justify-center rounded-full border-4 border-gray-200">
-              <Search className="h-10 w-10 sm:h-11 sm:w-11" strokeWidth={2.2} />
+              <Search className="h-8 w-8 sm:h-11 sm:w-11" strokeWidth={2.2} />
             </div>
           ) : (
             <div className="relative flex h-full w-full items-center justify-center">
               <FoldedMap
-                className="h-16 w-16 sm:h-20 sm:w-20"
+                className="h-12 w-12 sm:h-20 sm:w-20"
                 strokeWidth={2.2}
               />
               <MapPin
-                className="absolute -top-1 right-2 h-7 w-7 sm:top-0 sm:right-3 sm:h-8 sm:w-8"
+                className="absolute -top-1 right-2 h-6 w-6 sm:top-0 sm:right-3 sm:h-8 sm:w-8"
                 strokeWidth={2.2}
               />
             </div>
@@ -97,7 +97,7 @@ function OfferCell({ item }: { item: OfferItem }) {
       )}
 
       {item.label ? (
-        <p className="font-marvin text-xl uppercase leading-5 text-brand-purple sm:text-2xl sm:leading-6 lg:text-[1.75rem] lg:leading-7">
+        <p className="font-marvin text-lg uppercase leading-5 text-brand-purple sm:text-2xl sm:leading-6 lg:text-[1.75rem] lg:leading-7">
           {item.label}
         </p>
       ) : null}
@@ -280,11 +280,11 @@ export default function Landing() {
             {/* Adjust collage overlap via the CSS variables on this container */}
             <div
               className="relative h-[380px] sm:h-[480px] lg:h-[560px]
-                [--headline-x:18px] [--headline-y:10px]
-                [--dog-right:0px] [--dog-bottom:-1px] [--dog-h:86%] [--dog-z:10]
-                [--cat-x:100%] [--cat-bottom:-30px] [--cat-h:30%] [--cat-z:30]
-                [--illus-left-x:52%] [--illus-left-bottom:-100px] [--illus-left-h:33%] [--illus-left-z:70]
-                [--illus-right-x:74%] [--illus-right-bottom:-4px] [--illus-right-h:33%] [--illus-right-z:35]
+                [--headline-x:18px] [--headline-y:270px] 
+                [--dog-right:-16px] [--dog-bottom:-1px] [--dog-h:70%] [--dog-z:10]
+                [--cat-x:45%] [--cat-bottom:-30px] [--cat-h:22%] [--cat-z:30]
+                [--illus-left-x:65%] [--illus-left-bottom:-30px] [--illus-left-h:24%] [--illus-left-z:70]
+                [--illus-right-x:26%] [--illus-right-bottom:-4px] [--illus-right-h:24%] [--illus-right-z:35]
                 sm:[--headline-x:42px] sm:[--headline-y:108px]
                 sm:[--dog-h:90%] sm:[--cat-h:31%] sm:[--illus-left-h:34%] sm:[--illus-right-bottom:-1px] sm:[--illus-right-h:34%]
                 lg:[--headline-x:70px] lg:[--headline-y:50px]
@@ -300,11 +300,32 @@ export default function Landing() {
                   bottom: "var(--headline-y)",
                 }}
               >
-                <h1 className="font-marvin text-[2.6rem] uppercase leading-[0.9] tracking-tight text-white sm:text-[3.7rem] lg:text-[5.1rem]">
+                <h1 className="font-marvin text-[1.5rem] uppercase leading-[0.9] tracking-tight text-white sm:text-[3.7rem] lg:text-[5.1rem]">
                   YOUR PET,
                   <br />
                   OUR PRIORITY
                 </h1>
+                <div className="mt-4 flex flex-row gap-1 sm:gap-3 sm:items-center">
+                  <Button
+                    asChild
+                    size="sm"
+                    className="h-6 px-1.5 text-[10px] bg-brand-purple text-white hover:opacity-90 sm:h-10 sm:px-4 sm:text-sm"
+                  >
+                    <a href={IOS_STORE_URL} target="_blank" rel="noreferrer">
+                      Download on App Store
+                    </a>
+                  </Button>
+                  <Button
+                    asChild
+                    size="sm"
+                    variant="outline"
+                    className="h-6 px-1.5 text-[10px] whitespace-nowrap border-white bg-transparent text-white hover:bg-white hover:text-brand-purple sm:h-10 sm:px-4 sm:text-sm"
+                  >
+                    <a href={ANDROID_STORE_URL} target="_blank" rel="noreferrer">
+                      Get it on Google Play
+                    </a>
+                  </Button>
+                </div>
               </div>
 
               {/* Dog */}
@@ -395,7 +416,7 @@ export default function Landing() {
                 ABOUT TWOPAWS
               </h2>
 
-              <div className="mx-auto mt-5 max-w-[980px] space-y-5 text-lg leading-[1.35] sm:text-xl lg:text-[1.45rem]">
+              <div className="mx-auto mt-5 max-w-[980px] space-y-5 text-lg leading-[1.25] sm:text-xl lg:text-[1.3rem]">
                 <p className="text-brand-purple">
                   TwoPaws began as a passion project between two best friends
                   who wanted a{" "}
@@ -428,17 +449,7 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* Paw/diagonal shape: overlaps About + Features and stays under text */}
-          <img
-            src="/shape-5.svg"
-            alt=""
-            aria-hidden
-            width={430}
-            height={430}
-            loading="lazy"
-            decoding="async"
-            className="pointer-events-none absolute -bottom-56 -right-36 z-10 hidden w-[360px] opacity-95 sm:block lg:-bottom-34 lg:-right-44 lg:w-[430px]"
-          />
+         
         </section>
 
         {/* FEATURES */}
@@ -476,11 +487,11 @@ export default function Landing() {
             src="/shape-6.png"
             alt=""
             aria-hidden
-            width={250}
-            height={250}
+            width={220}
+            height={220}
             loading="lazy"
             decoding="async"
-            className="pointer-events-none absolute -right-8 -top-10 hidden w-[180px] opacity-95 sm:block lg:-right-10 lg:-top-14 lg:w-[250px]"
+            className="pointer-events-none absolute -right-8 -top-10 hidden w-[100px] -scale-x-100 opacity-95 sm:block lg:-right-0 lg:-top-0 lg:w-[160px]"
           />
 
           <div className="relative z-10 mx-auto w-full max-w-[1366px]">
@@ -495,7 +506,7 @@ export default function Landing() {
             </p>
 
             <div className="mt-10 grid gap-8 md:grid-cols-2 md:items-start lg:mt-12 lg:gap-14">
-              <div>
+              <div className="md:justify-self-start">
                 <h3 className="font-marvin text-4xl uppercase text-brand-purple sm:text-5xl lg:text-[2.65rem]">
                   AMIRA SAMEH
                 </h3>
@@ -509,14 +520,14 @@ export default function Landing() {
                 </p>
               </div>
 
-              <div className="md:text-right">
+              <div className="md:justify-self-start md:text-right md:mt-12 lg:mt-14">
                 <h3 className="font-marvin text-4xl uppercase text-brand-purple sm:text-5xl lg:text-[2.65rem]">
                   HASSAN REDA
                 </h3>
                 <p className="mt-1 font-marvin text-3xl uppercase text-white sm:text-4xl lg:text-[2.1rem]">
                   CO-FOUNDER
                 </p>
-                <p className="mt-3 ml-auto max-w-[640px] text-lg leading-tight text-brand-purple sm:text-xl lg:text-[1.22rem]">
+                <p className="mt-3 max-w-[640px] text-lg leading-tight text-brand-purple sm:text-xl lg:text-[1.22rem]">
                   Product strategist and full-stack engineer who prototypes
                   ideas at lightning speed, obsessed with details that make
                   Egypt&rsquo;s pet community smarter, safer, and more fun.
@@ -528,19 +539,19 @@ export default function Landing() {
       </div>
 
       {/* FAQ Section */}
-      <section id="faq" className="py-20 bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="faq" className="bg-brand-purple px-3 py-12 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
+        <div className="mx-auto w-full max-w-[1366px]">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
-            className="text-center mb-16"
+            className="text-center mb-12 sm:mb-16"
           >
-            <h2 className="text-3xl sm:text-4xl font-bold text-brand-dark mb-4">
+            <h2 className="font-marvin text-4xl uppercase text-white sm:text-5xl lg:text-[3.35rem]">
               Frequently Asked Questions
             </h2>
-            <p className="text-xl text-gray-600">
+            <p className="mx-auto mt-3 max-w-[940px] text-center text-lg leading-tight text-white sm:text-xl lg:text-[1.45rem]">
               Everything you need to know about TwoPaws
             </p>
           </motion.div>
@@ -553,15 +564,20 @@ export default function Landing() {
           >
             <Accordion type="single" collapsible className="space-y-4">
               {faqs.map((faq, index) => (
-                <Card key={index} className="shadow-sm">
+                <Card
+                  key={index}
+                  className="border-2 border-brand-purple/30 bg-white/90 shadow-[0_8px_0_rgba(84,54,120,0.12)]"
+                >
                   <AccordionItem value={`item-${index}`} className="border-0">
                     <AccordionTrigger className="px-6 py-4 hover:no-underline">
-                      <span className="font-semibold text-brand-dark text-left">
+                      <span className="font-marvin text-xl uppercase text-brand-yellow text-left sm:text-2xl">
                         {faq.question}
                       </span>
                     </AccordionTrigger>
-                    <AccordionContent className="px-6 pb-4">
-                      <p className="text-gray-600">{faq.answer}</p>
+                    <AccordionContent className="px-6 pb-5">
+                      <p className="text-lg leading-tight text-brand-yellow sm:text-xl">
+                        {faq.answer}
+                      </p>
                     </AccordionContent>
                   </AccordionItem>
                 </Card>
@@ -572,33 +588,30 @@ export default function Landing() {
       </section>
 
       {/* Call to Action Section */}
-      <section
-        id="cta"
-        className="py-20 bg-gradient-to-br from-brand-dark to-brand-olive"
-      >
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <section id="cta" className="bg-white px-3 py-12 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
+        <div className="mx-auto w-full max-w-[1366px] text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6">
+            <h2 className="font-marvin text-4xl uppercase text-brand-purple sm:text-5xl lg:text-[3.35rem]">
               Ready to Give Your Pet the Best Life?
             </h2>
-            <p className="text-xl text-gray-800 mb-8">
+            <p className="mx-auto mt-3 max-w-[940px] text-center text-lg leading-tight text-brand-purple sm:text-xl lg:text-[1.45rem]">
               Join thousands of pet families who trust TwoPaws for their pet
               care needs.
             </p>
 
-            <p className="text-lg text-gray-900 font-semibold mb-8">
+            <p className="mt-5 text-lg font-semibold text-brand-purple sm:text-xl">
               Follow us to know the latest updates
             </p>
 
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <Button
                 asChild
-                className="bg-white text-gray-900 border border-gray-900/10 hover:bg-gray-100 font-semibold shadow-lg shadow-yellow-200/30"
+                className="bg-brand-yellow text-brand-purple border border-brand-purple/20 hover:bg-brand-yellow/90 font-semibold shadow-lg shadow-brand-purple/10"
               >
                 <a href={IOS_STORE_URL} target="_blank" rel="noreferrer">
                   Download on App Store
@@ -607,7 +620,7 @@ export default function Landing() {
               <Button
                 asChild
                 variant="outline"
-                className="border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white"
+                className="border-brand-purple text-brand-purple hover:bg-brand-purple hover:text-white"
               >
                 <a href={ANDROID_STORE_URL} target="_blank" rel="noreferrer">
                   Get it on Google Play
