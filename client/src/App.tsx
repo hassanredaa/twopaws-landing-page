@@ -7,8 +7,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
 import { CartProvider } from "@/hooks/useCart";
-import { initMetaPixel, trackPageView } from "@/lib/metaPixel";
+import { initMetaPixel, trackMetaEvent, trackPageView } from "@/lib/metaPixel";
 import { isReactSnapPrerender } from "@/lib/isPrerender";
+import { ANDROID_STORE_URL, IOS_STORE_URL } from "@/lib/seo/constants";
 import Landing from "@/pages/landing";
 import AboutPage from "@/pages/marketing/about";
 import ContactPage from "@/pages/marketing/contact";
@@ -32,6 +33,18 @@ import LoginPage from "@/pages/login";
 import PaymobPaymentPage from "@/pages/payment/paymob";
 import PaymentReturnPage from "@/pages/payment/return";
 
+const normalizePath = (path: string) => {
+  const normalized = path.replace(/\/+$/, "");
+  return normalized || "/";
+};
+
+const iosStoreUrl = new URL(IOS_STORE_URL);
+const androidStoreUrl = new URL(ANDROID_STORE_URL);
+
+const isSameOriginAndPath = (left: URL, right: URL) =>
+  left.origin.toLowerCase() === right.origin.toLowerCase() &&
+  normalizePath(left.pathname).toLowerCase() === normalizePath(right.pathname).toLowerCase();
+
 function MetaPixelTracker() {
   const location = useLocation();
   const enablePixel = import.meta.env.PROD && !isReactSnapPrerender();
@@ -45,6 +58,56 @@ function MetaPixelTracker() {
     if (!enablePixel) return;
     trackPageView();
   }, [enablePixel, location.pathname, location.search]);
+
+  useEffect(() => {
+    if (!enablePixel) return;
+
+    const handleDocumentClick = (event: MouseEvent) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+
+      const link = target.closest("a[href]");
+      if (!(link instanceof HTMLAnchorElement)) return;
+
+      const href = link.getAttribute("href");
+      if (!href) return;
+
+      let destinationUrl: URL;
+      try {
+        destinationUrl = new URL(href, window.location.origin);
+      } catch {
+        return;
+      }
+
+      if (destinationUrl.protocol === "mailto:") {
+        trackMetaEvent("Contact", {
+          contact_method: "email",
+          destination: destinationUrl.href,
+          source_path: normalizePath(location.pathname),
+        });
+        return;
+      }
+
+      const matchesIosStore = isSameOriginAndPath(destinationUrl, iosStoreUrl);
+      const matchesAndroidStore =
+        isSameOriginAndPath(destinationUrl, androidStoreUrl) &&
+        destinationUrl.searchParams.get("id") ===
+          androidStoreUrl.searchParams.get("id");
+      if (!matchesIosStore && !matchesAndroidStore) return;
+
+      trackMetaEvent("Lead", {
+        lead_type: "app_download",
+        platform: matchesIosStore ? "ios" : "android",
+        destination: destinationUrl.href,
+        source_path: normalizePath(location.pathname),
+      });
+    };
+
+    document.addEventListener("click", handleDocumentClick, true);
+    return () => {
+      document.removeEventListener("click", handleDocumentClick, true);
+    };
+  }, [enablePixel, location.pathname]);
 
   return null;
 }

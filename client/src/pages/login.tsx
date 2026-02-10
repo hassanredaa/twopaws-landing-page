@@ -11,6 +11,7 @@ import { FaApple, FaGoogle } from "react-icons/fa";
 import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import Seo from "@/lib/seo/Seo";
+import { trackMetaEvent } from "@/lib/metaPixel";
 
 export default function LoginPage() {
   const { signIn, signUp, signInWithGoogle, signInWithApple } = useAuth();
@@ -78,6 +79,10 @@ export default function LoginPage() {
         await signUp(email, password, {
           displayName,
           phone: phoneInput,
+        });
+        trackMetaEvent("CompleteRegistration", {
+          method: "email",
+          source_path: "/login",
         });
       }
       navigate(redirectTo);
