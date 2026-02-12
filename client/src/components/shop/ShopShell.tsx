@@ -143,9 +143,14 @@ export default function ShopShell({ children, headerContent }: ShopShellProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button asChild className="bg-brand-green-dark text-white">
-                <Link to="/login">Sign in</Link>
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button asChild variant="outline" className="border-slate-200">
+                  <Link to="/login">Sign in</Link>
+                </Button>
+                <Button asChild className="bg-brand-green-dark text-white">
+                  <Link to="/login?mode=signup">Sign up</Link>
+                </Button>
+              </div>
             )}
           </div>
         </div>

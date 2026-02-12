@@ -594,13 +594,10 @@ const buildPaymobHmac = (payload: Record<string, any>, secret: string) => {
 
 export const createPaymobPayment = functions.https.onCall(async (data: any, context: any) => {
   const auth = context?.auth;
-  if (!auth?.uid) {
-    throw new functions.https.HttpsError(
-      'unauthenticated',
-      'You must be signed in. Call this endpoint as a Firebase callable function with a valid Firebase ID token.'
-    );
-  }
   const orderId = typeof data?.orderId === 'string' ? data.orderId : '';
+  const guestCheckoutToken = typeof data?.guestCheckoutToken === 'string'
+    ? data.guestCheckoutToken.trim()
+    : '';
   if (!orderId) {
     throw new functions.https.HttpsError('invalid-argument', 'orderId is required');
   }
@@ -651,12 +648,36 @@ export const createPaymobPayment = functions.https.onCall(async (data: any, cont
   const orderData = orderSnap.data() as {
     totalPrice?: number;
     shippingAddress?: admin.firestore.DocumentReference;
+    shippingAddressData?: Record<string, any>;
     buyerId?: admin.firestore.DocumentReference;
+    createdWithoutAccount?: boolean;
+    paymobGuestToken?: string;
+    customerFirstName?: string;
+    customerLastName?: string;
+    customerFullName?: string;
+    customerPhone?: string;
+    customerEmail?: string | null;
     orderNumber?: number;
   };
 
-  if (orderData?.buyerId?.id && orderData.buyerId.id !== auth.uid) {
-    throw new functions.https.HttpsError('permission-denied', 'Order does not belong to user');
+  const isGuestOrder = Boolean(orderData?.createdWithoutAccount);
+  if (isGuestOrder) {
+    const expectedToken = typeof orderData?.paymobGuestToken === 'string'
+      ? orderData.paymobGuestToken.trim()
+      : '';
+    if (!expectedToken || !guestCheckoutToken || expectedToken !== guestCheckoutToken) {
+      throw new functions.https.HttpsError('permission-denied', 'Invalid guest checkout token');
+    }
+  } else {
+    if (!auth?.uid) {
+      throw new functions.https.HttpsError(
+        'unauthenticated',
+        'You must be signed in. Call this endpoint as a Firebase callable function with a valid Firebase ID token.'
+      );
+    }
+    if (orderData?.buyerId?.id && orderData.buyerId.id !== auth.uid) {
+      throw new functions.https.HttpsError('permission-denied', 'Order does not belong to user');
+    }
   }
 
   const amountCents = Math.round((orderData.totalPrice ?? 0) * 100);
@@ -669,9 +690,22 @@ export const createPaymobPayment = functions.https.onCall(async (data: any, cont
   }
 
   const addressSnap = orderData.shippingAddress ? await orderData.shippingAddress.get() : null;
-  const addressData = (addressSnap?.exists ? addressSnap.data() : {}) as Record<string, any>;
-  const buyerUid = orderData?.buyerId?.id || auth.uid;
-  let recipientName = String(addressData?.recipientName || addressData?.name || '').trim();
+  const addressFromRef = (addressSnap?.exists ? addressSnap.data() : null) as Record<string, any> | null;
+  const addressData = {
+    ...(orderData?.shippingAddressData || {}),
+    ...(addressFromRef || {}),
+  } as Record<string, any>;
+  const buyerUid = orderData?.buyerId?.id || auth?.uid || '';
+  const customerFirstName = String(orderData?.customerFirstName || '').trim();
+  const customerLastName = String(orderData?.customerLastName || '').trim();
+  const customerFullName = String(orderData?.customerFullName || '').trim();
+  let recipientName = String(
+    customerFullName ||
+    `${customerFirstName} ${customerLastName}`.trim() ||
+    addressData?.recipientName ||
+    addressData?.name ||
+    ''
+  ).trim();
   if (!recipientName && buyerUid) {
     const userSnap = await db.collection('users').doc(buyerUid).get();
     if (userSnap.exists) {
@@ -680,17 +714,19 @@ export const createPaymobPayment = functions.https.onCall(async (data: any, cont
           userData?.display_name ||
           userData?.displayName ||
           userData?.name ||
-          auth.token?.name ||
+          auth?.token?.name ||
           ''
       ).trim();
     }
   }
   if (!recipientName) {
-    recipientName = String(auth.token?.name || 'Customer').trim() || 'Customer';
+    recipientName = String(auth?.token?.name || 'Customer').trim() || 'Customer';
   }
   const nameParts = recipientName.split(/\s+/).filter(Boolean);
-  const firstName = nameParts[0] || 'Customer';
-  const lastName = nameParts.slice(1).join(' ') || 'TwoPaws';
+  const firstName = customerFirstName || nameParts[0] || 'Customer';
+  const lastName = customerLastName || nameParts.slice(1).join(' ') || 'TwoPaws';
+  const email = String(orderData?.customerEmail || auth?.token?.email || '').trim() || 'support@twopaws.pet';
+  const phone = String(orderData?.customerPhone || addressData?.phone || '').trim() || 'NA';
 
   const payload: Record<string, any> = {
     amount: amountCents,
@@ -707,8 +743,8 @@ export const createPaymobPayment = functions.https.onCall(async (data: any, cont
     billing_data: {
       first_name: firstName || 'Customer',
       last_name: lastName || 'TwoPaws',
-      email: auth.token?.email || 'support@twopaws.pet',
-      phone_number: addressData?.phone || 'NA',
+      email,
+      phone_number: phone,
       apartment: addressData?.apartment || 'NA',
       floor: addressData?.floor || 'NA',
       street: addressData?.street || 'NA',
@@ -844,6 +880,7 @@ export const paymobWebhook = functions.https.onRequest(async (req, res) => {
         success,
         status: nextOrderStatus,
         orderStatus: nextOrderStatus,
+        paymobGuestToken: admin.firestore.FieldValue.delete(),
         paidAt: success ? admin.firestore.FieldValue.serverTimestamp() : null,
         updated_at: admin.firestore.FieldValue.serverTimestamp(),
       },

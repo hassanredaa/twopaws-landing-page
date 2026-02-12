@@ -66,6 +66,8 @@ type CartContextValue = {
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
+const GUEST_CART_ID = "guest";
+const GUEST_CART_STORAGE_KEY = "twopaws:guest-cart:v1";
 
 const toNumber = (value: unknown) =>
   typeof value === "number" && Number.isFinite(value) ? value : 0;
@@ -94,6 +96,68 @@ const refsEqual = (
 ) => {
   if (!first || !second) return false;
   return first.path === second.path;
+};
+
+const readGuestCartItems = (): CartItemDoc[] => {
+  if (typeof window === "undefined") return [];
+  const raw = window.localStorage.getItem(GUEST_CART_STORAGE_KEY);
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw) as unknown[];
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map((item, index) => {
+        const payload = (item ?? {}) as Record<string, unknown>;
+        const productId = typeof payload.productId === "string" ? payload.productId.trim() : "";
+        const quantity = Math.floor(toNumber(payload.quantity));
+        const unitPrice = toNumber(payload.unitPrice);
+        if (!productId || quantity <= 0) return null;
+        return {
+          id: typeof payload.id === "string" && payload.id.trim() ? payload.id : `${productId}-${index}`,
+          productId,
+          quantity,
+          unitPrice,
+        } satisfies CartItemDoc;
+      })
+      .filter(Boolean) as CartItemDoc[];
+  } catch {
+    return [];
+  }
+};
+
+const writeGuestCartItems = (items: CartItemDoc[]) => {
+  if (typeof window === "undefined") return;
+  if (items.length === 0) {
+    window.localStorage.removeItem(GUEST_CART_STORAGE_KEY);
+    return;
+  }
+  const payload = items
+    .map((item) => {
+      const productId = getProductRef(item.productId)?.id;
+      const quantity = Math.floor(toNumber(item.quantity));
+      const unitPrice = toNumber(item.unitPrice);
+      if (!productId || quantity <= 0) return null;
+      return {
+        id: item.id,
+        productId,
+        quantity,
+        unitPrice,
+      };
+    })
+    .filter(Boolean);
+  window.localStorage.setItem(GUEST_CART_STORAGE_KEY, JSON.stringify(payload));
+};
+
+const summarizeCart = (items: CartItemDoc[]) => {
+  let itemCount = 0;
+  let total = 0;
+  for (const item of items) {
+    const quantity = Math.max(0, Math.floor(toNumber(item.quantity)));
+    const unitPrice = toNumber(item.unitPrice);
+    itemCount += quantity;
+    total += quantity * unitPrice;
+  }
+  return { itemCount, total: Math.max(total, 0) };
 };
 
 function useCartState(): CartContextValue {
@@ -133,6 +197,15 @@ function useCartState(): CartContextValue {
     setProductsById({});
     setError(null);
     if (!user) {
+      const guestItems = readGuestCartItems();
+      const summary = summarizeCart(guestItems);
+      setCartId(GUEST_CART_ID);
+      setItems(guestItems);
+      setCart({
+        id: GUEST_CART_ID,
+        itemCount: summary.itemCount,
+        total: summary.total,
+      });
       setLoading(false);
       return;
     }
@@ -183,6 +256,7 @@ function useCartState(): CartContextValue {
 
   useEffect(() => {
     if (prerender) return;
+    if (!user) return;
     if (!cartId) return;
     const cartRef = doc(db, "carts", cartId);
     const unsubscribe = onSnapshot(cartRef, (snap) => {
@@ -198,6 +272,7 @@ function useCartState(): CartContextValue {
 
   useEffect(() => {
     if (prerender) return;
+    if (!user) return;
     if (!cartId) return;
     const itemsRef = collection(db, "carts", cartId, "cartItems");
     const unsubscribe = onSnapshot(itemsRef, (snap) => {
@@ -265,6 +340,18 @@ function useCartState(): CartContextValue {
       };
     });
   }, [items, productsById]);
+
+  useEffect(() => {
+    if (prerender) return;
+    if (user) return;
+    const summary = summarizeCart(items);
+    setCart({
+      id: GUEST_CART_ID,
+      itemCount: summary.itemCount,
+      total: summary.total,
+    });
+    writeGuestCartItems(items);
+  }, [items, user, prerender]);
 
   useEffect(() => {
     if (prerender) return;
@@ -398,8 +485,8 @@ function useCartState(): CartContextValue {
 
   const addItem = useCallback(
     async (product: ProductDoc, quantity: number) => {
-      if (!user || !cartId) {
-        throw new Error("You must be signed in to add items.");
+      if (!cartId) {
+        throw new Error("Cart is unavailable right now.");
       }
       if (!product.id) {
         throw new Error("Invalid product.");
@@ -436,6 +523,40 @@ function useCartState(): CartContextValue {
       }
 
       const unitPrice = getProductUnitPrice(product);
+      if (!user || cartId === GUEST_CART_ID) {
+        setItems((prev) => {
+          const existing = prev.find((item) => getProductRef(item.productId)?.id === product.id);
+          const existingQty = existing ? toNumber(existing.quantity) : 0;
+          const newQty = Math.min(existingQty + quantity, available);
+          if (newQty === existingQty) return prev;
+
+          if (!existing) {
+            return [
+              ...prev,
+              {
+                id: product.id,
+                productId: product.id,
+                quantity: newQty,
+                unitPrice,
+              },
+            ];
+          }
+
+          return prev.map((item) =>
+            item.id === existing.id
+              ? {
+                  ...item,
+                  productId: product.id,
+                  quantity: newQty,
+                  unitPrice,
+                  lastPriceSyncAt: undefined,
+                }
+              : item
+          );
+        });
+        return;
+      }
+
       const cartRef = doc(db, "carts", cartId);
       const existingItem = findExistingItem(product.id);
       const itemRef = doc(cartRef, "cartItems", existingItem?.id ?? product.id);
@@ -486,8 +607,8 @@ function useCartState(): CartContextValue {
 
   const setItemQuantity = useCallback(
     async (product: ProductDoc, nextQty: number) => {
-      if (!user || !cartId) {
-        throw new Error("You must be signed in to update items.");
+      if (!cartId) {
+        throw new Error("Cart is unavailable right now.");
       }
       if (!product.id) {
         throw new Error("Invalid product.");
@@ -498,6 +619,39 @@ function useCartState(): CartContextValue {
       }
       const targetQty = Math.min(Math.max(nextQty, 0), available > 0 ? available : 0);
       const unitPrice = getProductUnitPrice(product);
+      if (!user || cartId === GUEST_CART_ID) {
+        setItems((prev) => {
+          const existing = prev.find((item) => getProductRef(item.productId)?.id === product.id);
+          if (!existing) {
+            if (targetQty <= 0) return prev;
+            return [
+              ...prev,
+              {
+                id: product.id,
+                productId: product.id,
+                quantity: targetQty,
+                unitPrice,
+              },
+            ];
+          }
+          if (targetQty <= 0) {
+            return prev.filter((item) => item.id !== existing.id);
+          }
+          return prev.map((item) =>
+            item.id === existing.id
+              ? {
+                  ...item,
+                  productId: product.id,
+                  quantity: targetQty,
+                  unitPrice,
+                  lastPriceSyncAt: undefined,
+                }
+              : item
+          );
+        });
+        return;
+      }
+
       const cartRef = doc(db, "carts", cartId);
       const existingItem = findExistingItem(product.id);
       const itemRef = doc(cartRef, "cartItems", existingItem?.id ?? product.id);
@@ -562,8 +716,12 @@ function useCartState(): CartContextValue {
   );
 
   const clearCart = useCallback(async () => {
-    if (!user || !cartId) {
-      throw new Error("You must be signed in to clear the cart.");
+    if (!cartId) {
+      throw new Error("Cart is unavailable right now.");
+    }
+    if (!user || cartId === GUEST_CART_ID) {
+      setItems([]);
+      return;
     }
     const cartRef = doc(db, "carts", cartId);
     await runTransaction(db, async (transaction) => {

@@ -27,6 +27,12 @@ export type OrderDoc = {
   success?: boolean;
   status?: string;
   orderStatus?: string;
+  source?: string;
+  createdWithoutAccount?: boolean;
+  customerFirstName?: string;
+  customerLastName?: string;
+  customerPhone?: string;
+  customerEmail?: string | null;
   [key: string]: unknown;
 };
 

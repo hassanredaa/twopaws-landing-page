@@ -59,6 +59,14 @@ export default function OrderDetailPage() {
 
   useEffect(() => {
     if (!order?.shippingAddress) {
+      const embeddedAddress =
+        (order as Record<string, unknown> | null)?.shippingAddressData as
+          | Record<string, unknown>
+          | undefined;
+      setAddress(embeddedAddress ?? null);
+      return;
+    }
+    if (typeof order.shippingAddress !== "object") {
       setAddress(null);
       return;
     }
@@ -125,6 +133,10 @@ export default function OrderDetailPage() {
     (order as any)?.promoDiscount ??
     (order as any)?.discount ??
     (order as any)?.promo?.discount;
+  const orderSource = ((order as Record<string, unknown>)?.source as string | undefined) ?? "website";
+  const createdWithoutAccount = Boolean(
+    (order as Record<string, unknown>)?.createdWithoutAccount
+  );
 
   const orderItems = useMemo(() => {
     return items.map((item) => {
@@ -171,6 +183,9 @@ export default function OrderDetailPage() {
             </h1>
             <p className="text-sm text-slate-500">
               {order.status ?? order.orderStatus ?? "Processing"} · {formatDate(order.created_at ?? order.createdAt)}
+            </p>
+            <p className="text-xs text-slate-500">
+              Source: {orderSource} · {createdWithoutAccount ? "Guest checkout" : "Account checkout"}
             </p>
           </header>
 

@@ -251,17 +251,18 @@ export default function CartPage() {
 
       {!user && (
         <Card className="border-slate-100">
-          <CardContent className="p-6">
-            <p className="text-slate-600">Sign in to view your cart.</p>
-            <Button asChild className="mt-4 bg-brand-green-dark text-white">
-              <Link to="/login">Sign in</Link>
+          <CardContent className="space-y-3 p-6">
+            <p className="text-slate-600">
+              You are shopping as guest. Sign in to sync your cart across devices.
+            </p>
+            <Button asChild variant="outline" className="border-slate-200">
+              <Link to="/login?redirect=/cart">Sign in</Link>
             </Button>
           </CardContent>
         </Card>
       )}
 
-      {user && (
-        <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
+      <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
           <div className="space-y-4">
             {cartEmpty && (
               <Card className="border-slate-100">
@@ -420,7 +421,6 @@ export default function CartPage() {
             </Button>
           </div>
         </div>
-      )}
     </ShopShell>
   );
 }

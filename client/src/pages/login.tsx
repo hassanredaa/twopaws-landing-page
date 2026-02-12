@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import ShopShell from "@/components/shop/ShopShell";
 import { Button } from "@/components/ui/button";
@@ -20,14 +20,21 @@ export default function LoginPage() {
   const location = useLocation();
   const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const redirectTo = params.get("redirect") || "/shop";
+  const requestedMode = params.get("mode");
+  const initialMode: "signin" | "signup" =
+    requestedMode === "signup" ? "signup" : "signin";
 
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup">(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phoneInput, setPhoneInput] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setMode(initialMode);
+  }, [initialMode]);
 
   const handleSocialSignIn = async (provider: "google" | "apple") => {
     setLoading(true);

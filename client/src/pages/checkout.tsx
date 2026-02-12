@@ -53,6 +53,7 @@ import { META_PIXEL_CURRENCY, trackMetaEvent } from "@/lib/metaPixel";
 import Seo from "@/lib/seo/Seo";
 
 const PROMO_STORAGE_KEY = "twopawsPromo";
+const ORDER_SOURCE_WEBSITE = "website";
 
 const buildPaymobCheckoutUrl = (publicKey: string, clientSecret: string) => {
   const params = new URLSearchParams({
@@ -93,6 +94,29 @@ type AddressFormState = {
   location: LatLngLiteral | null;
 };
 
+type CustomerFormState = {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email: string;
+};
+
+const splitFullName = (value?: string | null): { firstName: string; lastName: string } => {
+  const normalized = (value ?? "").trim().replace(/\s+/g, " ");
+  if (!normalized) return { firstName: "", lastName: "" };
+  const [firstName, ...rest] = normalized.split(" ");
+  return {
+    firstName: firstName ?? "",
+    lastName: rest.join(" "),
+  };
+};
+
+const isValidOptionalEmail = (value: string) => {
+  const normalized = value.trim();
+  if (!normalized) return true;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized);
+};
+
 const toLatLng = (location?: { latitude?: number; longitude?: number } | null) => {
   if (!location) return null;
   const lat = location.latitude;
@@ -117,6 +141,12 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
   const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
+  const [customerForm, setCustomerForm] = useState<CustomerFormState>({
+    firstName: "",
+    lastName: "",
+    phone: "",
+    email: "",
+  });
   const [addressForm, setAddressForm] = useState<AddressFormState>({
     label: "",
     recipientName: "",
@@ -131,8 +161,23 @@ export default function CheckoutPage() {
     notes: "",
     location: null,
   });
+  const [guestAddressForm, setGuestAddressForm] = useState<AddressFormState>({
+    label: "Delivery address",
+    recipientName: "",
+    phone: "",
+    country: ADDRESS_COUNTRY,
+    city: ADDRESS_CITIES[0],
+    area: "",
+    street: "",
+    building: "",
+    floor: "",
+    apartment: "",
+    notes: "",
+    location: null,
+  });
 
   const supplierName = activeSupplierRef ? supplierMap[activeSupplierRef.id]?.name : undefined;
+  const isGuestCheckout = !user || !userRef;
 
   useEffect(() => {
     const stored = localStorage.getItem(PROMO_STORAGE_KEY);
@@ -145,6 +190,17 @@ export default function CheckoutPage() {
       }
     }
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    const { firstName, lastName } = splitFullName(user.displayName);
+    setCustomerForm((prev) => ({
+      firstName: prev.firstName || firstName,
+      lastName: prev.lastName || lastName,
+      phone: prev.phone,
+      email: prev.email || user.email || "",
+    }));
+  }, [user]);
 
   useEffect(() => {
     if (addresses.length === 0) {
@@ -186,13 +242,26 @@ export default function CheckoutPage() {
     }
   }, [shippingZones, selectedZoneId]);
 
+  useEffect(() => {
+    const selectedAddress = addresses.find((address) => address.id === selectedAddressId);
+    if (!selectedAddress || isGuestCheckout) return;
+    const nameFromAddress = splitFullName(selectedAddress.recipientName as string | undefined);
+    setCustomerForm((prev) => ({
+      firstName: prev.firstName || nameFromAddress.firstName,
+      lastName: prev.lastName || nameFromAddress.lastName,
+      phone: prev.phone || String(selectedAddress.phone ?? ""),
+      email: prev.email,
+    }));
+  }, [addresses, selectedAddressId, isGuestCheckout]);
+
   const selectedAddress = addresses.find((address) => address.id === selectedAddressId);
+  const shippingCity = isGuestCheckout ? guestAddressForm.city : selectedAddress?.city;
 
   const filteredShippingZones = useMemo(() => {
-    if (!selectedAddress?.city) return shippingZones;
-    const city = selectedAddress.city.trim().toLowerCase();
+    if (!shippingCity) return shippingZones;
+    const city = shippingCity.trim().toLowerCase();
     return shippingZones.filter((zone) => (zone.label ?? "").trim().toLowerCase() === city);
-  }, [selectedAddress?.city, shippingZones]);
+  }, [shippingCity, shippingZones]);
 
   useEffect(() => {
     if (filteredShippingZones.length === 0) {
@@ -336,15 +405,53 @@ export default function CheckoutPage() {
   };
 
   const handleCheckout = async () => {
-    if (!user || !userRef || !cart) {
-      navigate(`/login?redirect=${encodeURIComponent(location.pathname)}`);
+    if (!cart) {
+      toast({ title: "Cart unavailable", description: "Reload and try again." });
       return;
     }
     if (cartEmpty) {
       toast({ title: "Cart empty", description: "Add items before checkout." });
       return;
     }
-    if (addresses.length === 0) {
+    const firstName = customerForm.firstName.trim();
+    const lastName = customerForm.lastName.trim();
+    const normalizedPhone = customerForm.phone.trim();
+    const normalizedEmail = customerForm.email.trim();
+
+    if (!firstName || !lastName) {
+      toast({
+        title: "Name required",
+        description: "Enter first and last name.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!normalizedPhone) {
+      toast({
+        title: "Phone required",
+        description: "Enter your phone number to place the order.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!isValidPhoneNumber(normalizedPhone)) {
+      toast({
+        title: "Invalid phone number",
+        description: "Enter a valid phone number with country code.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!isValidOptionalEmail(normalizedEmail)) {
+      toast({
+        title: "Invalid email",
+        description: "Enter a valid email address or leave it empty.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!isGuestCheckout && addresses.length === 0) {
       toast({
         title: "No address saved",
         description: "Add a shipping address before placing your order.",
@@ -352,7 +459,7 @@ export default function CheckoutPage() {
       });
       return;
     }
-    if (!selectedAddress) {
+    if (!isGuestCheckout && !selectedAddress) {
       toast({
         title: "Select an address",
         description: "Choose a shipping address to continue.",
@@ -360,6 +467,33 @@ export default function CheckoutPage() {
       });
       return;
     }
+    if (isGuestCheckout) {
+      if (!ADDRESS_CITIES.includes(guestAddressForm.city as (typeof ADDRESS_CITIES)[number])) {
+        toast({
+          title: "Invalid city",
+          description: "City must be Cairo or Giza.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!guestAddressForm.street.trim()) {
+        toast({
+          title: "Street required",
+          description: "Enter a street for delivery.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!guestAddressForm.location) {
+        toast({
+          title: "Location required",
+          description: "Select your delivery location on the map.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     if (!selectedZoneId) {
       toast({
         title: "Select shipping",
@@ -420,10 +554,54 @@ export default function CheckoutPage() {
       const orderRef = doc(collection(db, "orders"));
       const isPaymob = paymentMethod === "paymob";
       const orderStatus = isPaymob ? "PAYMENT_INITIALIZING" : "Pending";
-      await setDoc(orderRef, {
-        buyerId: userRef,
+      const guestCheckoutToken =
+        isGuestCheckout && isPaymob
+          ? (window.crypto?.randomUUID?.() ??
+            `${Date.now()}-${Math.random().toString(36).slice(2)}`)
+          : null;
+      const customerFullName = `${firstName} ${lastName}`.trim();
+      const shippingAddressData = isGuestCheckout
+        ? {
+            label: guestAddressForm.label.trim() || "Delivery address",
+            recipientName: customerFullName,
+            phone: normalizedPhone,
+            email: normalizedEmail || null,
+            country: ADDRESS_COUNTRY,
+            city: guestAddressForm.city,
+            area: guestAddressForm.area.trim(),
+            street: guestAddressForm.street.trim(),
+            building: guestAddressForm.building.trim(),
+            floor: guestAddressForm.floor.trim(),
+            apartment: guestAddressForm.apartment.trim(),
+            notes: guestAddressForm.notes.trim(),
+            location: new GeoPoint(guestAddressForm.location!.lat, guestAddressForm.location!.lng),
+          }
+        : {
+            label: selectedAddress?.label ?? "Saved address",
+            recipientName: selectedAddress?.recipientName ?? customerFullName,
+            phone: selectedAddress?.phone ?? normalizedPhone,
+            email: normalizedEmail || null,
+            country: selectedAddress?.country ?? ADDRESS_COUNTRY,
+            city: selectedAddress?.city ?? "",
+            area: selectedAddress?.area ?? "",
+            street: selectedAddress?.street ?? "",
+            building: selectedAddress?.building ?? "",
+            floor: selectedAddress?.floor ?? "",
+            apartment: selectedAddress?.apartment ?? "",
+            notes: selectedAddress?.notes ?? "",
+            location: selectedAddress?.location ?? null,
+          };
+
+      const orderPayload: Record<string, unknown> = {
         supplierRef: activeSupplierRef,
-        shippingAddress: doc(db, "addresses", selectedAddress.id),
+        source: ORDER_SOURCE_WEBSITE,
+        createdWithoutAccount: isGuestCheckout,
+        customerFirstName: firstName,
+        customerLastName: lastName,
+        customerPhone: normalizedPhone,
+        customerEmail: normalizedEmail || null,
+        customerFullName,
+        shippingAddressData,
         shippingCost,
         totalPrice,
         orderNumber,
@@ -434,7 +612,34 @@ export default function CheckoutPage() {
         success: paymentMethod === "cod",
         paymentMethod: paymentMethod === "cod" ? "cash" : "card",
         paymentStatus: paymentMethod === "cod" ? "PENDING_COD" : "PAYMENT_INITIALIZING",
-      });
+      };
+      if (userRef) {
+        orderPayload.buyerId = userRef;
+      }
+      if (!isGuestCheckout && selectedAddress) {
+        orderPayload.shippingAddress = doc(db, "addresses", selectedAddress.id);
+      }
+      if (guestCheckoutToken) {
+        orderPayload.paymobGuestToken = guestCheckoutToken;
+      }
+      await setDoc(orderRef, orderPayload);
+      await setDoc(
+        doc(db, "orderCustomers", orderRef.id),
+        {
+          orderRef,
+          source: ORDER_SOURCE_WEBSITE,
+          createdWithoutAccount: isGuestCheckout,
+          firstName,
+          lastName,
+          fullName: customerFullName,
+          phone: normalizedPhone,
+          email: normalizedEmail || null,
+          buyerId: userRef ?? null,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
 
       const batch = writeBatch(db);
       cartItems.forEach((item) => {
@@ -447,7 +652,7 @@ export default function CheckoutPage() {
       });
       await batch.commit();
 
-      if (promo?.code) {
+      if (promo?.code && cart.id !== "guest") {
         const commitPromo = httpsCallable(functions, "commitPromo");
         await commitPromo({
           code: promo.code,
@@ -472,7 +677,10 @@ export default function CheckoutPage() {
       if (paymentMethod === "paymob") {
         try {
           const createPaymobPayment = httpsCallable(functions, "createPaymobPayment");
-          const result = await createPaymobPayment({ orderId: orderRef.id });
+          const result = await createPaymobPayment({
+            orderId: orderRef.id,
+            guestCheckoutToken: guestCheckoutToken ?? undefined,
+          });
           const data = result.data as { clientSecret?: string; publicKey?: string };
           if (!data?.clientSecret || !data?.publicKey) {
             throw new Error("Unable to start Paymob payment.");
@@ -485,6 +693,7 @@ export default function CheckoutPage() {
           const orderItemsSnap = await getDocs(collection(orderRef, "orderItems"));
           const cleanupBatch = writeBatch(db);
           orderItemsSnap.docs.forEach((docSnap) => cleanupBatch.delete(docSnap.ref));
+          cleanupBatch.delete(doc(db, "orderCustomers", orderRef.id));
           cleanupBatch.delete(orderRef);
           await cleanupBatch.commit();
           throw paymobErr;
@@ -493,7 +702,15 @@ export default function CheckoutPage() {
 
       await clearCart();
       localStorage.removeItem(PROMO_STORAGE_KEY);
-      navigate(`/orders/${orderRef.id}`);
+      if (isGuestCheckout) {
+        toast({
+          title: "Order placed",
+          description: `Your order #${orderNumber} has been received.`,
+        });
+        navigate("/shop");
+      } else {
+        navigate(`/orders/${orderRef.id}`);
+      }
     } catch (err) {
       toast({
         title: "Checkout failed",
@@ -519,29 +736,6 @@ export default function CheckoutPage() {
     );
   }
 
-  if (!user) {
-    return (
-      <ShopShell>
-        <Seo
-          title="Checkout | TwoPaws Shop"
-          description="Complete your TwoPaws order securely."
-          canonicalUrl="/checkout"
-          noIndex
-        />
-        <Card className="border-slate-100">
-          <CardContent className="p-6">
-            <p className="text-slate-600">Sign in to continue to checkout.</p>
-            <Button asChild className="mt-4 bg-brand-green-dark text-white">
-              <Link to={`/login?redirect=${encodeURIComponent(location.pathname)}`}>
-                Sign in
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </ShopShell>
-    );
-  }
-
   return (
     <ShopShell>
       <Seo
@@ -560,119 +754,297 @@ export default function CheckoutPage() {
 
       <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
         <div className="space-y-6">
-          <Card className="border-slate-100">
-            <CardContent className="space-y-4 p-6">
-              <h3 className="text-lg font-semibold text-slate-900">Shipping address</h3>
-              <RadioGroup
-                value={selectedAddressId}
-                onValueChange={setSelectedAddressId}
-                className="space-y-2"
-              >
-                {addresses.map((address) => (
-                  <label
-                    key={address.id}
-                    className="flex items-start gap-3 rounded-xl border border-slate-100 p-3"
-                  >
-                    <RadioGroupItem value={address.id} />
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-slate-900">
-                        {address.label ?? "Saved address"}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        {formatAddress(address)}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        openEditAddress(address);
-                      }}
-                      className="text-xs font-semibold text-brand-green-dark hover:underline"
-                    >
-                      Edit
-                    </button>
-                  </label>
-                ))}
-                {addresses.length === 0 && (
-                  <p className="text-sm text-slate-500">No saved addresses yet.</p>
-                )}
-              </RadioGroup>
-            </CardContent>
-          </Card>
+          {!user && (
+            <Card className="border-slate-100">
+              <CardContent className="space-y-3 p-6">
+                <p className="text-sm text-slate-600">
+                  You are checking out as guest.
+                </p>
+                <Button asChild variant="outline" className="border-slate-200">
+                  <Link to={`/login?redirect=${encodeURIComponent(location.pathname)}`}>
+                    Sign in for faster checkout
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="border-slate-100">
             <CardContent className="space-y-4 p-6">
-              <div className="flex flex-wrap items-center justify-between gap-3">
+              <h3 className="text-lg font-semibold text-slate-900">Customer details</h3>
+              <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <h3 className="text-lg font-semibold text-slate-900">Need a new address?</h3>
-                  <p className="text-sm text-slate-500">Add one to continue checkout.</p>
+                  <Label>First name</Label>
+                  <Input
+                    value={customerForm.firstName}
+                    onChange={(event) =>
+                      setCustomerForm((prev) => ({ ...prev, firstName: event.target.value }))
+                    }
+                  />
                 </div>
-                <Button className="bg-brand-green-dark text-white" onClick={openAddAddress}>
-                  Add address
-                </Button>
+                <div>
+                  <Label>Last name</Label>
+                  <Input
+                    value={customerForm.lastName}
+                    onChange={(event) =>
+                      setCustomerForm((prev) => ({ ...prev, lastName: event.target.value }))
+                    }
+                  />
+                </div>
+                <div>
+                  <Label>Phone</Label>
+                  <PhoneInput
+                    className="auth-phone-input"
+                    defaultCountry="EG"
+                    international
+                    countryCallingCodeEditable={false}
+                    value={customerForm.phone || undefined}
+                    onChange={(value) =>
+                      setCustomerForm((prev) => ({ ...prev, phone: value ?? "" }))
+                    }
+                    placeholder="Enter phone number"
+                  />
+                </div>
+                <div>
+                  <Label>Email (optional)</Label>
+                  <Input
+                    type="email"
+                    value={customerForm.email}
+                    onChange={(event) =>
+                      setCustomerForm((prev) => ({ ...prev, email: event.target.value }))
+                    }
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          <Dialog
-            open={isAddressDialogOpen}
-            onOpenChange={(open) => {
-              setIsAddressDialogOpen(open);
-              if (!open) {
-                resetAddressForm();
-              }
-            }}
-          >
-            <DialogContent className="max-w-3xl">
-              <DialogHeader>
-                <DialogTitle>{editingAddressId ? "Edit address" : "Add new address"}</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
+          {!isGuestCheckout ? (
+            <>
+              <Card className="border-slate-100">
+                <CardContent className="space-y-4 p-6">
+                  <h3 className="text-lg font-semibold text-slate-900">Shipping address</h3>
+                  <RadioGroup
+                    value={selectedAddressId}
+                    onValueChange={setSelectedAddressId}
+                    className="space-y-2"
+                  >
+                    {addresses.map((address) => (
+                      <label
+                        key={address.id}
+                        className="flex items-start gap-3 rounded-xl border border-slate-100 p-3"
+                      >
+                        <RadioGroupItem value={address.id} />
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-slate-900">
+                            {address.label ?? "Saved address"}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {formatAddress(address)}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            openEditAddress(address);
+                          }}
+                          className="text-xs font-semibold text-brand-green-dark hover:underline"
+                        >
+                          Edit
+                        </button>
+                      </label>
+                    ))}
+                    {addresses.length === 0 && (
+                      <p className="text-sm text-slate-500">No saved addresses yet.</p>
+                    )}
+                  </RadioGroup>
+                </CardContent>
+              </Card>
+
+              <Card className="border-slate-100">
+                <CardContent className="space-y-4 p-6">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-lg font-semibold text-slate-900">Need a new address?</h3>
+                      <p className="text-sm text-slate-500">Add one to continue checkout.</p>
+                    </div>
+                    <Button className="bg-brand-green-dark text-white" onClick={openAddAddress}>
+                      Add address
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Dialog
+                open={isAddressDialogOpen}
+                onOpenChange={(open) => {
+                  setIsAddressDialogOpen(open);
+                  if (!open) {
+                    resetAddressForm();
+                  }
+                }}
+              >
+                <DialogContent className="max-w-3xl">
+                  <DialogHeader>
+                    <DialogTitle>{editingAddressId ? "Edit address" : "Add new address"}</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <Label>Label</Label>
+                        <Input
+                          value={addressForm.label}
+                          onChange={(event) =>
+                            setAddressForm((prev) => ({ ...prev, label: event.target.value }))
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label>Recipient name</Label>
+                        <Input
+                          value={addressForm.recipientName}
+                          onChange={(event) =>
+                            setAddressForm((prev) => ({ ...prev, recipientName: event.target.value }))
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label>Phone</Label>
+                        <PhoneInput
+                          className="auth-phone-input"
+                          defaultCountry="EG"
+                          international
+                          countryCallingCodeEditable={false}
+                          value={addressForm.phone || undefined}
+                          onChange={(value) =>
+                            setAddressForm((prev) => ({ ...prev, phone: value ?? "" }))
+                          }
+                          placeholder="Enter phone number"
+                        />
+                      </div>
+                      <div>
+                        <Label>Country</Label>
+                        <Input value={ADDRESS_COUNTRY} disabled className="bg-slate-50" />
+                      </div>
+                      <div>
+                        <Label>City</Label>
+                        <Select
+                          value={addressForm.city}
+                          onValueChange={(value) =>
+                            setAddressForm((prev) => ({ ...prev, city: value }))
+                          }
+                        >
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="Select city" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ADDRESS_CITIES.map((city) => (
+                              <SelectItem key={city} value={city}>
+                                {city}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Area</Label>
+                        <Input
+                          value={addressForm.area}
+                          onChange={(event) =>
+                            setAddressForm((prev) => ({ ...prev, area: event.target.value }))
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label>Street</Label>
+                        <Input
+                          value={addressForm.street}
+                          onChange={(event) =>
+                            setAddressForm((prev) => ({ ...prev, street: event.target.value }))
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label>Building</Label>
+                        <Input
+                          value={addressForm.building}
+                          onChange={(event) =>
+                            setAddressForm((prev) => ({ ...prev, building: event.target.value }))
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label>Floor</Label>
+                        <Input
+                          value={addressForm.floor}
+                          onChange={(event) =>
+                            setAddressForm((prev) => ({ ...prev, floor: event.target.value }))
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label>Apartment</Label>
+                        <Input
+                          value={addressForm.apartment}
+                          onChange={(event) =>
+                            setAddressForm((prev) => ({ ...prev, apartment: event.target.value }))
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label>Notes</Label>
+                      <Textarea
+                        value={addressForm.notes}
+                        onChange={(event) =>
+                          setAddressForm((prev) => ({ ...prev, notes: event.target.value }))
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Location</Label>
+                      <GoogleMapPicker
+                        value={addressForm.location}
+                        onChange={(location) =>
+                          setAddressForm((prev) => ({ ...prev, location }))
+                        }
+                      />
+                      <p className="text-xs text-slate-500">
+                        Tap on the map to set the exact delivery location.
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Button className="bg-brand-green-dark text-white" onClick={handleSaveAddress}>
+                        {editingAddressId ? "Update address" : "Save address"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="border-slate-200"
+                        onClick={() => {
+                          resetAddressForm();
+                          setIsAddressDialogOpen(false);
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </>
+          ) : (
+            <Card className="border-slate-100">
+              <CardContent className="space-y-4 p-6">
+                <h3 className="text-lg font-semibold text-slate-900">Shipping address</h3>
                 <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <Label>Label</Label>
-                    <Input
-                      value={addressForm.label}
-                      onChange={(event) =>
-                        setAddressForm((prev) => ({ ...prev, label: event.target.value }))
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>Recipient name</Label>
-                    <Input
-                      value={addressForm.recipientName}
-                      onChange={(event) =>
-                        setAddressForm((prev) => ({ ...prev, recipientName: event.target.value }))
-                      }
-                    />
-                  </div>
-                  <div>
-                    <Label>Phone</Label>
-                    <PhoneInput
-                      className="auth-phone-input"
-                      defaultCountry="EG"
-                      international
-                      countryCallingCodeEditable={false}
-                      value={addressForm.phone || undefined}
-                      onChange={(value) =>
-                        setAddressForm((prev) => ({ ...prev, phone: value ?? "" }))
-                      }
-                      placeholder="Enter phone number"
-                    />
-                  </div>
-                  <div>
-                    <Label>Country</Label>
-                    <Input value={ADDRESS_COUNTRY} disabled className="bg-slate-50" />
-                  </div>
                   <div>
                     <Label>City</Label>
                     <Select
-                      value={addressForm.city}
+                      value={guestAddressForm.city}
                       onValueChange={(value) =>
-                        setAddressForm((prev) => ({ ...prev, city: value }))
+                        setGuestAddressForm((prev) => ({ ...prev, city: value }))
                       }
                     >
                       <SelectTrigger className="h-9">
@@ -690,45 +1062,45 @@ export default function CheckoutPage() {
                   <div>
                     <Label>Area</Label>
                     <Input
-                      value={addressForm.area}
+                      value={guestAddressForm.area}
                       onChange={(event) =>
-                        setAddressForm((prev) => ({ ...prev, area: event.target.value }))
+                        setGuestAddressForm((prev) => ({ ...prev, area: event.target.value }))
                       }
                     />
                   </div>
                   <div>
                     <Label>Street</Label>
                     <Input
-                      value={addressForm.street}
+                      value={guestAddressForm.street}
                       onChange={(event) =>
-                        setAddressForm((prev) => ({ ...prev, street: event.target.value }))
+                        setGuestAddressForm((prev) => ({ ...prev, street: event.target.value }))
                       }
                     />
                   </div>
                   <div>
                     <Label>Building</Label>
                     <Input
-                      value={addressForm.building}
+                      value={guestAddressForm.building}
                       onChange={(event) =>
-                        setAddressForm((prev) => ({ ...prev, building: event.target.value }))
+                        setGuestAddressForm((prev) => ({ ...prev, building: event.target.value }))
                       }
                     />
                   </div>
                   <div>
                     <Label>Floor</Label>
                     <Input
-                      value={addressForm.floor}
+                      value={guestAddressForm.floor}
                       onChange={(event) =>
-                        setAddressForm((prev) => ({ ...prev, floor: event.target.value }))
+                        setGuestAddressForm((prev) => ({ ...prev, floor: event.target.value }))
                       }
                     />
                   </div>
                   <div>
                     <Label>Apartment</Label>
                     <Input
-                      value={addressForm.apartment}
+                      value={guestAddressForm.apartment}
                       onChange={(event) =>
-                        setAddressForm((prev) => ({ ...prev, apartment: event.target.value }))
+                        setGuestAddressForm((prev) => ({ ...prev, apartment: event.target.value }))
                       }
                     />
                   </div>
@@ -736,42 +1108,27 @@ export default function CheckoutPage() {
                 <div>
                   <Label>Notes</Label>
                   <Textarea
-                    value={addressForm.notes}
+                    value={guestAddressForm.notes}
                     onChange={(event) =>
-                      setAddressForm((prev) => ({ ...prev, notes: event.target.value }))
+                      setGuestAddressForm((prev) => ({ ...prev, notes: event.target.value }))
                     }
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>Location</Label>
                   <GoogleMapPicker
-                    value={addressForm.location}
+                    value={guestAddressForm.location}
                     onChange={(location) =>
-                      setAddressForm((prev) => ({ ...prev, location }))
+                      setGuestAddressForm((prev) => ({ ...prev, location }))
                     }
                   />
                   <p className="text-xs text-slate-500">
                     Tap on the map to set the exact delivery location.
                   </p>
                 </div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <Button className="bg-brand-green-dark text-white" onClick={handleSaveAddress}>
-                    {editingAddressId ? "Update address" : "Save address"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="border-slate-200"
-                    onClick={() => {
-                      resetAddressForm();
-                      setIsAddressDialogOpen(false);
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="border-slate-100">
             <CardContent className="space-y-4 p-6">
@@ -799,7 +1156,7 @@ export default function CheckoutPage() {
                 ))}
                 {filteredShippingZones.length === 0 && (
                   <p className="text-sm text-slate-500">
-                    No shipping zones available for this address.
+                    No shipping zones available for the selected city.
                   </p>
                 )}
               </RadioGroup>
@@ -861,7 +1218,7 @@ export default function CheckoutPage() {
           <Button
             className="w-full bg-brand-olive text-brand-dark"
             onClick={handleCheckout}
-            disabled={submitting || cartEmpty || addresses.length === 0 || !selectedAddress}
+            disabled={submitting || cartEmpty || !selectedZoneId}
           >
             {submitting ? "Placing order..." : "Place order"}
           </Button>
