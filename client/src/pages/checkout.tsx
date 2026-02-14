@@ -54,6 +54,7 @@ import Seo from "@/lib/seo/Seo";
 
 const PROMO_STORAGE_KEY = "twopawsPromo";
 const ORDER_SOURCE_WEBSITE = "website";
+const PAYMOB_GUEST_TOKEN_STORAGE_PREFIX = "twopaws:paymob:guest-token:";
 
 const buildPaymobCheckoutUrl = (publicKey: string, clientSecret: string) => {
   const params = new URLSearchParams({
@@ -67,6 +68,7 @@ type PromoState = {
   code: string;
   discount: number;
   total: number;
+  verified?: boolean;
 };
 
 type ShippingZoneDoc = {
@@ -184,7 +186,14 @@ export default function CheckoutPage() {
     if (stored) {
       try {
         const parsed = JSON.parse(stored) as PromoState;
-        if (parsed?.code) setPromo(parsed);
+        if (parsed?.code) {
+          setPromo({
+            code: parsed.code,
+            discount: typeof parsed.discount === "number" ? parsed.discount : 0,
+            total: typeof parsed.total === "number" ? parsed.total : 0,
+            verified: false,
+          });
+        }
       } catch {
         localStorage.removeItem(PROMO_STORAGE_KEY);
       }
@@ -275,11 +284,68 @@ export default function CheckoutPage() {
 
   const selectedZone = filteredShippingZones.find((zone) => zone.id === selectedZoneId);
   const subtotal = cart?.total ?? 0;
-  const discount = promo?.discount ?? 0;
+  const discount = promo?.verified ? promo.discount : 0;
   const shippingCost = selectedZone?.rateEGP ?? 0;
   const totalPrice = Math.max(subtotal - discount + shippingCost, 0);
 
   const cartEmpty = cartItems.length === 0;
+  const promoValidationItems = useMemo(
+    () =>
+      cartItems
+        .map((item) => {
+          const productId = item.productIdValue ?? item.productRef?.id ?? item.product?.id ?? "";
+          const quantity = typeof item.quantity === "number" ? Math.floor(item.quantity) : 0;
+          if (!productId || quantity <= 0) return null;
+          return { productId, quantity };
+        })
+        .filter((item): item is { productId: string; quantity: number } => Boolean(item)),
+    [cartItems]
+  );
+  const promoValidationSignature = useMemo(
+    () =>
+      promoValidationItems
+        .map((item) => `${item.productId}:${item.quantity}`)
+        .sort()
+        .join("|"),
+    [promoValidationItems]
+  );
+
+  useEffect(() => {
+    if (!promo?.code) return;
+    if (promoValidationItems.length === 0) return;
+    let active = true;
+    const validatePromo = httpsCallable(functions, "validatePromo");
+    validatePromo({
+      code: promo.code,
+      cartId: cart?.id ?? null,
+      items: promoValidationItems,
+    })
+      .then((result) => {
+        if (!active) return;
+        const data = result.data as { ok?: boolean; discountapp?: number; total?: number };
+        if (!data?.ok) {
+          setPromo(null);
+          localStorage.removeItem(PROMO_STORAGE_KEY);
+          return;
+        }
+        const verifiedPromo: PromoState = {
+          code: promo.code,
+          discount: typeof data.discountapp === "number" ? data.discountapp : 0,
+          total: typeof data.total === "number" ? data.total : subtotal,
+          verified: true,
+        };
+        setPromo(verifiedPromo);
+        localStorage.setItem(PROMO_STORAGE_KEY, JSON.stringify(verifiedPromo));
+      })
+      .catch(() => {
+        if (!active) return;
+        setPromo(null);
+        localStorage.removeItem(PROMO_STORAGE_KEY);
+      });
+    return () => {
+      active = false;
+    };
+  }, [promo?.code, cart?.id, promoValidationSignature, promoValidationItems, subtotal]);
 
   const resetAddressForm = () => {
     setAddressForm({
@@ -413,44 +479,6 @@ export default function CheckoutPage() {
       toast({ title: "Cart empty", description: "Add items before checkout." });
       return;
     }
-    const firstName = customerForm.firstName.trim();
-    const lastName = customerForm.lastName.trim();
-    const normalizedPhone = customerForm.phone.trim();
-    const normalizedEmail = customerForm.email.trim();
-
-    if (!firstName || !lastName) {
-      toast({
-        title: "Name required",
-        description: "Enter first and last name.",
-        variant: "destructive",
-      });
-      return;
-    }
-    if (!normalizedPhone) {
-      toast({
-        title: "Phone required",
-        description: "Enter your phone number to place the order.",
-        variant: "destructive",
-      });
-      return;
-    }
-    if (!isValidPhoneNumber(normalizedPhone)) {
-      toast({
-        title: "Invalid phone number",
-        description: "Enter a valid phone number with country code.",
-        variant: "destructive",
-      });
-      return;
-    }
-    if (!isValidOptionalEmail(normalizedEmail)) {
-      toast({
-        title: "Invalid email",
-        description: "Enter a valid email address or leave it empty.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     if (!isGuestCheckout && addresses.length === 0) {
       toast({
         title: "No address saved",
@@ -467,7 +495,52 @@ export default function CheckoutPage() {
       });
       return;
     }
+    const guestFirstName = customerForm.firstName.trim();
+    const guestLastName = customerForm.lastName.trim();
+    const guestPhone = customerForm.phone.trim();
+    const guestEmail = customerForm.email.trim();
+    const signedInNameCandidate = String(
+      selectedAddress?.recipientName ?? user?.displayName ?? ""
+    ).trim();
+    const signedInNameParts = splitFullName(signedInNameCandidate);
+    const firstName = isGuestCheckout
+      ? guestFirstName
+      : signedInNameParts.firstName || "Customer";
+    const lastName = isGuestCheckout
+      ? guestLastName
+      : signedInNameParts.lastName || "TwoPaws";
+    const normalizedPhone = isGuestCheckout
+      ? guestPhone
+      : String(selectedAddress?.phone ?? "").trim();
+    const normalizedEmail = isGuestCheckout
+      ? guestEmail
+      : String(user?.email ?? "").trim() || guestEmail;
+
     if (isGuestCheckout) {
+      if (!firstName || !lastName) {
+        toast({
+          title: "Name required",
+          description: "Enter first and last name.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!normalizedPhone) {
+        toast({
+          title: "Phone required",
+          description: "Enter your phone number to place the order.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!isValidPhoneNumber(normalizedPhone)) {
+        toast({
+          title: "Invalid phone number",
+          description: "Enter a valid phone number with country code.",
+          variant: "destructive",
+        });
+        return;
+      }
       if (!ADDRESS_CITIES.includes(guestAddressForm.city as (typeof ADDRESS_CITIES)[number])) {
         toast({
           title: "Invalid city",
@@ -492,12 +565,37 @@ export default function CheckoutPage() {
         });
         return;
       }
+    } else {
+      if (!normalizedPhone) {
+        toast({
+          title: "Phone required",
+          description: "Add a phone number to your selected shipping address.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!isValidPhoneNumber(normalizedPhone)) {
+        toast({
+          title: "Invalid phone number",
+          description: "Update your selected address with a valid phone number.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    if (!isValidOptionalEmail(normalizedEmail)) {
+      toast({
+        title: "Invalid email",
+        description: "Enter a valid email address or leave it empty.",
+        variant: "destructive",
+      });
+      return;
     }
 
-    if (!selectedZoneId) {
+    if (!selectedZone) {
       toast({
         title: "Select shipping",
-        description: "Pick a shipping zone to continue.",
+        description: "Pick a valid shipping zone to continue.",
         variant: "destructive",
       });
       return;
@@ -511,6 +609,38 @@ export default function CheckoutPage() {
       });
       return;
     }
+    let appliedPromo: PromoState | null = null;
+    if (promo?.code) {
+      try {
+        const validatePromo = httpsCallable(functions, "validatePromo");
+        const result = await validatePromo({
+          code: promo.code,
+          cartId: cart.id,
+          items: promoValidationItems,
+        });
+        const data = result.data as { ok?: boolean; discountapp?: number; total?: number };
+        if (data?.ok) {
+          appliedPromo = {
+            code: promo.code,
+            discount: typeof data.discountapp === "number" ? data.discountapp : 0,
+            total: typeof data.total === "number" ? data.total : subtotal,
+            verified: true,
+          };
+          setPromo(appliedPromo);
+          localStorage.setItem(PROMO_STORAGE_KEY, JSON.stringify(appliedPromo));
+        } else {
+          setPromo(null);
+          localStorage.removeItem(PROMO_STORAGE_KEY);
+        }
+      } catch {
+        setPromo(null);
+        localStorage.removeItem(PROMO_STORAGE_KEY);
+      }
+    }
+    const resolvedDiscount = appliedPromo?.discount ?? 0;
+    const resolvedShippingCost =
+      typeof selectedZone.rateEGP === "number" ? selectedZone.rateEGP : 0;
+    const resolvedTotalPrice = Math.max(subtotal - resolvedDiscount + resolvedShippingCost, 0);
 
     const checkoutItems = cartItems
       .map((item) => {
@@ -528,14 +658,14 @@ export default function CheckoutPage() {
     trackMetaEvent("InitiateCheckout", {
       content_ids: checkoutItems.map((item) => item.id),
       contents: checkoutItems,
-      value: totalPrice,
+      value: resolvedTotalPrice,
       currency: META_PIXEL_CURRENCY,
       num_items: itemCount,
     });
     trackMetaEvent("AddPaymentInfo", {
       content_ids: checkoutItems.map((item) => item.id),
       contents: checkoutItems,
-      value: totalPrice,
+      value: resolvedTotalPrice,
       currency: META_PIXEL_CURRENCY,
       num_items: itemCount,
       payment_method: paymentMethod,
@@ -602,8 +732,8 @@ export default function CheckoutPage() {
         customerEmail: normalizedEmail || null,
         customerFullName,
         shippingAddressData,
-        shippingCost,
-        totalPrice,
+        shippingCost: resolvedShippingCost,
+        totalPrice: resolvedTotalPrice,
         orderNumber,
         created_at: serverTimestamp(),
         updated_at: serverTimestamp(),
@@ -619,8 +749,17 @@ export default function CheckoutPage() {
       if (!isGuestCheckout && selectedAddress) {
         orderPayload.shippingAddress = doc(db, "addresses", selectedAddress.id);
       }
+      if (appliedPromo?.code && resolvedDiscount > 0) {
+        orderPayload.promoCode = appliedPromo.code;
+        orderPayload.promoDiscount = resolvedDiscount;
+        orderPayload.discount = resolvedDiscount;
+      }
       if (guestCheckoutToken) {
         orderPayload.paymobGuestToken = guestCheckoutToken;
+        window.sessionStorage.setItem(
+          `${PAYMOB_GUEST_TOKEN_STORAGE_PREFIX}${orderRef.id}`,
+          guestCheckoutToken
+        );
       }
       await setDoc(orderRef, orderPayload);
       await setDoc(
@@ -652,21 +791,25 @@ export default function CheckoutPage() {
       });
       await batch.commit();
 
-      if (promo?.code && cart.id !== "guest") {
-        const commitPromo = httpsCallable(functions, "commitPromo");
-        await commitPromo({
-          code: promo.code,
-          cartId: cart.id,
-          orderId: orderRef.id,
-          discount: promo.discount,
-        });
+      if (appliedPromo?.code && cart.id !== "guest") {
+        try {
+          const commitPromo = httpsCallable(functions, "commitPromo");
+          await commitPromo({
+            code: appliedPromo.code,
+            cartId: cart.id,
+            orderId: orderRef.id,
+            discount: resolvedDiscount,
+          });
+        } catch (promoErr) {
+          console.warn("Promo commit failed:", promoErr);
+        }
       }
 
       if (paymentMethod === "cod") {
         trackMetaEvent("Purchase", {
           content_ids: checkoutItems.map((item) => item.id),
           contents: checkoutItems,
-          value: totalPrice,
+          value: resolvedTotalPrice,
           currency: META_PIXEL_CURRENCY,
           num_items: itemCount,
           order_id: orderRef.id,
@@ -696,6 +839,11 @@ export default function CheckoutPage() {
           cleanupBatch.delete(doc(db, "orderCustomers", orderRef.id));
           cleanupBatch.delete(orderRef);
           await cleanupBatch.commit();
+          if (guestCheckoutToken) {
+            window.sessionStorage.removeItem(
+              `${PAYMOB_GUEST_TOKEN_STORAGE_PREFIX}${orderRef.id}`
+            );
+          }
           throw paymobErr;
         }
       }
@@ -769,55 +917,57 @@ export default function CheckoutPage() {
             </Card>
           )}
 
-          <Card className="border-slate-100">
-            <CardContent className="space-y-4 p-6">
-              <h3 className="text-lg font-semibold text-slate-900">Customer details</h3>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <Label>First name</Label>
-                  <Input
-                    value={customerForm.firstName}
-                    onChange={(event) =>
-                      setCustomerForm((prev) => ({ ...prev, firstName: event.target.value }))
-                    }
-                  />
+          {isGuestCheckout && (
+            <Card className="border-slate-100">
+              <CardContent className="space-y-4 p-6">
+                <h3 className="text-lg font-semibold text-slate-900">Customer details</h3>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <Label>First name</Label>
+                    <Input
+                      value={customerForm.firstName}
+                      onChange={(event) =>
+                        setCustomerForm((prev) => ({ ...prev, firstName: event.target.value }))
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>Last name</Label>
+                    <Input
+                      value={customerForm.lastName}
+                      onChange={(event) =>
+                        setCustomerForm((prev) => ({ ...prev, lastName: event.target.value }))
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>Phone</Label>
+                    <PhoneInput
+                      className="auth-phone-input"
+                      defaultCountry="EG"
+                      international
+                      countryCallingCodeEditable={false}
+                      value={customerForm.phone || undefined}
+                      onChange={(value) =>
+                        setCustomerForm((prev) => ({ ...prev, phone: value ?? "" }))
+                      }
+                      placeholder="Enter phone number"
+                    />
+                  </div>
+                  <div>
+                    <Label>Email (optional)</Label>
+                    <Input
+                      type="email"
+                      value={customerForm.email}
+                      onChange={(event) =>
+                        setCustomerForm((prev) => ({ ...prev, email: event.target.value }))
+                      }
+                    />
+                  </div>
                 </div>
-                <div>
-                  <Label>Last name</Label>
-                  <Input
-                    value={customerForm.lastName}
-                    onChange={(event) =>
-                      setCustomerForm((prev) => ({ ...prev, lastName: event.target.value }))
-                    }
-                  />
-                </div>
-                <div>
-                  <Label>Phone</Label>
-                  <PhoneInput
-                    className="auth-phone-input"
-                    defaultCountry="EG"
-                    international
-                    countryCallingCodeEditable={false}
-                    value={customerForm.phone || undefined}
-                    onChange={(value) =>
-                      setCustomerForm((prev) => ({ ...prev, phone: value ?? "" }))
-                    }
-                    placeholder="Enter phone number"
-                  />
-                </div>
-                <div>
-                  <Label>Email (optional)</Label>
-                  <Input
-                    type="email"
-                    value={customerForm.email}
-                    onChange={(event) =>
-                      setCustomerForm((prev) => ({ ...prev, email: event.target.value }))
-                    }
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
 
           {!isGuestCheckout ? (
             <>
@@ -886,7 +1036,7 @@ export default function CheckoutPage() {
                   }
                 }}
               >
-                <DialogContent className="max-w-3xl">
+                <DialogContent className="max-h-[90vh] w-[calc(100vw-1rem)] max-w-3xl overflow-y-auto p-4 sm:p-6">
                   <DialogHeader>
                     <DialogTitle>{editingAddressId ? "Edit address" : "Add new address"}</DialogTitle>
                   </DialogHeader>
@@ -1010,6 +1160,7 @@ export default function CheckoutPage() {
                         onChange={(location) =>
                           setAddressForm((prev) => ({ ...prev, location }))
                         }
+                        heightClassName="h-52 sm:h-64"
                       />
                       <p className="text-xs text-slate-500">
                         Tap on the map to set the exact delivery location.
@@ -1198,7 +1349,7 @@ export default function CheckoutPage() {
                 <span>Subtotal</span>
                 <span>{formatCurrency(subtotal)}</span>
               </div>
-              {promo && (
+              {discount > 0 && (
                 <div className="flex items-center justify-between text-sm text-slate-600">
                   <span>Promo discount</span>
                   <span>-{formatCurrency(discount)}</span>

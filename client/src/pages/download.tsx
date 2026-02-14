@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from "react";
-import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { trackMetaEvent } from "@/lib/metaPixel";
+import Seo from "@/lib/seo/Seo";
 
 const IOS_STORE_URL =  "https://apps.apple.com/app/twopaws/id6745481497";
 const ANDROID_STORE_URL = "https://play.google.com/store/apps/details?id=com.twopaws.app";
@@ -49,15 +49,12 @@ export default function DownloadRedirect() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white px-6 py-12 text-center">
-      <Helmet>
-        <title>Download TwoPaws</title>
-        <meta
-          name="description"
-          content="Get the TwoPaws app on the App Store or Google Play."
-        />
-        <link rel="canonical" href="https://twopaws.pet/download" />
-        <meta name="robots" content="noindex,follow" />
-      </Helmet>
+      <Seo
+        title="Download TwoPaws"
+        description="Get the TwoPaws app on the App Store or Google Play."
+        canonicalUrl="/download"
+        noIndex
+      />
 
       <div className="max-w-md space-y-6">
         <div className="space-y-2">

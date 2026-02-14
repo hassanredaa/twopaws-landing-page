@@ -3,6 +3,7 @@ import path from "path";
 
 const DEFAULT_BASE_URL = "https://twopaws.pet";
 const DEFAULT_OG_IMAGE = "/og-image.webp";
+const STRICT_SSG = process.env.SSG_STRICT === "true" || process.env.CI === "true";
 
 const readEnvFile = (filePath) => {
   if (!fs.existsSync(filePath)) return {};
@@ -326,6 +327,9 @@ const writeShopPages = async () => {
       env.VITE_FIREBASE_API_KEY
     );
   } catch (err) {
+    if (STRICT_SSG) {
+      throw err;
+    }
     console.warn("Shop SSG: unable to load suppliers.", err);
   }
 

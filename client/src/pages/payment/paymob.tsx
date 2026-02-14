@@ -9,6 +9,8 @@ import { functions, db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import Seo from "@/lib/seo/Seo";
 
+const PAYMOB_GUEST_TOKEN_STORAGE_PREFIX = "twopaws:paymob:guest-token:";
+
 const buildCheckoutUrl = (publicKey: string, clientSecret: string) => {
   const params = new URLSearchParams({
     publicKey,
@@ -23,12 +25,37 @@ export default function PaymobPaymentPage() {
   const { toast } = useToast();
   const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const orderId = params.get("orderId");
-  const locationState = location.state as { clientSecret?: string; publicKey?: string } | null;
+  const locationState = location.state as {
+    clientSecret?: string;
+    publicKey?: string;
+    guestCheckoutToken?: string;
+  } | null;
   const [clientSecret, setClientSecret] = useState<string | null>(locationState?.clientSecret ?? null);
   const [publicKey, setPublicKey] = useState<string | null>(locationState?.publicKey ?? null);
+  const [guestCheckoutToken, setGuestCheckoutToken] = useState<string | null>(
+    locationState?.guestCheckoutToken ?? params.get("guestCheckoutToken")
+  );
   const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const redirectedRef = useRef(false);
+
+  useEffect(() => {
+    if (!orderId || guestCheckoutToken) return;
+    const storedToken = window.sessionStorage.getItem(
+      `${PAYMOB_GUEST_TOKEN_STORAGE_PREFIX}${orderId}`
+    );
+    if (storedToken) {
+      setGuestCheckoutToken(storedToken);
+    }
+  }, [orderId, guestCheckoutToken]);
+
+  useEffect(() => {
+    if (!orderId || !guestCheckoutToken) return;
+    window.sessionStorage.setItem(
+      `${PAYMOB_GUEST_TOKEN_STORAGE_PREFIX}${orderId}`,
+      guestCheckoutToken
+    );
+  }, [orderId, guestCheckoutToken]);
 
   useEffect(() => {
     if (!orderId) return;
@@ -45,7 +72,7 @@ export default function PaymobPaymentPage() {
     if (clientSecret || !orderId) return;
     setLoading(true);
     const createPaymobPayment = httpsCallable(functions, "createPaymobPayment");
-    createPaymobPayment({ orderId })
+    createPaymobPayment({ orderId, guestCheckoutToken: guestCheckoutToken ?? undefined })
       .then((result) => {
         const data = result.data as { clientSecret?: string; publicKey?: string };
         if (data?.clientSecret && data?.publicKey) {
@@ -67,7 +94,15 @@ export default function PaymobPaymentPage() {
         });
       })
       .finally(() => setLoading(false));
-  }, [clientSecret, orderId, toast]);
+  }, [clientSecret, guestCheckoutToken, orderId, toast]);
+
+  useEffect(() => {
+    if (!orderId || !status) return;
+    const normalized = status.toUpperCase();
+    const isTerminal = normalized.includes("PAID") || normalized.includes("FAILED");
+    if (!isTerminal) return;
+    window.sessionStorage.removeItem(`${PAYMOB_GUEST_TOKEN_STORAGE_PREFIX}${orderId}`);
+  }, [orderId, status]);
 
   const checkoutUrl = useMemo(() => {
     if (!clientSecret || !publicKey) return null;

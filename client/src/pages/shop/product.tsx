@@ -190,7 +190,7 @@ export default function ProductDetailPage() {
   const rawDescription =
     product?.description ?? "Shop premium pet supplies and accessories at TwoPaws.";
   const seoDescription = toSeoDescription(rawDescription);
-  const canonicalPath = product ? `/shop/product/${product.id}/` : "/shop/";
+  const canonicalPath = productId ? `/shop/product/${productId}/` : "/shop/";
   const primaryImage = imageUrls[0];
   const offerPrice = showSale ? salePrice : price;
   const structuredData = product
@@ -355,6 +355,7 @@ export default function ProductDetailPage() {
         ogType="product"
         ogImageUrl={primaryImage}
         structuredData={structuredData}
+        noIndex={!loading && !product}
       />
       {loading && <p className="text-sm text-slate-500">Loading product...</p>}
       {!loading && !product && (

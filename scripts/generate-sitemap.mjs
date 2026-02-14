@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 
 const DEFAULT_BASE_URL = "https://twopaws.pet";
+const STRICT_SSG = process.env.SSG_STRICT === "true" || process.env.CI === "true";
 const STATIC_ROUTES = [
   "/",
   "/about/",
@@ -57,6 +58,9 @@ const fetchCollectionDocs = async (projectId, apiKey, collectionName) => {
 
     const res = await fetch(url);
     if (!res.ok) {
+      if (STRICT_SSG) {
+        throw new Error(`Sitemap: Firestore fetch failed (${res.status}) for ${collectionName}.`);
+      }
       console.warn(`Sitemap: Firestore fetch failed (${res.status}).`);
       return Array.from(docs.values());
     }
@@ -97,6 +101,7 @@ const buildSitemap = async () => {
       lastmod: doc.lastmod,
     }));
   } catch (err) {
+    if (STRICT_SSG) throw err;
     console.warn("Sitemap: unable to load product routes.", err);
   }
   try {
@@ -110,6 +115,7 @@ const buildSitemap = async () => {
       lastmod: doc.lastmod,
     }));
   } catch (err) {
+    if (STRICT_SSG) throw err;
     console.warn("Sitemap: unable to load supplier routes.", err);
   }
 

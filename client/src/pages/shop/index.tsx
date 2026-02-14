@@ -79,7 +79,8 @@ const parseShopScrollState = (raw: string | null): ShopScrollState | null => {
 const getProductCardElement = (productId?: string) => {
   if (!productId) return null;
   const nodes = document.querySelectorAll<HTMLElement>("[data-product-card-id]");
-  for (const node of nodes) {
+  for (let index = 0; index < nodes.length; index += 1) {
+    const node = nodes[index];
     if (node.dataset.productCardId === productId) return node;
   }
   return null;
