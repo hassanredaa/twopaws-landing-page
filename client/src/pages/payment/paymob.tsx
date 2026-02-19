@@ -120,7 +120,7 @@ export default function PaymobPaymentPage() {
       <Seo
         title="Paymob Checkout | TwoPaws Shop"
         description="Complete your TwoPaws payment."
-        canonicalUrl="/payment/paymob"
+        canonicalUrl="/payment/paymob/"
         noIndex
       />
       <header className="space-y-2">
@@ -157,7 +157,7 @@ export default function PaymobPaymentPage() {
             <Button asChild className="bg-brand-green-dark text-white">
               <Link to={`/orders/${orderId}`}>View order</Link>
             </Button>
-            <Button variant="outline" className="border-slate-200" onClick={() => navigate("/shop")}>
+            <Button variant="outline" className="border-slate-200" onClick={() => navigate("/shop/")}>
               Continue shopping
             </Button>
           </div>

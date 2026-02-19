@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { httpsCallable } from "firebase/functions";
 import ShopShell from "@/components/shop/ShopShell";
@@ -238,7 +238,7 @@ export default function CartPage() {
       <Seo
         title="Cart | TwoPaws Shop"
         description="Review and update items in your TwoPaws shopping cart."
-        canonicalUrl="/cart"
+        canonicalUrl="/cart/"
         noIndex
       />
       <header className="space-y-2">
@@ -289,7 +289,7 @@ export default function CartPage() {
                 <Card key={item.id} className="border-slate-100">
                   <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
                     <Link
-                      to={`/shop/product/${product.id}`}
+                      to={`/shop/product/${product.id}/`}
                       className="flex h-20 w-20 items-center justify-center"
                     >
                       {photo ? (
@@ -302,7 +302,7 @@ export default function CartPage() {
                     </Link>
                     <div className="flex-1">
                       <Link
-                        to={`/shop/product/${product.id}`}
+                        to={`/shop/product/${product.id}/`}
                         className="text-lg font-semibold text-slate-900 hover:text-brand-green-dark"
                       >
                         {product.name}

@@ -8,7 +8,7 @@ export default function AboutPage() {
       <Seo
         title="About TwoPaws | Pet care app in Egypt"
         description="Learn how TwoPaws supports pet families in Egypt with trusted vets, clinics, community features, and supplies delivery."
-        canonicalUrl="/about"
+        canonicalUrl="/about/"
       />
       <header className="space-y-3">
         <h1 className="text-4xl font-semibold text-slate-900">About TwoPaws</h1>

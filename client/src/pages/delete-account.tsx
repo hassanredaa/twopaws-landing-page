@@ -39,8 +39,7 @@ export default function DeleteAccount() {
       <Seo
         title="Delete Account | TwoPaws"
         description="Request deletion of your TwoPaws account."
-        canonicalUrl="/delete-account"
-        noIndex
+        canonicalUrl="/delete-account/"
       />
       <nav className="fixed top-0 w-full bg-white/90 backdrop-blur-md z-50 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -54,13 +53,13 @@ export default function DeleteAccount() {
               <a href="/" className="text-gray-600 hover:text-brand-green-dark transition-colors">
                 Home
               </a>
-              <a href="/shop" className="text-gray-600 hover:text-brand-green-dark transition-colors">
+              <a href="/shop/" className="text-gray-600 hover:text-brand-green-dark transition-colors">
                 Shop
               </a>
-              <a href="/terms" className="text-gray-600 hover:text-brand-green-dark transition-colors">
+              <a href="/terms/" className="text-gray-600 hover:text-brand-green-dark transition-colors">
                 Terms
               </a>
-              <a href="/privacy" className="text-gray-600 hover:text-brand-green-dark transition-colors">
+              <a href="/privacy/" className="text-gray-600 hover:text-brand-green-dark transition-colors">
                 Privacy
               </a>
             </div>
@@ -77,13 +76,13 @@ export default function DeleteAccount() {
               <a href="/" className="block w-full text-left text-gray-600">
                 Home
               </a>
-              <a href="/shop" className="block w-full text-left text-gray-600">
+              <a href="/shop/" className="block w-full text-left text-gray-600">
                 Shop
               </a>
-              <a href="/terms" className="block w-full text-left text-gray-600">
+              <a href="/terms/" className="block w-full text-left text-gray-600">
                 Terms
               </a>
-              <a href="/privacy" className="block w-full text-left text-gray-600">
+              <a href="/privacy/" className="block w-full text-left text-gray-600">
                 Privacy
               </a>
             </div>
@@ -181,12 +180,12 @@ export default function DeleteAccount() {
                 {/* <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Contact Us</a></li> */}
                 <li>
-                  <a href="/privacy" className="hover:text-white transition-colors">
+                  <a href="/privacy/" className="hover:text-white transition-colors">
                     Privacy Policy
                   </a>
                 </li>
                 <li>
-                  <a href="/terms" className="hover:text-white transition-colors">
+                  <a href="/terms/" className="hover:text-white transition-colors">
                     Terms of Service
                   </a>
                 </li>

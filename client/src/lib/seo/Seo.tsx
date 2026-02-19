@@ -45,11 +45,14 @@ export default function Seo({
       ? structuredData
       : [structuredData]
     : [];
+  const robotsDirective = noIndex ? "noindex,follow" : "index,follow";
 
   return (
     <Helmet>
       <title>{title}</title>
       <meta name="description" content={description} />
+      <meta name="robots" content={robotsDirective} />
+      <meta name="googlebot" content={robotsDirective} />
       <link rel="canonical" href={resolvedCanonical} />
 
       <meta property="og:site_name" content={SITE_NAME} />
@@ -63,8 +66,6 @@ export default function Seo({
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={resolvedOgImage} />
-
-      {noIndex ? <meta name="robots" content="noindex,follow" /> : null}
 
       {structuredItems.map((item, index) => (
         <script key={`ld-${index}`} type="application/ld+json">

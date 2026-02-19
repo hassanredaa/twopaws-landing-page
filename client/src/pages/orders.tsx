@@ -1,4 +1,4 @@
-﻿import ShopShell from "@/components/shop/ShopShell";
+import ShopShell from "@/components/shop/ShopShell";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,7 @@ export default function OrdersPage() {
         <Seo
           title="Orders | TwoPaws Shop"
           description="Track your TwoPaws orders."
-          canonicalUrl="/orders"
+          canonicalUrl="/orders/"
           noIndex
         />
         <Card className="border-slate-100">
@@ -47,7 +47,7 @@ export default function OrdersPage() {
       <Seo
         title="Orders | TwoPaws Shop"
         description="Track your TwoPaws orders."
-        canonicalUrl="/orders"
+        canonicalUrl="/orders/"
         noIndex
       />
       <header className="space-y-2">

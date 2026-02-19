@@ -9,7 +9,7 @@ export default function ContactPage() {
       <Seo
         title="Contact TwoPaws | Pet care in Egypt"
         description="Contact the TwoPaws team for pet care questions in Egypt, app feedback, or partnership requests."
-        canonicalUrl="/contact"
+        canonicalUrl="/contact/"
       />
       <header className="space-y-3">
         <h1 className="text-4xl font-semibold text-slate-900">Contact TwoPaws</h1>

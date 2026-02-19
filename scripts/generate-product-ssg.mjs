@@ -2,6 +2,8 @@ import fs from "fs";
 import path from "path";
 
 const DEFAULT_BASE_URL = "https://twopaws.pet";
+const DEFAULT_CURRENCY = "EGP";
+const DEFAULT_BRAND = "TwoPaws";
 
 const readEnvFile = (filePath) => {
   if (!fs.existsSync(filePath)) return {};
@@ -150,6 +152,47 @@ const getOfferPrice = (product) => {
   return regular;
 };
 
+const getFirstString = (source, keys) => {
+  if (!source || typeof source !== "object") return undefined;
+  for (const key of keys) {
+    const value = source[key];
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+  return undefined;
+};
+
+const normalizeGtin = (value) => {
+  if (!value) return undefined;
+  const digits = String(value).replace(/\D+/g, "");
+  if ([8, 12, 13, 14].includes(digits.length)) return digits;
+  return undefined;
+};
+
+const resolveItemCondition = (value) => {
+  const raw = String(value || "").trim().toLowerCase();
+  if (raw.includes("used")) return "https://schema.org/UsedCondition";
+  if (raw.includes("refurb")) return "https://schema.org/RefurbishedCondition";
+  return "https://schema.org/NewCondition";
+};
+
+const buildPriceValidUntil = (daysAhead = 30) => {
+  const date = new Date();
+  date.setUTCDate(date.getUTCDate() + daysAhead);
+  return date.toISOString().slice(0, 10);
+};
+
+const getImageList = (product, baseUrl) => {
+  const raw = product.photo_url;
+  const values = Array.isArray(raw) ? raw : raw ? [raw] : [];
+  const resolved = values
+    .map((value) => absoluteUrl(baseUrl, value))
+    .filter(Boolean);
+  if (resolved.length > 0) return resolved;
+  return [`${baseUrl}/og-image.webp`];
+};
+
 const setTitle = (html, value) => {
   const next = `<title>${escapeHtml(value)}</title>`;
   if (/<title>[\s\S]*?<\/title>/i.test(html)) {
@@ -210,32 +253,82 @@ const buildProductHtml = (template, product, baseUrl) => {
   );
   const canonicalPath = `/shop/product/${product.id}/`;
   const canonicalUrl = `${baseUrl}${canonicalPath}`;
-  const imageUrl = getPrimaryImage(product, baseUrl);
+  const imageUrls = getImageList(product, baseUrl);
+  const imageUrl = imageUrls[0] || getPrimaryImage(product, baseUrl);
   const offerPrice = getOfferPrice(product);
   const quantity = coerceNumber(product.quantity) ?? 0;
+  const sku =
+    getFirstString(product, ["sku", "item_sku", "itemSku"]) || product.id;
+  const brandName =
+    getFirstString(product, [
+      "brand",
+      "brand_name",
+      "brandName",
+      "manufacturer",
+      "vendor",
+    ]) || DEFAULT_BRAND;
+  const mpn = getFirstString(product, [
+    "mpn",
+    "manufacturer_part_number",
+    "manufacturerPartNumber",
+  ]);
+  const gtin = normalizeGtin(
+    getFirstString(product, [
+      "gtin",
+      "gtin8",
+      "gtin12",
+      "gtin13",
+      "gtin14",
+      "barcode",
+      "barcodeNumber",
+      "barcode_number",
+      "ean",
+      "upc",
+    ])
+  );
+  const productCategory = getFirstString(product, [
+    "google_product_category",
+    "product_type",
+    "categoryName",
+  ]);
+  const itemCondition = resolveItemCondition(
+    getFirstString(product, ["condition", "itemCondition", "item_condition"])
+  );
+  const priceValidUntil = buildPriceValidUntil();
 
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Product",
+    "@id": `${canonicalUrl}#product`,
     name: productName,
     description,
     url: canonicalUrl,
-    image: imageUrl ? [imageUrl] : undefined,
-    sku: product.id,
+    image: imageUrls,
+    sku,
+    mpn,
+    gtin,
+    category: productCategory,
     brand: {
       "@type": "Brand",
-      name: "TwoPaws",
+      name: brandName,
     },
     offers: {
       "@type": "Offer",
-      priceCurrency: "EGP",
+      "@id": `${canonicalUrl}#offer`,
+      priceCurrency: DEFAULT_CURRENCY,
       price: offerPrice,
       availability:
         quantity > 0
           ? "https://schema.org/InStock"
           : "https://schema.org/OutOfStock",
-      itemCondition: "https://schema.org/NewCondition",
+      itemCondition,
       url: canonicalUrl,
+      priceValidUntil,
+      seller: {
+        "@type": "Organization",
+        name: "TwoPaws",
+        url: baseUrl,
+      },
     },
   };
 

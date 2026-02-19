@@ -19,7 +19,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
-  const redirectTo = params.get("redirect") || "/shop";
+  const redirectTo = params.get("redirect") || "/shop/";
   const requestedMode = params.get("mode");
   const initialMode: "signin" | "signup" =
     requestedMode === "signup" ? "signup" : "signin";
@@ -109,7 +109,7 @@ export default function LoginPage() {
       <Seo
         title="Sign In | TwoPaws Shop"
         description="Sign in to access your TwoPaws cart, orders, and saved addresses."
-        canonicalUrl="/login"
+        canonicalUrl="/login/"
         noIndex
       />
       <div className="flex justify-center">

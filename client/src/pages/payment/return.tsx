@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { doc, onSnapshot } from "firebase/firestore";
 import ShopShell from "@/components/shop/ShopShell";
@@ -84,7 +84,7 @@ export default function PaymentReturnPage() {
       <Seo
         title="Payment Status | TwoPaws Shop"
         description="View your TwoPaws payment result."
-        canonicalUrl="/payment/return"
+        canonicalUrl="/payment/return/"
         noIndex
       />
       <header className="space-y-2">

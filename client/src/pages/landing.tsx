@@ -197,19 +197,19 @@ export default function Landing() {
                 FAQ
               </button>
               <a
-                href="/shop"
+                href="/shop/"
                 className="transition-colors hover:text-brand-purple"
               >
                 Shop
               </a>
               <a
-                href="/terms"
+                href="/terms/"
                 className="transition-colors hover:text-brand-purple"
               >
                 Terms &amp; Conditions
               </a>
               <a
-                href="/privacy"
+                href="/privacy/"
                 className="transition-colors hover:text-brand-purple"
               >
                 Privacy Policy
@@ -221,14 +221,14 @@ export default function Landing() {
                 asChild
                 className="h-9 rounded-md bg-brand-purple px-5 text-white hover:opacity-90"
               >
-                <a href="/download">Download</a>
+                <a href="/download/">Download</a>
               </Button>
             </div>
 
             {/* Mobile actions */}
             <div className="flex items-center gap-2 md:hidden">
               <a
-                href="/shop"
+                href="/shop/"
                 className="inline-flex h-10 items-center rounded-md border border-brand-purple/25 px-3 text-sm font-semibold text-brand-purple"
               >
                 Shop
@@ -269,14 +269,14 @@ export default function Landing() {
                 >
                   FAQ
                 </button>
-                <a href="/shop">Shop</a>
-                <a href="/terms">Terms &amp; Conditions</a>
-                <a href="/privacy">Privacy Policy</a>
+                <a href="/shop/">Shop</a>
+                <a href="/terms/">Terms &amp; Conditions</a>
+                <a href="/privacy/">Privacy Policy</a>
                 <Button
                   asChild
                   className="mt-2 w-full rounded-md bg-brand-purple text-white hover:opacity-90"
                 >
-                  <a href="/download">Download</a>
+                  <a href="/download/">Download</a>
                 </Button>
               </div>
             </div>
@@ -776,7 +776,7 @@ export default function Landing() {
                 </li>
                 <li>
                   <a
-                    href="/privacy"
+                    href="/privacy/"
                     className="hover:text-black transition-colors"
                   >
                     Privacy&nbsp;Policy
@@ -784,7 +784,7 @@ export default function Landing() {
                 </li>
                 <li>
                   <a
-                    href="/terms"
+                    href="/terms/"
                     className="hover:text-black transition-colors"
                   >
                     Terms&nbsp;&amp;&nbsp;Conditions

@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   collection,
@@ -855,7 +855,7 @@ export default function CheckoutPage() {
           title: "Order placed",
           description: `Your order #${orderNumber} has been received.`,
         });
-        navigate("/shop");
+        navigate("/shop/");
       } else {
         navigate(`/orders/${orderRef.id}`);
       }
@@ -876,7 +876,7 @@ export default function CheckoutPage() {
         <Seo
           title="Checkout | TwoPaws Shop"
           description="Complete your TwoPaws order securely."
-          canonicalUrl="/checkout"
+          canonicalUrl="/checkout/"
           noIndex
         />
         <p className="text-sm text-slate-500">Loading...</p>
@@ -889,7 +889,7 @@ export default function CheckoutPage() {
       <Seo
         title="Checkout | TwoPaws Shop"
         description="Complete your TwoPaws order securely."
-        canonicalUrl="/checkout"
+        canonicalUrl="/checkout/"
         noIndex
       />
       <header className="space-y-2">

@@ -82,7 +82,7 @@ export default function SiteFooter() {
                 </a>
               </li>
               <li>
-                <a href="/shop" className="transition-colors hover:text-black">
+                <a href="/shop/" className="transition-colors hover:text-black">
                   Shop
                 </a>
               </li>
@@ -101,12 +101,12 @@ export default function SiteFooter() {
                 </a>
               </li>
               <li>
-                <a href="/privacy" className="transition-colors hover:text-black">
+                <a href="/privacy/" className="transition-colors hover:text-black">
                   Privacy Policy
                 </a>
               </li>
               <li>
-                <a href="/terms" className="transition-colors hover:text-black">
+                <a href="/terms/" className="transition-colors hover:text-black">
                   Terms & Conditions
                 </a>
               </li>

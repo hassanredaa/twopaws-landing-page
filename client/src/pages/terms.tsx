@@ -18,53 +18,91 @@ export default function Terms() {
       <Seo
         title="Terms & Conditions | TwoPaws"
         description="Terms and conditions for TwoPaws, the pet care app for Egypt with vets, clinics, community features, and delivery."
-        canonicalUrl="/terms"
+        canonicalUrl="/terms/"
       />
-      {/* Navigation */}
-      <nav className="fixed top-0 w-full bg-white/90 backdrop-blur-md z-50 border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-2">
-              <a href="/">
-                <img src={twoPawsLogo} alt="TwoPaws Digital Solutions" className="h-16 w-auto" />
-              </a>
-            </div>
-            <div className="hidden md:flex items-center space-x-8">
-              <a href="/" className="text-gray-600 hover:text-brand-green-dark transition-colors">
-                Home
-              </a>
-              <a href="/terms" className="text-gray-600 hover:text-brand-green-dark transition-colors">
-                Terms & Conditions
-              </a>
-              <a href="/privacy" className="text-gray-600 hover:text-brand-green-dark transition-colors">
-                Privacy Policy
-              </a>
-            </div>
-            <div className="md:hidden">
-              <Button variant="ghost" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-                {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+      <nav className="relative z-50 border-b border-gray-100 bg-white">
+        <div className="mx-auto flex min-h-[64px] w-full max-w-[1500px] items-center justify-between px-4 sm:px-8 lg:px-10">
+          <a href="/" className="flex shrink-0 items-center">
+            <img
+              src={twoPawsLogo}
+              alt="TwoPaws"
+              className="h-10 w-auto sm:h-12"
+            />
+          </a>
+
+          <div className="hidden items-center gap-7 text-sm font-medium text-gray-600 md:flex">
+            <a href="/#features" className="transition-colors hover:text-brand-purple">
+              Features
+            </a>
+            <a href="/#about" className="transition-colors hover:text-brand-purple">
+              About
+            </a>
+            <a href="/#faq" className="transition-colors hover:text-brand-purple">
+              FAQ
+            </a>
+            <a href="/shop/" className="transition-colors hover:text-brand-purple">
+              Shop
+            </a>
+            <a href="/terms/" className="transition-colors hover:text-brand-purple">
+              Terms &amp; Conditions
+            </a>
+            <a href="/privacy/" className="transition-colors hover:text-brand-purple">
+              Privacy Policy
+            </a>
+          </div>
+
+          <div className="hidden md:block">
+            <Button
+              asChild
+              className="h-9 rounded-md bg-brand-purple px-5 text-white hover:opacity-90"
+            >
+              <a href="/download/">Download</a>
+            </Button>
+          </div>
+
+          <div className="flex items-center gap-2 md:hidden">
+            <a
+              href="/shop/"
+              className="inline-flex h-10 items-center rounded-md border border-brand-purple/25 px-3 text-sm font-semibold text-brand-purple"
+            >
+              Shop
+            </a>
+            <button
+              className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-brand-purple/25 bg-white text-brand-purple"
+              onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+              aria-label="Toggle menu"
+              aria-expanded={isMobileMenuOpen}
+            >
+              {isMobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {isMobileMenuOpen ? (
+          <div className="border-t border-gray-100 px-4 py-4 md:hidden">
+            <div className="flex flex-col gap-3 text-sm font-medium text-gray-700">
+              <a href="/#features">Features</a>
+              <a href="/#about">About</a>
+              <a href="/#faq">FAQ</a>
+              <a href="/shop/">Shop</a>
+              <a href="/terms/">Terms &amp; Conditions</a>
+              <a href="/privacy/">Privacy Policy</a>
+              <Button
+                asChild
+                className="mt-2 w-full rounded-md bg-brand-purple text-white hover:opacity-90"
+              >
+                <a href="/download/">Download</a>
               </Button>
             </div>
           </div>
-        </div>
-        {isMobileMenuOpen && (
-          <div className="md:hidden bg-white border-t border-gray-100">
-            <div className="px-4 py-4 space-y-3">
-              <a href="/" className="block w-full text-left text-gray-600">
-                Home
-              </a>
-              <a href="/terms" className="block w-full text-left text-gray-600">
-                Terms
-              </a>
-              <a href="/privacy" className="block w-full text-left text-gray-600">
-                Privacy
-              </a>
-            </div>
-          </div>
-        )}
+        ) : null}
       </nav>
 
-      <main className="flex-grow bg-gray-50 pb-16 pt-24 px-4">
+      <main className="flex-grow bg-gray-50 px-4 pb-16 pt-10">
         <div className="w-full max-w-4xl mx-auto space-y-8">
           <MarketingIntro />
           <Card className="w-full">
@@ -281,7 +319,7 @@ export default function Terms() {
                 </li>
                 <li>
                   <a
-                    href="/privacy"
+                    href="/privacy/"
                     className="hover:text-black transition-colors"
                   >
                     Privacy&nbsp;Policy
@@ -289,7 +327,7 @@ export default function Terms() {
                 </li>
                 <li>
                   <a
-                    href="/terms"
+                    href="/terms/"
                     className="hover:text-black transition-colors"
                   >
                     Terms&nbsp;&amp;&nbsp;Conditions

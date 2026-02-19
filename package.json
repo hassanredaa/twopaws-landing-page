@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "postbuild": "node scripts/generate-product-ssg.mjs && node scripts/generate-shop-ssg.mjs && node scripts/run-react-snap.mjs && node scripts/generate-sitemap.mjs",
+    "postbuild": "node scripts/generate-product-ssg.mjs && node scripts/generate-shop-ssg.mjs && node scripts/run-react-snap.mjs && node scripts/generate-sitemap.mjs && node scripts/generate-merchant-feed.mjs",
     "serve": "vite preview",
     "check": "tsc"
   },

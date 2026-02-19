@@ -9,3 +9,6 @@ Disallow: /payment
 
 # Update this if your production domain changes
 Sitemap: https://twopaws.pet/sitemap.xml
+
+# Product feed for Google Merchant Center:
+# https://twopaws.pet/merchant-feed.xml

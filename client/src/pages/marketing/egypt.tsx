@@ -8,7 +8,7 @@ export default function EgyptPage() {
       <Seo
         title="TwoPaws in Egypt | Cairo pet care"
         description="TwoPaws supports pet families in Cairo and Egypt with trusted vets, clinics, community features, and fast delivery."
-        canonicalUrl="/egypt"
+        canonicalUrl="/egypt/"
       />
       <header className="space-y-3">
         <h1 className="text-4xl font-semibold text-slate-900">TwoPaws in Egypt</h1>

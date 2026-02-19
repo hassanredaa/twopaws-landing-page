@@ -188,7 +188,7 @@ export default function AccountPage() {
         <Seo
           title="Account | TwoPaws Shop"
           description="Manage your TwoPaws account, addresses, and order history."
-          canonicalUrl="/account"
+          canonicalUrl="/account/"
           noIndex
         />
         <Card className="border-slate-100">
@@ -208,7 +208,7 @@ export default function AccountPage() {
       <Seo
         title="Account | TwoPaws Shop"
         description="Manage your TwoPaws account, addresses, and order history."
-        canonicalUrl="/account"
+        canonicalUrl="/account/"
         noIndex
       />
       <header className="space-y-2">

@@ -52,7 +52,7 @@ export default function DownloadRedirect() {
       <Seo
         title="Download TwoPaws"
         description="Get the TwoPaws app on the App Store or Google Play."
-        canonicalUrl="/download"
+        canonicalUrl="/download/"
         noIndex
       />
 

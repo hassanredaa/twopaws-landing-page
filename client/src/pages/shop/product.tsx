@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   collection,
@@ -74,6 +74,61 @@ const toSeoDescription = (value: string, maxLength = 160) => {
   if (!cleaned) return "";
   if (cleaned.length <= maxLength) return cleaned;
   return `${cleaned.slice(0, Math.max(0, maxLength - 3)).trim()}...`;
+};
+
+const PRODUCT_BRAND_KEYS = [
+  "brand",
+  "brand_name",
+  "brandName",
+  "manufacturer",
+  "vendor",
+] as const;
+const PRODUCT_SKU_KEYS = ["sku", "item_sku", "itemSku"] as const;
+const PRODUCT_MPN_KEYS = ["mpn", "manufacturer_part_number", "manufacturerPartNumber"] as const;
+const PRODUCT_GTIN_KEYS = [
+  "gtin",
+  "gtin8",
+  "gtin12",
+  "gtin13",
+  "gtin14",
+  "barcode",
+  "barcodeNumber",
+  "barcode_number",
+  "ean",
+  "upc",
+] as const;
+const PRODUCT_CATEGORY_KEYS = ["google_product_category", "product_type", "categoryName"] as const;
+const PRODUCT_CONDITION_KEYS = ["condition", "itemCondition", "item_condition"] as const;
+
+const getFirstString = (record: Record<string, unknown>, keys: readonly string[]) => {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+  return undefined;
+};
+
+const normalizeGtin = (value?: string) => {
+  if (!value) return undefined;
+  const digits = value.replace(/\D+/g, "");
+  if (!digits) return undefined;
+  if ([8, 12, 13, 14].includes(digits.length)) return digits;
+  return undefined;
+};
+
+const resolveItemCondition = (raw?: string) => {
+  const condition = String(raw || "").trim().toLowerCase();
+  if (condition.includes("used")) return "https://schema.org/UsedCondition";
+  if (condition.includes("refurb")) return "https://schema.org/RefurbishedCondition";
+  return "https://schema.org/NewCondition";
+};
+
+const buildPriceValidUntil = (daysAhead = 30) => {
+  const date = new Date();
+  date.setUTCDate(date.getUTCDate() + daysAhead);
+  return date.toISOString().slice(0, 10);
 };
 
 type ShippingZoneDoc = {
@@ -193,31 +248,75 @@ export default function ProductDetailPage() {
   const canonicalPath = productId ? `/shop/product/${productId}/` : "/shop/";
   const primaryImage = imageUrls[0];
   const offerPrice = showSale ? salePrice : price;
+  const productRecord = (product ?? {}) as Record<string, unknown>;
+  const sku = getFirstString(productRecord, PRODUCT_SKU_KEYS) ?? product?.id;
+  const brandName =
+    getFirstString(productRecord, PRODUCT_BRAND_KEYS) ??
+    supplier?.name ??
+    "TwoPaws";
+  const mpn = getFirstString(productRecord, PRODUCT_MPN_KEYS);
+  const gtin = normalizeGtin(getFirstString(productRecord, PRODUCT_GTIN_KEYS));
+  const productCategory = getFirstString(productRecord, PRODUCT_CATEGORY_KEYS);
+  const itemCondition = resolveItemCondition(
+    getFirstString(productRecord, PRODUCT_CONDITION_KEYS)
+  );
+  const priceValidUntil = buildPriceValidUntil();
+  const cheapestZone = useMemo(() => {
+    if (!shippingZones.length) return null;
+    return [...shippingZones].sort(
+      (a, b) => (a.rateEGP ?? 0) - (b.rateEGP ?? 0)
+    )[0];
+  }, [shippingZones]);
+  const shippingDetails =
+    cheapestZone && typeof cheapestZone.rateEGP === "number"
+      ? {
+          "@type": "OfferShippingDetails",
+          shippingRate: {
+            "@type": "MonetaryAmount",
+            value: cheapestZone.rateEGP,
+            currency: META_PIXEL_CURRENCY,
+          },
+          shippingDestination: {
+            "@type": "DefinedRegion",
+            addressCountry: "EG",
+          },
+        }
+      : undefined;
   const structuredData = product
     ? {
         "@context": "https://schema.org",
         "@type": "Product",
+        "@id": `${BASE_URL}${canonicalPath}#product`,
         name: productName,
         description: seoDescription,
         url: `${BASE_URL}${canonicalPath}`,
-        image: imageUrls.length ? imageUrls : undefined,
-        sku: product.id,
-        brand: supplier?.name
-          ? {
-              "@type": "Brand",
-              name: supplier.name,
-            }
-          : undefined,
+        image: imageUrls.length ? imageUrls : primaryImage ? [primaryImage] : undefined,
+        sku,
+        mpn,
+        gtin,
+        category: productCategory,
+        brand: {
+          "@type": "Brand",
+          name: brandName,
+        },
         offers: {
           "@type": "Offer",
+          "@id": `${BASE_URL}${canonicalPath}#offer`,
           priceCurrency: META_PIXEL_CURRENCY,
           price: offerPrice,
           availability:
             stock > 0
               ? "https://schema.org/InStock"
               : "https://schema.org/OutOfStock",
-          itemCondition: "https://schema.org/NewCondition",
+          itemCondition,
           url: `${BASE_URL}${canonicalPath}`,
+          priceValidUntil,
+          shippingDetails,
+          seller: {
+            "@type": "Organization",
+            name: "TwoPaws",
+            url: BASE_URL,
+          },
         },
       }
     : undefined;
@@ -270,13 +369,6 @@ export default function ProductDetailPage() {
     });
     viewTrackedRef.current = product.id;
   }, [product, price, salePrice, showSale]);
-
-  const cheapestZone = useMemo(() => {
-    if (!shippingZones.length) return null;
-    return [...shippingZones].sort(
-      (a, b) => (a.rateEGP ?? 0) - (b.rateEGP ?? 0)
-    )[0];
-  }, [shippingZones]);
 
   const handleAddToCart = async () => {
     if (!product) return;

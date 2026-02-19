@@ -31,7 +31,7 @@ export default function FeaturesPage() {
       <Seo
         title="TwoPaws Features | Pet care in Egypt"
         description="Explore TwoPaws features for Egypt: vet discovery, clinics, marketplace supplies, community tools, and delivery."
-        canonicalUrl="/features"
+        canonicalUrl="/features/"
       />
       <header className="space-y-3">
         <h1 className="text-4xl font-semibold text-slate-900">Features</h1>

@@ -7,13 +7,13 @@ import {
 } from "@/lib/seo/constants";
 
 const navLinks = [
-  { href: "/shop", label: "Shop" },
-  { href: "/about", label: "About" },
-  { href: "/features", label: "Features" },
-  { href: "/egypt", label: "Egypt" },
-  { href: "/contact", label: "Contact" },
-  { href: "/privacy", label: "Privacy" },
-  { href: "/terms", label: "Terms" },
+  { href: "/shop/", label: "Shop" },
+  { href: "/about/", label: "About" },
+  { href: "/features/", label: "Features" },
+  { href: "/egypt/", label: "Egypt" },
+  { href: "/contact/", label: "Contact" },
+  { href: "/privacy/", label: "Privacy" },
+  { href: "/terms/", label: "Terms" },
 ];
 
 type MarketingShellProps = {
