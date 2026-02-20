@@ -21,12 +21,17 @@ export type ProductCategoryDoc = {
 const mapSnapshot = (snap: QuerySnapshot<DocumentData>) =>
   snap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
 
-export function useProductCategories() {
+type UseProductCategoriesOptions = {
+  realtime?: boolean;
+};
+
+export function useProductCategories(options: UseProductCategoriesOptions = {}) {
+  const realtime = options.realtime ?? true;
   const [categories, setCategories] = useState<ProductCategoryDoc[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (isReactSnapPrerender()) {
+    if (isReactSnapPrerender() || !realtime) {
       getDocs(collection(db, "productCategories"))
         .then((snap) => setCategories(mapSnapshot(snap)))
         .finally(() => setLoading(false));
@@ -41,7 +46,7 @@ export function useProductCategories() {
       }
     );
     return () => unsubscribe();
-  }, []);
+  }, [realtime]);
 
   const categoryMap = useMemo(() => {
     return categories.reduce<Record<string, ProductCategoryDoc>>(

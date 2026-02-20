@@ -22,12 +22,17 @@ export type SupplierDoc = {
 const mapSnapshot = (snap: QuerySnapshot<DocumentData>) =>
   snap.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
 
-export function useSuppliers() {
+type UseSuppliersOptions = {
+  realtime?: boolean;
+};
+
+export function useSuppliers(options: UseSuppliersOptions = {}) {
+  const realtime = options.realtime ?? true;
   const [suppliers, setSuppliers] = useState<SupplierDoc[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (isReactSnapPrerender()) {
+    if (isReactSnapPrerender() || !realtime) {
       getDocs(collection(db, "suppliers"))
         .then((snap) => setSuppliers(mapSnapshot(snap)))
         .finally(() => setLoading(false));
@@ -39,7 +44,7 @@ export function useSuppliers() {
       setLoading(false);
     });
     return () => unsubscribe();
-  }, []);
+  }, [realtime]);
 
   const supplierMap = useMemo(() => {
     return suppliers.reduce<Record<string, SupplierDoc>>((acc, supplier) => {

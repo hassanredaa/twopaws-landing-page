@@ -8,6 +8,7 @@ import {
   Search,
   SlidersHorizontal,
 } from "lucide-react";
+import { collection, getCountFromServer } from "firebase/firestore";
 import ShopShell from "@/components/shop/ShopShell";
 import ProductCard from "@/components/shop/ProductCard";
 import { SupplierPicker } from "@/components/shop/SupplierPicker";
@@ -27,6 +28,7 @@ import { useProducts } from "@/hooks/useProducts";
 import { useSuppliers } from "@/hooks/useSuppliers";
 import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/use-toast";
+import { db } from "@/lib/firebase";
 import { META_PIXEL_CURRENCY, trackMetaEvent } from "@/lib/metaPixel";
 import Seo from "@/lib/seo/Seo";
 import { BASE_URL } from "@/lib/seo/constants";
@@ -125,6 +127,50 @@ const getPageItems = (totalPages: number, currentPage: number): PageItem[] => {
   return items;
 };
 
+type NavigatorWithConnection = Navigator & {
+  connection?: {
+    effectiveType?: string;
+    saveData?: boolean;
+  };
+  mozConnection?: {
+    effectiveType?: string;
+    saveData?: boolean;
+  };
+  webkitConnection?: {
+    effectiveType?: string;
+    saveData?: boolean;
+  };
+  deviceMemory?: number;
+};
+
+const resolveProductsFetchPageSize = () => {
+  if (typeof window === "undefined") return 80;
+
+  const nav = navigator as NavigatorWithConnection;
+  const connection = nav.connection ?? nav.mozConnection ?? nav.webkitConnection;
+  const effectiveType = String(connection?.effectiveType ?? "").toLowerCase();
+  const saveData = Boolean(connection?.saveData);
+  const deviceMemory =
+    typeof nav.deviceMemory === "number" ? nav.deviceMemory : undefined;
+  const cpuCores =
+    typeof nav.hardwareConcurrency === "number"
+      ? nav.hardwareConcurrency
+      : undefined;
+  const isPhoneViewport = window.innerWidth < 768;
+
+  if (saveData || effectiveType === "slow-2g" || effectiveType === "2g") return 24;
+  if (effectiveType === "3g") return 36;
+  if (
+    isPhoneViewport ||
+    (typeof deviceMemory === "number" && deviceMemory <= 2) ||
+    (typeof cpuCores === "number" && cpuCores <= 4)
+  ) {
+    return 48;
+  }
+
+  return 96;
+};
+
 function ProductCardSkeleton() {
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -145,12 +191,26 @@ function ProductCardSkeleton() {
 export default function ShopPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
-  const { products, productMap, loading } = useProducts();
-  const { categories } = useProductCategories();
-  const { suppliers, supplierMap, loading: suppliersLoading } = useSuppliers();
+  const [productsFetchPageSize] = useState(() => resolveProductsFetchPageSize());
+  const {
+    products,
+    productMap,
+    loading,
+    loadingMore,
+    hasMore,
+    loadMore,
+  } = useProducts({
+    mode: "paginated",
+    pageSize: productsFetchPageSize,
+  });
+  const { categories } = useProductCategories({ realtime: false });
+  const { suppliers, supplierMap, loading: suppliersLoading } = useSuppliers({
+    realtime: false,
+  });
   const { addItem, cartItems } = useCart();
   const { toast } = useToast();
   const hasRestoredScrollRef = useRef(false);
+  const [totalProductCount, setTotalProductCount] = useState<number | null>(null);
 
   const [search, setSearch] = useState(() => searchParams.get("q") ?? "");
   const deferredSearch = useDeferredValue(search);
@@ -189,6 +249,22 @@ export default function ShopPage() {
   );
   const trimmedSearch = search.trim();
   const isSearching = trimmedSearch.length > 0;
+
+  useEffect(() => {
+    let cancelled = false;
+    getCountFromServer(collection(db, "products"))
+      .then((snapshot) => {
+        if (cancelled) return;
+        setTotalProductCount(snapshot.data().count);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setTotalProductCount(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const sortOptions = useMemo(() => {
     const hasNewest = products.some((product) => product.created_at || product.createdAt);
@@ -285,14 +361,55 @@ export default function ShopPage() {
     sort,
   ]);
 
+  const hasPriceFilter = minPrice.trim() !== "" || maxPrice.trim() !== "";
+  const hasNarrowingQuery =
+    isSearching ||
+    selectedCategory !== "all" ||
+    (supplierMode === "single" && selectedSupplier !== "all") ||
+    hasPriceFilter;
+
   const totalItems = filteredProducts.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / perPage));
-  const currentPage = loading ? Math.max(1, page) : Math.min(page, totalPages);
+  const knownTotalItems = hasNarrowingQuery
+    ? hasMore
+      ? null
+      : totalItems
+    : totalProductCount ?? (hasMore ? null : totalItems);
+  const totalPagesFromLoaded = Math.max(1, Math.ceil(totalItems / perPage));
+  const totalPages =
+    knownTotalItems !== null
+      ? Math.max(1, Math.ceil(knownTotalItems / perPage))
+      : totalPagesFromLoaded;
+  const currentPage = loading
+    ? Math.max(1, page)
+    : knownTotalItems !== null
+      ? Math.min(Math.max(1, page), totalPages)
+      : hasMore
+        ? Math.max(1, page)
+        : Math.min(Math.max(1, page), totalPagesFromLoaded);
   const pageStart = (currentPage - 1) * perPage;
   const pageEnd = pageStart + perPage;
   const visibleProducts = filteredProducts.slice(pageStart, pageEnd);
-  const showingFrom = totalItems === 0 ? 0 : pageStart + 1;
-  const showingTo = Math.min(pageEnd, totalItems);
+  const needsMoreForCurrentPage = filteredProducts.length < pageEnd;
+  const awaitingPageData =
+    !loading &&
+    visibleProducts.length === 0 &&
+    (loadingMore || (hasMore && needsMoreForCurrentPage));
+  const showingFrom = visibleProducts.length === 0 ? 0 : pageStart + 1;
+  const showingTo = visibleProducts.length === 0 ? 0 : pageStart + visibleProducts.length;
+  const totalItemsLabel =
+    knownTotalItems !== null ? String(knownTotalItems) : String(totalItems);
+  const isTotalCountPending = knownTotalItems === null && hasMore;
+  const canGoNext =
+    knownTotalItems !== null ? currentPage < totalPages : hasMore || pageEnd < totalItems;
+  const paginationTotalPages =
+    knownTotalItems !== null
+      ? totalPages
+      : Math.max(totalPagesFromLoaded, currentPage + (hasMore ? 1 : 0));
+  const paginationItems = useMemo(
+    () => getPageItems(paginationTotalPages, currentPage),
+    [paginationTotalPages, currentPage]
+  );
+  const isLowBandwidthMode = productsFetchPageSize <= 36;
 
   const visibleCategories = useMemo(
     () => (showAllCategories ? categories : categories.slice(0, 8)),
@@ -311,7 +428,6 @@ export default function ShopPage() {
     }, {});
   }, [cartItems]);
 
-  const hasPriceFilter = minPrice.trim() !== "" || maxPrice.trim() !== "";
   const activeSuppliers = useMemo(
     () => suppliers.filter((supplier) => supplier.isActive !== false),
     [suppliers]
@@ -343,11 +459,11 @@ export default function ShopPage() {
         "@context": "https://schema.org",
         "@type": "ItemList",
         name: "TwoPaws Shop products",
-        numberOfItems: totalItems,
+        ...(knownTotalItems !== null ? { numberOfItems: knownTotalItems } : {}),
         itemListElement: listItems,
       },
     ];
-  }, [filteredProducts, totalItems]);
+  }, [filteredProducts, knownTotalItems]);
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (selectedCategory !== "all") count += 1;
@@ -431,6 +547,13 @@ export default function ShopPage() {
     if (page === currentPage) return;
     setPage(currentPage);
   }, [loading, page, currentPage]);
+
+  useEffect(() => {
+    if (loading || loadingMore) return;
+    if (!hasMore) return;
+    if (!needsMoreForCurrentPage) return;
+    void loadMore();
+  }, [loading, loadingMore, hasMore, needsMoreForCurrentPage, loadMore]);
 
   useEffect(() => {
     const hasSortOption = sortOptions.some((option) => option.value === sort);
@@ -737,11 +860,20 @@ export default function ShopPage() {
             <div className="flex flex-wrap items-center gap-2 text-sm">
               <span className="font-semibold">
                 {isSearching
-                  ? `Results for "${trimmedSearch}" (${totalItems})`
-                  : `Total items: ${totalItems}`}
+                  ? `Results for "${trimmedSearch}" (${totalItemsLabel})`
+                  : `Total items: ${totalItemsLabel}`}
               </span>
               {search !== deferredSearch && (
                 <span className="text-xs text-slate-500">Updating results...</span>
+              )}
+              {search === deferredSearch && loadingMore && (
+                <span className="text-xs text-slate-500">Loading more products...</span>
+              )}
+              {search === deferredSearch && isTotalCountPending && (
+                <span className="text-xs text-slate-500">Counting products...</span>
+              )}
+              {isLowBandwidthMode && (
+                <span className="text-xs text-slate-500">Data saver mode enabled.</span>
               )}
               <div className="flex items-center gap-2">
                 <span>Show</span>
@@ -822,11 +954,11 @@ export default function ShopPage() {
           </section>
 
           <section className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-            {loading &&
+            {(loading || awaitingPageData) &&
               Array.from({ length: PRODUCT_SKELETON_COUNT }).map((_, index) => (
                 <ProductCardSkeleton key={`product-skeleton-${index}`} />
               ))}
-            {!loading && visibleProducts.length === 0 && (
+            {!loading && !awaitingPageData && !loadingMore && !hasMore && visibleProducts.length === 0 && (
               <div className="col-span-full rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
                 <p className="text-sm font-semibold text-slate-700">
                   {isSearching ? "No products match your search." : "No products found."}
@@ -876,13 +1008,13 @@ export default function ShopPage() {
               <button
                 type="button"
                 className="rounded-md border border-slate-200 px-3 py-1 disabled:opacity-50"
-                disabled={loading || currentPage === 1}
+                disabled={loading || awaitingPageData || currentPage === 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
               <div className="flex items-center gap-1">
-                {getPageItems(totalPages, currentPage).map((item, index) => {
+                {paginationItems.map((item, index) => {
                   if (item === ELLIPSIS) {
                     return (
                       <span
@@ -913,14 +1045,16 @@ export default function ShopPage() {
               <button
                 type="button"
                 className="rounded-md border border-slate-200 px-3 py-1 disabled:opacity-50"
-                disabled={loading || currentPage >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={loading || loadingMore || !canGoNext}
+                onClick={() => setPage((p) => p + 1)}
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>
             <div className="text-xs text-slate-500">
-              Showing {showingFrom}-{showingTo} of {totalItems}
+              {knownTotalItems !== null
+                ? `Showing ${showingFrom}-${showingTo} of ${knownTotalItems}`
+                : `Showing ${showingFrom}-${showingTo} (count updating...)`}
             </div>
           </footer>
         </div>
