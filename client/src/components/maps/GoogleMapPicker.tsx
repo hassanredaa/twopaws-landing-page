@@ -11,6 +11,8 @@ type GoogleMapPickerProps = {
 };
 
 let googleMapsLoader: Promise<any> | null = null;
+const GOOGLE_MAPS_CALLBACK = "__twopawsGoogleMapsReady";
+const DEFAULT_CENTER = { lat: 30.0444, lng: 31.2357 };
 
 const loadGoogleMaps = (apiKey: string) => {
   if (googleMapsLoader) return googleMapsLoader;
@@ -20,13 +22,50 @@ const loadGoogleMaps = (apiKey: string) => {
       return;
     }
 
+    const existingScript = document.querySelector<HTMLScriptElement>(
+      'script[data-twopaws-google-maps="true"]',
+    );
+    existingScript?.remove();
+
     const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&loading=async&v=weekly&libraries=marker`;
+    const timeout = window.setTimeout(() => {
+      cleanup();
+      reject(new Error("Google Maps took too long to load."));
+    }, 15_000);
+    const cleanup = () => {
+      window.clearTimeout(timeout);
+      delete (window as any)[GOOGLE_MAPS_CALLBACK];
+    };
+
+    (window as any)[GOOGLE_MAPS_CALLBACK] = () => {
+      const google = (window as any).google;
+      cleanup();
+      if (google?.maps) {
+        resolve(google);
+      } else {
+        reject(new Error("Google Maps library failed to load."));
+      }
+    };
+
+    const params = new URLSearchParams({
+      key: apiKey,
+      loading: "async",
+      v: "weekly",
+      libraries: "marker",
+      callback: GOOGLE_MAPS_CALLBACK,
+    });
+    script.src = `https://maps.googleapis.com/maps/api/js?${params.toString()}`;
     script.async = true;
     script.defer = true;
-    script.onload = () => resolve((window as any).google);
-    script.onerror = () => reject(new Error("Failed to load Google Maps"));
+    script.dataset.twopawsGoogleMaps = "true";
+    script.onerror = () => {
+      cleanup();
+      reject(new Error("Failed to load Google Maps."));
+    };
     document.head.appendChild(script);
+  }).catch((error) => {
+    googleMapsLoader = null;
+    throw error;
   });
   return googleMapsLoader;
 };
@@ -35,7 +74,7 @@ export default function GoogleMapPicker({
   value,
   onChange,
   heightClassName = "h-64",
-  defaultCenter = { lat: 30.0444, lng: 31.2357 },
+  defaultCenter = DEFAULT_CENTER,
   zoom = 12,
 }: GoogleMapPickerProps) {
   const mapRef = useRef<HTMLDivElement | null>(null);
@@ -44,21 +83,28 @@ export default function GoogleMapPicker({
   const mapsApiRef = useRef<any>(null);
   const markerClassRef = useRef<any>(null);
   const mapClassRef = useRef<any>(null);
+  const onChangeRef = useRef(onChange);
   const [error, setError] = useState<string | null>(null);
+  const [loadAttempt, setLoadAttempt] = useState(0);
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
   useEffect(() => {
     const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined;
     if (!apiKey) {
-      setError("Missing VITE_GOOGLE_MAPS_API_KEY");
+      setError("The map is not configured.");
       return;
     }
     const mapId = import.meta.env.VITE_GOOGLE_MAPS_MAP_ID as string | undefined;
     if (!mapId) {
-      setError("Missing VITE_GOOGLE_MAPS_MAP_ID");
+      setError("The map is not configured.");
       return;
     }
 
     let cancelled = false;
+    setError(null);
     loadGoogleMaps(apiKey)
       .then(async (google) => {
         if (cancelled || !mapRef.current) return;
@@ -98,7 +144,7 @@ export default function GoogleMapPicker({
             if (!event?.latLng) return;
             const lat = event.latLng.lat();
             const lng = event.latLng.lng();
-            onChange({ lat, lng });
+            onChangeRef.current({ lat, lng });
           });
         }
       })
@@ -111,7 +157,7 @@ export default function GoogleMapPicker({
     return () => {
       cancelled = true;
     };
-  }, [defaultCenter, onChange, value, zoom]);
+  }, [defaultCenter.lat, defaultCenter.lng, loadAttempt, value, zoom]);
 
   useEffect(() => {
     const google = mapsApiRef.current;
@@ -145,7 +191,14 @@ export default function GoogleMapPicker({
   if (error) {
     return (
       <div className={`w-full rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-500 ${heightClassName}`}>
-        {error}
+        <p>{error}</p>
+        <button
+          type="button"
+          className="mt-3 rounded-md border border-slate-300 bg-white px-3 py-1.5 font-medium text-slate-700 hover:bg-slate-100"
+          onClick={() => setLoadAttempt((attempt) => attempt + 1)}
+        >
+          Retry map
+        </button>
       </div>
     );
   }
