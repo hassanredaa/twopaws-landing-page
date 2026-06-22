@@ -1,15 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   collection,
-  doc,
   GeoPoint,
-  getDocs,
-  getDoc,
   onSnapshot,
-  serverTimestamp,
-  setDoc,
-  writeBatch,
 } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import ShopShell from "@/components/shop/ShopShell";
@@ -53,8 +47,8 @@ import { META_PIXEL_CURRENCY, trackMetaEvent } from "@/lib/metaPixel";
 import Seo from "@/lib/seo/Seo";
 
 const PROMO_STORAGE_KEY = "twopawsPromo";
-const ORDER_SOURCE_WEBSITE = "website";
 const PAYMOB_GUEST_TOKEN_STORAGE_PREFIX = "twopaws:paymob:guest-token:";
+const GUEST_PENDING_ORDER_STORAGE_KEY = "twopaws:guest-checkout:pending-order";
 
 const buildPaymobCheckoutUrl = (publicKey: string, clientSecret: string) => {
   const params = new URLSearchParams({
@@ -69,6 +63,24 @@ type PromoState = {
   discount: number;
   total: number;
   verified?: boolean;
+};
+
+type CheckoutSummary = {
+  itemCount: number;
+  supplierCount: number;
+  subtotal: number;
+  discount: number;
+  shipping: number;
+  total: number;
+  eta?: string;
+};
+
+type CheckoutOrderResult = CheckoutSummary & {
+  orderId: string;
+  orderNumber: number;
+  paymentMethod: "cash" | "card";
+  requiresPayment: boolean;
+  guestCheckoutToken?: string | null;
 };
 
 type ShippingZoneDoc = {
@@ -140,7 +152,11 @@ export default function CheckoutPage() {
   const [selectedZoneId, setSelectedZoneId] = useState<string>("");
   const [paymentMethod, setPaymentMethod] = useState<"cod" | "paymob">("cod");
   const [promo, setPromo] = useState<PromoState | null>(null);
+  const [checkoutSummary, setCheckoutSummary] = useState<CheckoutSummary | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const checkoutAttemptKeyRef = useRef<string | null>(null);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
   const [isAddressDialogOpen, setIsAddressDialogOpen] = useState(false);
   const [customerForm, setCustomerForm] = useState<CustomerFormState>({
@@ -283,13 +299,8 @@ export default function CheckoutPage() {
   }, [filteredShippingZones, selectedZoneId]);
 
   const selectedZone = filteredShippingZones.find((zone) => zone.id === selectedZoneId);
-  const subtotal = cart?.total ?? 0;
-  const discount = promo?.verified ? promo.discount : 0;
-  const shippingCost = selectedZone?.rateEGP ?? 0;
-  const totalPrice = Math.max(subtotal - discount + shippingCost, 0);
-
   const cartEmpty = cartItems.length === 0;
-  const promoValidationItems = useMemo(
+  const checkoutRequestItems = useMemo(
     () =>
       cartItems
         .map((item) => {
@@ -301,51 +312,89 @@ export default function CheckoutPage() {
         .filter((item): item is { productId: string; quantity: number } => Boolean(item)),
     [cartItems]
   );
-  const promoValidationSignature = useMemo(
-    () =>
-      promoValidationItems
-        .map((item) => `${item.productId}:${item.quantity}`)
-        .sort()
-        .join("|"),
-    [promoValidationItems]
-  );
 
   useEffect(() => {
-    if (!promo?.code) return;
-    if (promoValidationItems.length === 0) return;
+    if (authLoading || checkoutRequestItems.length === 0) {
+      setCheckoutSummary(null);
+      return;
+    }
+    if (!isGuestCheckout && !selectedAddressId) {
+      setCheckoutSummary(null);
+      return;
+    }
+    const guestAddressReady = Boolean(
+      guestAddressForm.city
+      && guestAddressForm.street.trim()
+      && guestAddressForm.phone.trim().length >= 7
+      && guestAddressForm.location
+    );
+    if (isGuestCheckout && !guestAddressReady) {
+      setCheckoutSummary(null);
+      setSummaryError(null);
+      return;
+    }
     let active = true;
-    const validatePromo = httpsCallable(functions, "validatePromo");
-    validatePromo({
-      code: promo.code,
-      cartId: cart?.id ?? null,
-      items: promoValidationItems,
-    })
+    setSummaryLoading(true);
+    setSummaryError(null);
+    const timer = window.setTimeout(() => {
+      const summaryCall = httpsCallable(
+        functions,
+        isGuestCheckout ? "getGuestCheckoutSummary" : "getCheckoutSummary"
+      );
+      const payload = isGuestCheckout
+        ? {
+            items: checkoutRequestItems,
+            promoCode: promo?.code ?? "",
+            address: {
+              ...guestAddressForm,
+              location: guestAddressForm.location
+                ? { lat: guestAddressForm.location.lat, lng: guestAddressForm.location.lng }
+                : null,
+            },
+          }
+        : { addressId: selectedAddressId, promoCode: promo?.code ?? "" };
+      summaryCall(payload)
       .then((result) => {
         if (!active) return;
-        const data = result.data as { ok?: boolean; discountapp?: number; total?: number };
-        if (!data?.ok) {
-          setPromo(null);
-          localStorage.removeItem(PROMO_STORAGE_KEY);
-          return;
+        const data = result.data as CheckoutSummary;
+        setCheckoutSummary(data);
+        if (promo?.code) {
+          const verifiedPromo: PromoState = {
+            code: promo.code,
+            discount: data.discount,
+            total: data.total,
+            verified: true,
+          };
+          setPromo(verifiedPromo);
+          localStorage.setItem(PROMO_STORAGE_KEY, JSON.stringify(verifiedPromo));
         }
-        const verifiedPromo: PromoState = {
-          code: promo.code,
-          discount: typeof data.discountapp === "number" ? data.discountapp : 0,
-          total: typeof data.total === "number" ? data.total : subtotal,
-          verified: true,
-        };
-        setPromo(verifiedPromo);
-        localStorage.setItem(PROMO_STORAGE_KEY, JSON.stringify(verifiedPromo));
       })
-      .catch(() => {
+      .catch((error) => {
         if (!active) return;
-        setPromo(null);
-        localStorage.removeItem(PROMO_STORAGE_KEY);
+        setCheckoutSummary(null);
+        setSummaryError((error as Error).message);
+      })
+      .finally(() => {
+        if (active) setSummaryLoading(false);
       });
+    }, 300);
     return () => {
       active = false;
+      window.clearTimeout(timer);
     };
-  }, [promo?.code, cart?.id, promoValidationSignature, promoValidationItems, subtotal]);
+  }, [
+    authLoading,
+    checkoutRequestItems,
+    guestAddressForm,
+    isGuestCheckout,
+    promo?.code,
+    selectedAddressId,
+  ]);
+
+  const subtotal = checkoutSummary?.subtotal ?? cart?.total ?? 0;
+  const discount = checkoutSummary?.discount ?? 0;
+  const shippingCost = checkoutSummary?.shipping ?? selectedZone?.rateEGP ?? 0;
+  const totalPrice = checkoutSummary?.total ?? Math.max(subtotal - discount + shippingCost, 0);
 
   const resetAddressForm = () => {
     setAddressForm({
@@ -453,20 +502,6 @@ export default function CheckoutPage() {
         description: (err as Error).message,
         variant: "destructive",
       });
-    }
-  };
-
-  const verifyStock = async () => {
-    for (const item of cartItems) {
-      const productRef = item.productRef ?? (item.productIdValue ? doc(db, "products", item.productIdValue) : null);
-      if (!productRef) continue;
-      const productSnap = await getDoc(productRef);
-      if (!productSnap.exists()) continue;
-      const product = productSnap.data() as { quantity?: number };
-      const available = typeof product.quantity === "number" ? product.quantity : 0;
-      if ((item.quantity ?? 0) > available) {
-        throw new Error("Some items are unavailable. Please update your cart.");
-      }
     }
   };
 
@@ -592,55 +627,14 @@ export default function CheckoutPage() {
       return;
     }
 
-    if (!selectedZone) {
+    if (!checkoutSummary) {
       toast({
-        title: "Select shipping",
-        description: "Pick a valid shipping zone to continue.",
+        title: "Checkout not ready",
+        description: summaryError || "Wait for the server to confirm pricing and delivery.",
         variant: "destructive",
       });
       return;
     }
-
-    if (!activeSupplierRef) {
-      toast({
-        title: "Missing supplier",
-        description: "We couldn't determine the supplier for this cart.",
-        variant: "destructive",
-      });
-      return;
-    }
-    let appliedPromo: PromoState | null = null;
-    if (promo?.code) {
-      try {
-        const validatePromo = httpsCallable(functions, "validatePromo");
-        const result = await validatePromo({
-          code: promo.code,
-          cartId: cart.id,
-          items: promoValidationItems,
-        });
-        const data = result.data as { ok?: boolean; discountapp?: number; total?: number };
-        if (data?.ok) {
-          appliedPromo = {
-            code: promo.code,
-            discount: typeof data.discountapp === "number" ? data.discountapp : 0,
-            total: typeof data.total === "number" ? data.total : subtotal,
-            verified: true,
-          };
-          setPromo(appliedPromo);
-          localStorage.setItem(PROMO_STORAGE_KEY, JSON.stringify(appliedPromo));
-        } else {
-          setPromo(null);
-          localStorage.removeItem(PROMO_STORAGE_KEY);
-        }
-      } catch {
-        setPromo(null);
-        localStorage.removeItem(PROMO_STORAGE_KEY);
-      }
-    }
-    const resolvedDiscount = appliedPromo?.discount ?? 0;
-    const resolvedShippingCost =
-      typeof selectedZone.rateEGP === "number" ? selectedZone.rateEGP : 0;
-    const resolvedTotalPrice = Math.max(subtotal - resolvedDiscount + resolvedShippingCost, 0);
 
     const checkoutItems = cartItems
       .map((item) => {
@@ -658,14 +652,14 @@ export default function CheckoutPage() {
     trackMetaEvent("InitiateCheckout", {
       content_ids: checkoutItems.map((item) => item.id),
       contents: checkoutItems,
-      value: resolvedTotalPrice,
+      value: checkoutSummary.total,
       currency: META_PIXEL_CURRENCY,
       num_items: itemCount,
     });
     trackMetaEvent("AddPaymentInfo", {
       content_ids: checkoutItems.map((item) => item.id),
       contents: checkoutItems,
-      value: resolvedTotalPrice,
+      value: checkoutSummary.total,
       currency: META_PIXEL_CURRENCY,
       num_items: itemCount,
       payment_method: paymentMethod,
@@ -673,191 +667,95 @@ export default function CheckoutPage() {
 
     setSubmitting(true);
     try {
-      await verifyStock();
-
-      const getOrderNumber = httpsCallable(functions, "getNextOrderNumber");
-      const orderNumberResult = await getOrderNumber({});
-      const orderNumber = (orderNumberResult.data as { orderNumber?: number })?.orderNumber;
-      if (!orderNumber) {
-        throw new Error("Unable to generate order number.");
-      }
-      const orderRef = doc(collection(db, "orders"));
       const isPaymob = paymentMethod === "paymob";
-      const orderStatus = isPaymob ? "PAYMENT_INITIALIZING" : "Pending";
-      const guestCheckoutToken =
-        isGuestCheckout && isPaymob
-          ? (window.crypto?.randomUUID?.() ??
-            `${Date.now()}-${Math.random().toString(36).slice(2)}`)
-          : null;
-      const customerFullName = `${firstName} ${lastName}`.trim();
-      const shippingAddressData = isGuestCheckout
+      checkoutAttemptKeyRef.current ??= window.crypto?.randomUUID?.()
+        ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const createOrder = httpsCallable(
+        functions,
+        isGuestCheckout ? "createGuestCheckoutOrder" : "createCheckoutOrder"
+      );
+      const orderPayload = isGuestCheckout
         ? {
-            label: guestAddressForm.label.trim() || "Delivery address",
-            recipientName: customerFullName,
-            phone: normalizedPhone,
-            email: normalizedEmail || null,
-            country: ADDRESS_COUNTRY,
-            city: guestAddressForm.city,
-            area: guestAddressForm.area.trim(),
-            street: guestAddressForm.street.trim(),
-            building: guestAddressForm.building.trim(),
-            floor: guestAddressForm.floor.trim(),
-            apartment: guestAddressForm.apartment.trim(),
-            notes: guestAddressForm.notes.trim(),
-            location: new GeoPoint(guestAddressForm.location!.lat, guestAddressForm.location!.lng),
+            idempotencyKey: checkoutAttemptKeyRef.current,
+            paymentMethod: isPaymob ? "card" : "cash",
+            promoCode: promo?.code ?? "",
+            items: checkoutRequestItems,
+            customer: {
+              firstName,
+              lastName,
+              phone: normalizedPhone,
+              email: normalizedEmail || null,
+            },
+            address: {
+              ...guestAddressForm,
+              recipientName: `${firstName} ${lastName}`.trim(),
+              phone: normalizedPhone,
+              email: normalizedEmail || null,
+              location: guestAddressForm.location
+                ? { lat: guestAddressForm.location.lat, lng: guestAddressForm.location.lng }
+                : null,
+            },
           }
         : {
-            label: selectedAddress?.label ?? "Saved address",
-            recipientName: selectedAddress?.recipientName ?? customerFullName,
-            phone: selectedAddress?.phone ?? normalizedPhone,
-            email: normalizedEmail || null,
-            country: selectedAddress?.country ?? ADDRESS_COUNTRY,
-            city: selectedAddress?.city ?? "",
-            area: selectedAddress?.area ?? "",
-            street: selectedAddress?.street ?? "",
-            building: selectedAddress?.building ?? "",
-            floor: selectedAddress?.floor ?? "",
-            apartment: selectedAddress?.apartment ?? "",
-            notes: selectedAddress?.notes ?? "",
-            location: selectedAddress?.location ?? null,
+            idempotencyKey: checkoutAttemptKeyRef.current,
+            paymentMethod: isPaymob ? "card" : "cash",
+            promoCode: promo?.code ?? "",
+            addressId: selectedAddressId,
+            source: "website",
           };
-
-      const orderPayload: Record<string, unknown> = {
-        supplierRef: activeSupplierRef,
-        source: ORDER_SOURCE_WEBSITE,
-        createdWithoutAccount: isGuestCheckout,
-        customerFirstName: firstName,
-        customerLastName: lastName,
-        customerPhone: normalizedPhone,
-        customerEmail: normalizedEmail || null,
-        customerFullName,
-        shippingAddressData,
-        shippingCost: resolvedShippingCost,
-        totalPrice: resolvedTotalPrice,
-        orderNumber,
-        created_at: serverTimestamp(),
-        updated_at: serverTimestamp(),
-        status: orderStatus,
-        orderStatus,
-        success: paymentMethod === "cod",
-        paymentMethod: paymentMethod === "cod" ? "cash" : "card",
-        paymentStatus: paymentMethod === "cod" ? "PENDING_COD" : "PAYMENT_INITIALIZING",
-      };
-      if (userRef) {
-        orderPayload.buyerId = userRef;
-      }
-      if (!isGuestCheckout && selectedAddress) {
-        orderPayload.shippingAddress = doc(db, "addresses", selectedAddress.id);
-      }
-      if (appliedPromo?.code && resolvedDiscount > 0) {
-        orderPayload.promoCode = appliedPromo.code;
-        orderPayload.promoDiscount = resolvedDiscount;
-        orderPayload.discount = resolvedDiscount;
-      }
-      if (guestCheckoutToken) {
-        orderPayload.paymobGuestToken = guestCheckoutToken;
-        window.sessionStorage.setItem(
-          `${PAYMOB_GUEST_TOKEN_STORAGE_PREFIX}${orderRef.id}`,
-          guestCheckoutToken
-        );
-      }
-      await setDoc(orderRef, orderPayload);
-      await setDoc(
-        doc(db, "orderCustomers", orderRef.id),
-        {
-          orderRef,
-          source: ORDER_SOURCE_WEBSITE,
-          createdWithoutAccount: isGuestCheckout,
-          firstName,
-          lastName,
-          fullName: customerFullName,
-          phone: normalizedPhone,
-          email: normalizedEmail || null,
-          buyerId: userRef ?? null,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        },
-        { merge: true }
-      );
-
-      const batch = writeBatch(db);
-      cartItems.forEach((item) => {
-        const productRef = item.productRef ?? (item.productIdValue ? doc(db, "products", item.productIdValue) : null);
-        if (!productRef) return;
-        batch.set(doc(orderRef, "orderItems", item.id), {
-          productRef,
-          quantity: item.quantity ?? 1,
-        });
-      });
-      await batch.commit();
-
-      if (appliedPromo?.code && cart.id !== "guest") {
-        try {
-          const commitPromo = httpsCallable(functions, "commitPromo");
-          await commitPromo({
-            code: appliedPromo.code,
-            cartId: cart.id,
-            orderId: orderRef.id,
-            discount: resolvedDiscount,
-          });
-        } catch (promoErr) {
-          console.warn("Promo commit failed:", promoErr);
-        }
-      }
+      const orderResult = await createOrder(orderPayload);
+      const order = orderResult.data as CheckoutOrderResult;
+      if (!order.orderId || !order.orderNumber) throw new Error("Unable to create order.");
 
       if (paymentMethod === "cod") {
         trackMetaEvent("Purchase", {
           content_ids: checkoutItems.map((item) => item.id),
           contents: checkoutItems,
-          value: resolvedTotalPrice,
+          value: order.total,
           currency: META_PIXEL_CURRENCY,
           num_items: itemCount,
-          order_id: orderRef.id,
+          order_id: order.orderId,
           payment_method: paymentMethod,
         });
       }
 
       if (paymentMethod === "paymob") {
-        try {
-          const createPaymobPayment = httpsCallable(functions, "createPaymobPayment");
-          const result = await createPaymobPayment({
-            orderId: orderRef.id,
-            guestCheckoutToken: guestCheckoutToken ?? undefined,
-          });
-          const data = result.data as { clientSecret?: string; publicKey?: string };
-          if (!data?.clientSecret || !data?.publicKey) {
-            throw new Error("Unable to start Paymob payment.");
-          }
-          const checkoutUrl = buildPaymobCheckoutUrl(data.publicKey, data.clientSecret);
-          window.location.assign(checkoutUrl);
-          return;
-        } catch (paymobErr) {
-          // Roll back the draft order if we fail to initialize the payment session.
-          const orderItemsSnap = await getDocs(collection(orderRef, "orderItems"));
-          const cleanupBatch = writeBatch(db);
-          orderItemsSnap.docs.forEach((docSnap) => cleanupBatch.delete(docSnap.ref));
-          cleanupBatch.delete(doc(db, "orderCustomers", orderRef.id));
-          cleanupBatch.delete(orderRef);
-          await cleanupBatch.commit();
-          if (guestCheckoutToken) {
-            window.sessionStorage.removeItem(
-              `${PAYMOB_GUEST_TOKEN_STORAGE_PREFIX}${orderRef.id}`
-            );
-          }
-          throw paymobErr;
+        const guestCheckoutToken = order.guestCheckoutToken ?? undefined;
+        if (isGuestCheckout && !guestCheckoutToken) {
+          throw new Error("Guest payment authorization is unavailable.");
         }
+        if (guestCheckoutToken) {
+          window.sessionStorage.setItem(
+            `${PAYMOB_GUEST_TOKEN_STORAGE_PREFIX}${order.orderId}`,
+            guestCheckoutToken
+          );
+          window.sessionStorage.setItem(GUEST_PENDING_ORDER_STORAGE_KEY, order.orderId);
+        }
+        const createPaymobPayment = httpsCallable(functions, "createPaymobPayment");
+        const result = await createPaymobPayment({
+          orderId: order.orderId,
+          guestCheckoutToken,
+        });
+        const payment = result.data as { clientSecret?: string; publicKey?: string };
+        if (!payment?.clientSecret || !payment?.publicKey) {
+          throw new Error("Unable to start Paymob payment.");
+        }
+        const checkoutUrl = buildPaymobCheckoutUrl(payment.publicKey, payment.clientSecret);
+        window.location.assign(checkoutUrl);
+        return;
       }
 
-      await clearCart();
+      if (isGuestCheckout) await clearCart();
+      checkoutAttemptKeyRef.current = null;
       localStorage.removeItem(PROMO_STORAGE_KEY);
       if (isGuestCheckout) {
         toast({
           title: "Order placed",
-          description: `Your order #${orderNumber} has been received.`,
+          description: `Your order #${order.orderNumber} has been received.`,
         });
         navigate("/shop/");
       } else {
-        navigate(`/orders/${orderRef.id}`);
+        navigate(`/orders/${order.orderId}`);
       }
     } catch (err) {
       toast({
@@ -1363,13 +1261,20 @@ export default function CheckoutPage() {
                 <span>Total</span>
                 <span>{formatCurrency(totalPrice)}</span>
               </div>
+              {summaryLoading ? (
+                <p className="text-xs text-slate-500">Confirming prices and delivery...</p>
+              ) : summaryError ? (
+                <p className="text-xs text-red-600">{summaryError}</p>
+              ) : checkoutSummary?.eta ? (
+                <p className="text-xs text-slate-500">Estimated delivery: {checkoutSummary.eta}</p>
+              ) : null}
             </CardContent>
           </Card>
 
           <Button
             className="w-full bg-brand-olive text-brand-dark"
             onClick={handleCheckout}
-            disabled={submitting || cartEmpty || !selectedZoneId}
+            disabled={submitting || summaryLoading || cartEmpty || !checkoutSummary}
           >
             {submitting ? "Placing order..." : "Place order"}
           </Button>

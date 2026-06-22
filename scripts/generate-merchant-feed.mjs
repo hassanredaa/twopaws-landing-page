@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { buildCatalogSeoPlan } from "./catalog-seo.mjs";
 
 const DEFAULT_BASE_URL = "https://twopaws.pet";
 const DEFAULT_CURRENCY = "EGP";
@@ -324,8 +325,9 @@ const writeMerchantFeed = async () => {
     }
     return acc;
   }, {});
+  const productPlan = buildCatalogSeoPlan(products);
 
-  const items = products
+  const items = productPlan.sitemapProducts
     .map((product) => {
       const supplierId = resolveSupplierId(product.supplierRef);
       const supplierName = supplierId ? supplierNameById[supplierId] : undefined;
@@ -358,7 +360,7 @@ const writeMerchantFeed = async () => {
   }
 
   console.log(
-    `Merchant feed: wrote ${items.length} item(s) to ${outputDirs.join(", ")}`
+    `Merchant feed: wrote ${items.length} canonical item(s) to ${outputDirs.join(", ")}`
   );
 };
 

@@ -1,5 +1,10 @@
 import fs from "fs";
 import path from "path";
+import {
+  buildCatalogSeoPlan,
+  buildSeoDescription,
+  getSupplierId,
+} from "./catalog-seo.mjs";
 
 const DEFAULT_BASE_URL = "https://twopaws.pet";
 const DEFAULT_CURRENCY = "EGP";
@@ -128,6 +133,30 @@ const fetchProductDocs = async (projectId, apiKey) => {
   return docs;
 };
 
+const fetchShippingZones = async (projectId, apiKey, supplierId) => {
+  if (!projectId || !apiKey || !supplierId) return [];
+  const url = new URL(
+    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/suppliers/${supplierId}/shippingZones`
+  );
+  url.searchParams.set("pageSize", "100");
+  url.searchParams.set("key", apiKey);
+  const response = await fetch(url);
+  if (!response.ok) return [];
+  const payload = await response.json();
+  return (payload.documents ?? []).map((document) => extractFirestoreDocument(document));
+};
+
+const fetchSupplier = async (projectId, apiKey, supplierId) => {
+  if (!projectId || !apiKey || !supplierId) return null;
+  const url = new URL(
+    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/suppliers/${supplierId}`
+  );
+  url.searchParams.set("key", apiKey);
+  const response = await fetch(url);
+  if (!response.ok) return null;
+  return extractFirestoreDocument(await response.json());
+};
+
 const absoluteUrl = (baseUrl, value) => {
   if (!value) return null;
   if (String(value).startsWith("http")) return String(value);
@@ -246,12 +275,16 @@ const upsertStructuredData = (html, id, payload) => {
   return html.replace("</head>", `  ${next}\n</head>`);
 };
 
-const buildProductHtml = (template, product, baseUrl) => {
+const buildProductHtml = (template, product, baseUrl, canonicalProductId, supplierInfo) => {
   const productName = String(product.name || "Product");
+  const supplierName = String(supplierInfo?.name ?? "").trim();
+  const baseDescription = buildSeoDescription(product);
   const description = toSeoDescription(
-    product.description || "Shop premium pet supplies and accessories at TwoPaws."
+    supplierName
+      ? `Shop ${productName} from ${supplierName} on TwoPaws Egypt. ${baseDescription}`
+      : baseDescription
   );
-  const canonicalPath = `/shop/product/${product.id}/`;
+  const canonicalPath = `/shop/product/${canonicalProductId}/`;
   const canonicalUrl = `${baseUrl}${canonicalPath}`;
   const imageUrls = getImageList(product, baseUrl);
   const imageUrl = imageUrls[0] || getPrimaryImage(product, baseUrl);
@@ -324,27 +357,51 @@ const buildProductHtml = (template, product, baseUrl) => {
       itemCondition,
       url: canonicalUrl,
       priceValidUntil,
+      shippingDetails: supplierInfo?.shippingZone && Number(supplierInfo.shippingZone.rateEGP) >= 0
+        ? {
+            "@type": "OfferShippingDetails",
+            shippingRate: {
+              "@type": "MonetaryAmount",
+              value: Number(supplierInfo.shippingZone.rateEGP),
+              currency: DEFAULT_CURRENCY,
+            },
+            shippingDestination: {
+              "@type": "DefinedRegion",
+              addressCountry: "EG",
+            },
+          }
+        : undefined,
       seller: {
         "@type": "Organization",
-        name: "TwoPaws",
-        url: baseUrl,
+        name: supplierName || "TwoPaws",
+        url: supplierName
+          ? `${baseUrl}/shop/supplier/${getSupplierId(product)}/`
+          : baseUrl,
       },
     },
   };
 
   let html = template;
-  html = setTitle(html, `${productName} | TwoPaws Shop`);
+  const seoTitle = supplierName
+    ? `${productName} from ${supplierName} | TwoPaws Shop`
+    : `${productName} | TwoPaws Shop`;
+  html = setTitle(html, seoTitle);
   html = upsertMetaByName(html, "description", description);
   html = upsertCanonical(html, canonicalUrl);
   html = upsertMetaByProperty(html, "og:type", "product");
-  html = upsertMetaByProperty(html, "og:title", `${productName} | TwoPaws Shop`);
+  html = upsertMetaByProperty(html, "og:title", seoTitle);
   html = upsertMetaByProperty(html, "og:description", description);
   html = upsertMetaByProperty(html, "og:url", canonicalUrl);
   html = upsertMetaByProperty(html, "og:image", imageUrl);
-  html = upsertMetaByName(html, "twitter:title", `${productName} | TwoPaws Shop`);
+  html = upsertMetaByName(html, "twitter:title", seoTitle);
   html = upsertMetaByName(html, "twitter:description", description);
   html = upsertMetaByName(html, "twitter:image", imageUrl);
   html = upsertStructuredData(html, "product-jsonld", structuredData);
+  const canonicalContext = `<script>window.__TWOPAWS_PRODUCT_CANONICAL__=${JSON.stringify({
+    sourceId: product.id,
+    canonicalId: canonicalProductId,
+  }).replaceAll("<", "\\u003c")};</script>`;
+  html = html.replace("</head>", `  ${canonicalContext}\n</head>`);
   return html;
 };
 
@@ -370,14 +427,37 @@ const writeProductPages = async () => {
     return;
   }
 
-  for (const product of productDocs) {
+  const plan = buildCatalogSeoPlan(productDocs);
+  const supplierIds = [...new Set(plan.eligible.map(getSupplierId).filter(Boolean))];
+  const supplierEntries = await Promise.all(supplierIds.map(async (supplierId) => {
+    const [supplier, zones] = await Promise.all([
+      fetchSupplier(env.VITE_FIREBASE_PROJECT_ID, env.VITE_FIREBASE_API_KEY, supplierId),
+      fetchShippingZones(env.VITE_FIREBASE_PROJECT_ID, env.VITE_FIREBASE_API_KEY, supplierId),
+    ]);
+    const cheapest = zones
+      .filter((zone) => Number.isFinite(Number(zone.rateEGP)) && Number(zone.rateEGP) >= 0)
+      .sort((a, b) => Number(a.rateEGP) - Number(b.rateEGP))[0] ?? null;
+    return [supplierId, { ...(supplier ?? {}), shippingZone: cheapest }];
+  }));
+  const supplierById = new Map(supplierEntries);
+
+  for (const product of plan.eligible) {
     const routeDir = path.join(distDir, "shop", "product", product.id);
     fs.mkdirSync(routeDir, { recursive: true });
-    const html = buildProductHtml(template, product, baseUrl);
+    const canonicalProductId = plan.canonicalById.get(product.id) ?? product.id;
+    const html = buildProductHtml(
+      template,
+      product,
+      baseUrl,
+      canonicalProductId,
+      supplierById.get(getSupplierId(product)) ?? null,
+    );
     fs.writeFileSync(path.join(routeDir, "index.html"), html, "utf8");
   }
 
-  console.log(`Product SSG: generated ${productDocs.length} product page(s).`);
+  console.log(
+    `Product SSG: generated ${plan.eligible.length} page(s), canonicalized ${plan.canonicalById.size} duplicate(s), excluded ${plan.excluded.length} incomplete record(s).`
+  );
 };
 
 writeProductPages().catch((err) => {

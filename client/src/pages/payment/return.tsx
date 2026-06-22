@@ -7,9 +7,13 @@ import { Button } from "@/components/ui/button";
 import { db } from "@/lib/firebase";
 import { META_PIXEL_CURRENCY, trackMetaEvent } from "@/lib/metaPixel";
 import Seo from "@/lib/seo/Seo";
+import { useCart } from "@/hooks/useCart";
+
+const GUEST_PENDING_ORDER_STORAGE_KEY = "twopaws:guest-checkout:pending-order";
 
 export default function PaymentReturnPage() {
   const location = useLocation();
+  const { clearCart } = useCart();
   const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const orderId = useMemo(() => {
     return (
@@ -23,8 +27,10 @@ export default function PaymentReturnPage() {
   const [orderSummary, setOrderSummary] = useState<{
     totalPrice?: number;
     paymentMethod?: string;
+    verifiedPaid?: boolean;
   } | null>(null);
   const trackedRef = useRef<string | null>(null);
+  const clearedGuestCartRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!orderId) return;
@@ -37,11 +43,14 @@ export default function PaymentReturnPage() {
         success?: boolean;
         totalPrice?: number;
         paymentMethod?: string;
+        paymentStatus?: string;
       };
       setStatus(data.status ?? data.orderStatus ?? (data.success ? "PAID" : null));
       setOrderSummary({
         totalPrice: typeof data.totalPrice === "number" ? data.totalPrice : undefined,
         paymentMethod: data.paymentMethod,
+        verifiedPaid: String(data.paymentStatus ?? data.status ?? data.orderStatus ?? "")
+          .toUpperCase() === "PAID",
       });
     });
     return () => unsubscribe();
@@ -78,6 +87,23 @@ export default function PaymentReturnPage() {
     });
     trackedRef.current = orderId;
   }, [orderId, status, orderSummary]);
+
+  useEffect(() => {
+    if (!orderId || !status || !orderSummary?.verifiedPaid || clearedGuestCartRef.current === orderId) return;
+    const normalized = status.toUpperCase();
+    const isPaid = normalized.includes("PAID") || normalized.includes("SUCCESS");
+    if (!isPaid) return;
+    const pendingGuestOrder = window.sessionStorage.getItem(GUEST_PENDING_ORDER_STORAGE_KEY);
+    if (pendingGuestOrder !== orderId) return;
+    clearedGuestCartRef.current = orderId;
+    clearCart()
+      .then(() => {
+        window.sessionStorage.removeItem(GUEST_PENDING_ORDER_STORAGE_KEY);
+      })
+      .catch(() => {
+        clearedGuestCartRef.current = null;
+      });
+  }, [clearCart, orderId, orderSummary, status]);
 
   return (
     <ShopShell>

@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { buildCatalogSeoPlan } from "./catalog-seo.mjs";
 
 const DEFAULT_BASE_URL = "https://twopaws.pet";
 const STRICT_SSG = process.env.SSG_STRICT === "true" || process.env.CI === "true";
@@ -41,6 +42,21 @@ const toLastMod = (value) => {
   return date.toISOString();
 };
 
+const extractFirestoreValue = (value) => {
+  if (!value || typeof value !== "object") return undefined;
+  if ("stringValue" in value) return value.stringValue;
+  if ("integerValue" in value) return Number(value.integerValue);
+  if ("doubleValue" in value) return Number(value.doubleValue);
+  if ("booleanValue" in value) return value.booleanValue;
+  if ("referenceValue" in value) return value.referenceValue;
+  if ("arrayValue" in value) return (value.arrayValue?.values ?? []).map(extractFirestoreValue);
+  if ("mapValue" in value) return Object.fromEntries(
+    Object.entries(value.mapValue?.fields ?? {}).map(([key, child]) => [key, extractFirestoreValue(child)]),
+  );
+  if ("nullValue" in value) return null;
+  return undefined;
+};
+
 const fetchCollectionDocs = async (projectId, apiKey, collectionName) => {
   if (!projectId || !apiKey) return [];
   const docs = new Map();
@@ -71,7 +87,10 @@ const fetchCollectionDocs = async (projectId, apiKey, collectionName) => {
       const id = doc.name.split("/").pop();
       if (!id) continue;
       const lastmod = toLastMod(doc.updateTime) || toLastMod(doc.createTime);
-      docs.set(id, { id, lastmod });
+      const fields = Object.fromEntries(
+        Object.entries(doc.fields ?? {}).map(([key, value]) => [key, extractFirestoreValue(value)]),
+      );
+      docs.set(id, { id, lastmod, ...fields });
     }
     pageToken = data.nextPageToken || "";
     if (!pageToken) break;
@@ -96,10 +115,14 @@ const buildSitemap = async () => {
       env.VITE_FIREBASE_API_KEY,
       "products"
     );
-    productRoutes = productDocs.map((doc) => ({
+    const productPlan = buildCatalogSeoPlan(productDocs);
+    productRoutes = productPlan.sitemapProducts.map((doc) => ({
       path: `/shop/product/${doc.id}/`,
       lastmod: doc.lastmod,
     }));
+    console.log(
+      `Sitemap: included ${productPlan.sitemapProducts.length} canonical products; excluded ${productPlan.excluded.length} incomplete and ${productPlan.canonicalById.size} duplicate URLs.`
+    );
   } catch (err) {
     if (STRICT_SSG) throw err;
     console.warn("Sitemap: unable to load product routes.", err);

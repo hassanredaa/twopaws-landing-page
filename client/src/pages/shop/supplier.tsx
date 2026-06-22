@@ -1,20 +1,55 @@
-import { useDeferredValue, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { Search } from "lucide-react";
 import { useParams } from "react-router-dom";
+import {
+  collection,
+  doc,
+  documentId,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  startAfter,
+  where,
+  type DocumentData,
+  type QueryConstraint,
+  type QueryDocumentSnapshot,
+} from "firebase/firestore";
 import ShopShell from "@/components/shop/ShopShell";
 import ProductCard from "@/components/shop/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCart } from "@/hooks/useCart";
-import { useProducts } from "@/hooks/useProducts";
+import { type ProductDoc } from "@/hooks/useProducts";
 import { useSuppliers } from "@/hooks/useSuppliers";
+import { db } from "@/lib/firebase";
 import Seo from "@/lib/seo/Seo";
 import { BASE_URL } from "@/lib/seo/constants";
 
 const getUnitPrice = (price?: number, salePrice?: number, onSale?: boolean) => {
   if (onSale && typeof salePrice === "number" && salePrice > 0) return salePrice;
   return typeof price === "number" ? price : 0;
+};
+
+const SUPPLIER_PRODUCTS_PAGE_SIZE = 48;
+
+const mapProductDocs = (snapDocs: QueryDocumentSnapshot<DocumentData>[]) =>
+  snapDocs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }) as ProductDoc);
+
+const buildSupplierProductsQuery = (
+  supplierId: string,
+  cursor?: QueryDocumentSnapshot<DocumentData> | null
+) => {
+  const constraints: QueryConstraint[] = [
+    where("supplierRef", "==", doc(db, "suppliers", supplierId)),
+    orderBy(documentId()),
+    limit(SUPPLIER_PRODUCTS_PAGE_SIZE),
+  ];
+  if (cursor) {
+    constraints.splice(2, 0, startAfter(cursor));
+  }
+  return query(collection(db, "products"), ...constraints);
 };
 
 function ProductCardSkeleton() {
@@ -35,7 +70,13 @@ function ProductCardSkeleton() {
 
 export default function SupplierShopPage() {
   const { supplierId } = useParams();
-  const { products, loading } = useProducts();
+  const [products, setProducts] = useState<ProductDoc[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const cursorRef = useRef<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const requestIdRef = useRef(0);
+  const isFetchingRef = useRef(false);
   const { cartItems } = useCart();
   const { supplierMap } = useSuppliers();
   const [search, setSearch] = useState("");
@@ -54,15 +95,76 @@ export default function SupplierShopPage() {
       : `${BASE_URL}${supplierLogo.startsWith("/") ? "" : "/"}${supplierLogo}`
     : undefined;
 
+  useEffect(() => {
+    requestIdRef.current += 1;
+    const requestId = requestIdRef.current;
+    cursorRef.current = null;
+    isFetchingRef.current = false;
+    setProducts([]);
+    setHasMore(false);
+    setLoadingMore(false);
+
+    if (!supplierId) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    const bootstrap = async () => {
+      const snap = await getDocs(buildSupplierProductsQuery(supplierId));
+      if (requestIdRef.current !== requestId) return;
+      setProducts(mapProductDocs(snap.docs));
+      cursorRef.current = snap.docs.length > 0 ? snap.docs[snap.docs.length - 1] : null;
+      setHasMore(snap.docs.length === SUPPLIER_PRODUCTS_PAGE_SIZE);
+      setLoading(false);
+    };
+
+    bootstrap().catch(() => {
+      if (requestIdRef.current !== requestId) return;
+      setProducts([]);
+      setHasMore(false);
+      setLoading(false);
+    });
+
+    return () => {
+      requestIdRef.current += 1;
+    };
+  }, [supplierId]);
+
+  const loadMore = useCallback(async () => {
+    if (!supplierId || isFetchingRef.current || !hasMore) return;
+
+    const requestId = requestIdRef.current;
+    isFetchingRef.current = true;
+    setLoadingMore(true);
+    try {
+      const snap = await getDocs(
+        buildSupplierProductsQuery(supplierId, cursorRef.current)
+      );
+      if (requestIdRef.current !== requestId) return;
+      const nextProducts = mapProductDocs(snap.docs);
+      if (nextProducts.length > 0) {
+        setProducts((prev) => [...prev, ...nextProducts]);
+      }
+      cursorRef.current =
+        snap.docs.length > 0 ? snap.docs[snap.docs.length - 1] : cursorRef.current;
+      setHasMore(snap.docs.length === SUPPLIER_PRODUCTS_PAGE_SIZE);
+    } finally {
+      if (requestIdRef.current === requestId) {
+        isFetchingRef.current = false;
+        setLoadingMore(false);
+      }
+    }
+  }, [hasMore, supplierId]);
+
   const supplierProducts = useMemo(() => {
-    if (!supplierId) return [];
     return products.filter((product) => {
       const quantity = typeof product.quantity === "number" ? product.quantity : 1;
       const price = getUnitPrice(product.price, product.sale_price, product.on_sale);
-      if (quantity <= 0 || price <= 0) return false;
-      return product.supplierRef && product.supplierRef.id === supplierId;
+      return quantity > 0 && price > 0;
     });
-  }, [products, supplierId]);
+  }, [products]);
+
   const visibleProducts = useMemo(() => {
     const needle = deferredSearch.trim().toLowerCase();
     if (!needle) return supplierProducts;
@@ -181,6 +283,22 @@ export default function SupplierShopPage() {
           />
         ))}
       </section>
+
+      {!loading && hasMore && (
+        <div className="mt-6 flex justify-center">
+          <Button
+            type="button"
+            variant="outline"
+            className="border-slate-200"
+            disabled={loadingMore}
+            onClick={() => {
+              void loadMore();
+            }}
+          >
+            {loadingMore ? "Loading more..." : "Load more products"}
+          </Button>
+        </div>
+      )}
     </ShopShell>
   );
 }

@@ -4,7 +4,6 @@ import {
   documentId,
   getDocs,
   limit,
-  onSnapshot,
   orderBy,
   query,
   startAfter,
@@ -57,7 +56,7 @@ const buildPaginatedQuery = (
 };
 
 export function useProducts(options: UseProductsOptions = {}) {
-  const mode = options.mode ?? "all";
+  const mode = options.mode ?? "paginated";
   const pageSize = Math.max(1, options.pageSize ?? DEFAULT_PAGE_SIZE);
 
   const [products, setProducts] = useState<ProductDoc[]>([]);
@@ -169,13 +168,20 @@ export function useProducts(options: UseProductsOptions = {}) {
 
     hasMoreRef.current = false;
     setHasMore(false);
-    const unsubscribe = onSnapshot(collection(db, "products"), (snap) => {
-      if (requestIdRef.current !== requestId) return;
-      setProducts(mapSnapshot(snap));
-      setLoading(false);
-    });
+    const bootstrapAll = async () => {
+      try {
+        const snap = await getDocs(query(collection(db, "products"), orderBy(documentId())));
+        if (requestIdRef.current !== requestId) return;
+        setProducts(mapSnapshot(snap));
+      } finally {
+        if (requestIdRef.current !== requestId) return;
+        setLoading(false);
+        setLoadingMore(false);
+      }
+    };
+
+    void bootstrapAll();
     return () => {
-      unsubscribe();
       requestIdRef.current += 1;
     };
   }, [mode, pageSize]);

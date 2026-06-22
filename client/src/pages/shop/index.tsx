@@ -389,11 +389,11 @@ export default function ShopPage() {
   const pageStart = (currentPage - 1) * perPage;
   const pageEnd = pageStart + perPage;
   const visibleProducts = filteredProducts.slice(pageStart, pageEnd);
-  const needsMoreForCurrentPage = filteredProducts.length < pageEnd;
   const awaitingPageData =
     !loading &&
     visibleProducts.length === 0 &&
-    (loadingMore || (hasMore && needsMoreForCurrentPage));
+    hasMore &&
+    filteredProducts.length < pageEnd;
   const showingFrom = visibleProducts.length === 0 ? 0 : pageStart + 1;
   const showingTo = visibleProducts.length === 0 ? 0 : pageStart + visibleProducts.length;
   const totalItemsLabel =
@@ -508,6 +508,10 @@ export default function ShopPage() {
     setPage(1);
   }, []);
 
+  const handlePageChange = useCallback((targetPage: number) => {
+    setPage(Math.max(1, targetPage));
+  }, []);
+
   const headerSearch = (
     <div className="mx-auto flex w-full max-w-[980px] items-center gap-2">
       <div className="relative flex-1">
@@ -551,9 +555,9 @@ export default function ShopPage() {
   useEffect(() => {
     if (loading || loadingMore) return;
     if (!hasMore) return;
-    if (!needsMoreForCurrentPage) return;
+    if (filteredProducts.length >= pageEnd) return;
     void loadMore();
-  }, [loading, loadingMore, hasMore, needsMoreForCurrentPage, loadMore]);
+  }, [loading, loadingMore, hasMore, filteredProducts.length, pageEnd, loadMore]);
 
   useEffect(() => {
     const hasSortOption = sortOptions.some((option) => option.value === sort);
@@ -958,7 +962,7 @@ export default function ShopPage() {
               Array.from({ length: PRODUCT_SKELETON_COUNT }).map((_, index) => (
                 <ProductCardSkeleton key={`product-skeleton-${index}`} />
               ))}
-            {!loading && !awaitingPageData && !loadingMore && !hasMore && visibleProducts.length === 0 && (
+            {!loading && !awaitingPageData && visibleProducts.length === 0 && (
               <div className="col-span-full rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center">
                 <p className="text-sm font-semibold text-slate-700">
                   {isSearching ? "No products match your search." : "No products found."}
@@ -1009,7 +1013,9 @@ export default function ShopPage() {
                 type="button"
                 className="rounded-md border border-slate-200 px-3 py-1 disabled:opacity-50"
                 disabled={loading || awaitingPageData || currentPage === 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                onClick={() => {
+                  void handlePageChange(currentPage - 1);
+                }}
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
@@ -1029,7 +1035,9 @@ export default function ShopPage() {
                     <button
                       key={item}
                       type="button"
-                      onClick={() => setPage(item)}
+                      onClick={() => {
+                        void handlePageChange(item);
+                      }}
                       aria-current={currentPage === item ? "page" : undefined}
                       className={`h-8 w-8 rounded-md border text-sm ${
                         currentPage === item
@@ -1046,7 +1054,9 @@ export default function ShopPage() {
                 type="button"
                 className="rounded-md border border-slate-200 px-3 py-1 disabled:opacity-50"
                 disabled={loading || loadingMore || !canGoNext}
-                onClick={() => setPage((p) => p + 1)}
+                onClick={() => {
+                  void handlePageChange(currentPage + 1);
+                }}
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
