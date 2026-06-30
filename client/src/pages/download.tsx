@@ -2,9 +2,8 @@ import { useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { trackMetaEvent } from "@/lib/metaPixel";
 import Seo from "@/lib/seo/Seo";
+import { ANDROID_STORE_URL, IOS_STORE_URL } from "@/lib/seo/constants";
 
-const IOS_STORE_URL =  "https://apps.apple.com/app/twopaws/id6745481497";
-const ANDROID_STORE_URL = "https://play.google.com/store/apps/details?id=com.twopaws.app";
 const WEB_FALLBACK_URL = "https://twopaws.pet/";
 
 function detectPlatform(userAgent: string) {
